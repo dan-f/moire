@@ -1,8 +1,22 @@
-import { useState } from "react";
+// import init from "granular-engine/granular_engine_bg.wasm?init";
+// import * as engine from "granular-engine";
+import init from "granular-engine";
+import { useEffect, useState } from "react";
 import cls from "./App.module.css";
 
 function App() {
   const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    init().then((thing) => {
+      thing.greet();
+    });
+
+    // engine.greet();
+    // init().then((instance) => {
+    //   instance.exports.greet();
+    // });
+  }, []);
 
   return (
     <>

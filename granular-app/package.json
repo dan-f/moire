@@ -12,11 +12,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "granular-engine": "file:../granular-engine/pkg",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@types/audioworklet": "^0.0.59",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
