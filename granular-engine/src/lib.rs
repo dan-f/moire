@@ -1,13 +1,32 @@
-mod utils;
+use synth::Synth;
 
-use wasm_bindgen::prelude::*;
+mod buffer;
+mod synth;
 
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
+#[no_mangle]
+pub extern "C" fn new_synth(
+    sample_rate: usize,
+    output_buf_capacity: usize,
+    output_buf_len: usize,
+) -> *mut Synth {
+    let boxed: Box<Synth> = Synth::new(sample_rate, output_buf_capacity, output_buf_len).into();
+    Box::into_raw(boxed)
 }
 
-#[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, granular-engine!");
+#[no_mangle]
+pub unsafe extern "C" fn output_channel(synth: *const Synth, channel: usize) -> *const f32 {
+    synth.as_ref().unwrap().output_channel(channel).as_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn resize_output_buf(synth: *mut Synth, new_capacity: usize, new_len: usize) {
+    synth
+        .as_mut()
+        .unwrap()
+        .resize_output_buf(new_capacity, new_len);
+}
+
+#[no_mangle]
+pub extern "C" fn process(synth: *mut Synth) {
+    println!("Processing for synth {:?}", synth);
 }

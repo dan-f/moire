@@ -1,19 +1,27 @@
-import granularProcessorUrl from "./processor?worker&url";
+import { GranularNode } from "./GranularNode";
 
 export class Synth {
-  ctx: AudioContext;
-  granularNode: AudioWorkletNode;
+  private ctx: AudioContext;
+  // private granularNode: AudioWorkletNode;
 
-  constructor(ctx: AudioContext, granularNode: AudioWorkletNode) {
+  private constructor(ctx: AudioContext, _granularNode: AudioWorkletNode) {
     this.ctx = ctx;
-    this.granularNode = granularNode;
+    // this.granularNode = granularNode;
   }
 
-  static async build(): Promise<Synth> {
+  async start(): Promise<AudioContextState> {
+    await this.ctx.resume();
+    return this.ctxState;
+  }
+
+  get ctxState(): AudioContextState {
+    return this.ctx.state;
+  }
+
+  static async new(): Promise<Synth> {
     const ctx = new AudioContext();
-    await ctx.audioWorklet.addModule(granularProcessorUrl);
-    const granularNode = new AudioWorkletNode(ctx, "GranularProcessor");
+    const granularNode = await GranularNode.new(ctx);
     granularNode.connect(ctx.destination);
-    return Promise.resolve(new Synth(ctx, granularNode));
+    return new Synth(ctx, granularNode);
   }
 }

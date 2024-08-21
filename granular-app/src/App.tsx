@@ -1,29 +1,24 @@
-// import init from "granular-engine/granular_engine_bg.wasm?init";
-// import * as engine from "granular-engine";
-import init from "granular-engine";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import cls from "./App.module.css";
+import { Synth } from "./synth/Synth";
+
+const synth = await Synth.new();
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [audioCtxState, setAudioCtxState] = useState(synth.ctxState);
 
-  useEffect(() => {
-    init().then((thing) => {
-      thing.greet();
-    });
-
-    // engine.greet();
-    // init().then((instance) => {
-    //   instance.exports.greet();
-    // });
-  }, []);
+  function handleClick() {
+    if (audioCtxState === "suspended") {
+      synth.start().then((ctxState) => setAudioCtxState(ctxState));
+    }
+  }
 
   return (
     <>
       <h1>Vite + React</h1>
       <div className={cls.card}>
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button onClick={handleClick}>
+          AudioContext state is {synth.ctxState}
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR

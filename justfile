@@ -1,12 +1,22 @@
-default: app-build
+engine_dir := "granular-engine"
+app_dir := "granular-app"
+
+default: dev
+
+dev: app-build (app 'dev')
+
+preview: app-build (app 'preview')
 
 engine-build:
-  cd granular-engine && wasm-pack build
+  cd {{engine_dir}} && cargo build --target=wasm32-unknown-unknown --release
+  cp \
+    {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
+    {{app_dir}}/src/assets/
 
 app-build: engine-build app-deps (app 'build')
 
 app-deps:
-  cd granular-app && npm i
+  cd {{app_dir}} && npm i
 
 app npm_script='dev':
-  cd granular-app && npm run {{npm_script}}
+  cd {{app_dir}} && npm run {{npm_script}}
