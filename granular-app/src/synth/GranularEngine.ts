@@ -20,20 +20,17 @@ export class GranularEngine {
       outputBufLen: number;
     },
   ) {
+    this.instance = new WebAssembly.Instance(module, {});
+
     this.outputBufCapacity = options.outputBufCapacity;
     this.outputBufLen = options.outputBufLen;
-
-    this.instance = new WebAssembly.Instance(module, {});
-    console.log("Granular engine is exporting:", this.engine);
-
     this.synth = this.engine.new_synth(
       sampleRate,
       this.outputBufCapacity,
       this.outputBufLen,
     );
-    console.log("Instantiated `Synth`:", this.synth);
 
-    this.assignOutputBuffer();
+    this.redrawBufferViews();
   }
 
   process(samples: number): Float32Array {
@@ -61,12 +58,12 @@ export class GranularEngine {
     if (samples > this.outputBufCapacity) {
       this.outputBufLen = samples;
       this.outputBufCapacity = Math.ceil(this.outputBufLen / 1024) * 1024;
-      this.engine.resize_output_buf(
+      this.engine.alloc_output_buf(
         this.synth,
         this.outputBufCapacity,
         this.outputBufLen,
       );
-      this.assignOutputBuffer();
+      this.redrawBufferViews();
     }
 
     this.engine.process(this.synth);
@@ -76,13 +73,17 @@ export class GranularEngine {
 
   updateSample(sample: Float32Array[]) {
     const bufLen = sample[0].length;
-    const bufPtr = this.engine.alloc_sample_buffer(this.synth, bufLen);
+    this.engine.alloc_sample_buf(this.synth, bufLen);
+    // If our allocation causes the WASM memory to grow, we will have to re-draw
+    // our views over its memory buffer. The WASM memory model guarantees that
+    // our pointers are still accurate relative to the buffer, but the buffer
+    // may itself have moved.
+    this.redrawBufferViews();
     const buffer = new Float32Array(
       this.engine.memory.buffer,
-      bufPtr,
+      this.engine.sample_buf(this.synth),
       bufLen * 2,
     );
-
     switch (sample.length) {
       case 1:
         for (let i = 0; i < bufLen; i++) {
@@ -108,10 +109,10 @@ export class GranularEngine {
     return this.instance.exports as EngineExports;
   }
 
-  private assignOutputBuffer() {
+  private redrawBufferViews() {
     this.outputBuffer = new Float32Array(
       this.engine.memory.buffer,
-      this.engine.output_buffer(this.synth),
+      this.engine.output_buf(this.synth),
       this.outputBufLen * 2,
     );
   }

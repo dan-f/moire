@@ -3,7 +3,6 @@ use crate::buffer::Buffer;
 pub struct Synth {
     sample_rate: usize,
     sample_buf: Option<Buffer>,
-    /// Stereo interleaved output buffer
     output_buf: Buffer,
 }
 
@@ -16,16 +15,28 @@ impl Synth {
         }
     }
 
-    pub fn alloc_sample_buffer(&mut self, buf_len: usize) -> &[f32] {
+    pub fn alloc_sample_buf(&mut self, buf_len: usize) {
         self.sample_buf.replace(Buffer::new(2, buf_len, buf_len));
-        &self.sample_buf.as_ref().unwrap().data
     }
 
-    pub fn output_buffer(&self) -> &[f32] {
+    pub fn sample_buf(&self) -> Option<&[f32]> {
+        self.sample_buf.as_ref().map(|buf| buf.data.as_slice())
+    }
+
+    pub fn output_buf(&self) -> &[f32] {
         &self.output_buf.data
     }
 
-    pub fn resize_output_buf(&mut self, new_capacity: usize, new_len: usize) {
+    pub fn alloc_output_buf(&mut self, new_capacity: usize, new_len: usize) {
         self.output_buf.resize(new_capacity, new_len);
+    }
+
+    pub fn process(&mut self) {
+        if let Some(sample_buf) = &self.sample_buf {
+            for (dst_sample, src_sample) in self.output_buf.frames_mut().zip(sample_buf.frames()) {
+                dst_sample[0] = src_sample[0];
+                dst_sample[1] = src_sample[1];
+            }
+        }
     }
 }

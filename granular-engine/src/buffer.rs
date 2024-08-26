@@ -29,4 +29,12 @@ impl Buffer {
         }
         self.len = new_len;
     }
+
+    pub fn frames(&self) -> impl Iterator<Item = &[f32]> {
+        self.data.chunks_exact(2)
+    }
+
+    pub fn frames_mut(&mut self) -> impl Iterator<Item = &mut [f32]> {
+        self.data.chunks_exact_mut(2)
+    }
 }

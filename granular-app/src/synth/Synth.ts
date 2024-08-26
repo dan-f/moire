@@ -14,7 +14,9 @@ export class Synth {
   }
 
   async start(): Promise<AudioContextState> {
-    await this.ctx.resume();
+    if (this.ctx.state !== "running") {
+      await this.ctx.resume();
+    }
     return this.ctx.state;
   }
 

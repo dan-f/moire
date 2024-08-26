@@ -34,6 +34,7 @@ function ProvidedApp() {
   return (
     <>
       <h1>Granular</h1>
+      <button onClick={synth.start.bind(synth)}>start</button>
       <div className={cls.card}>
         <SampleUpload onUpload={handleUpload} />
         {uploadingSample && <div>uploading</div>}

@@ -12,6 +12,7 @@ class GranularProcessor extends AudioWorkletProcessor {
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
+
     this.engine = new GranularEngine(options.processorOptions.granularModule, {
       sampleRate,
       outputBufCapacity: 2048,
@@ -31,10 +32,12 @@ class GranularProcessor extends AudioWorkletProcessor {
     const output = outputs[0];
     const samples = output[0].length;
     const engineOutput = this.engine.process(samples);
+
     for (let i = 0; i < samples; i++) {
       output[0][i] = engineOutput[i * 2];
       output[1][i] = engineOutput[i * 2 + 1];
     }
+
     return true;
   }
 
