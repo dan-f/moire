@@ -13,6 +13,9 @@ engine-build:
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/assets/
 
+disassemble: engine-build
+  wasm2wat {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm -o granular_engine.wat
+
 app-build: engine-build app-deps (app 'build')
 
 app-deps:
