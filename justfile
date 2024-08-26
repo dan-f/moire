@@ -8,7 +8,7 @@ dev: app-build (app 'dev')
 preview: app-build (app 'preview')
 
 engine-build:
-  cd {{engine_dir}} && cargo build --target=wasm32-unknown-unknown --release
+  cd {{engine_dir}} && cargo build --release
   cp \
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/assets/

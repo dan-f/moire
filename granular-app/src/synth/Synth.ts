@@ -1,25 +1,31 @@
+import { MessageType } from "./GranularMessage";
 import { GranularNode } from "./GranularNode";
 
+/**
+ * Top-level interface for the application to orchestrate sound generation
+ */
 export class Synth {
   private ctx: AudioContext;
-  // private granularNode: AudioWorkletNode;
+  private granularNode: GranularNode;
 
-  private constructor(ctx: AudioContext, _granularNode: AudioWorkletNode) {
+  private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
-    // this.granularNode = granularNode;
+    this.granularNode = granularNode;
   }
 
   async start(): Promise<AudioContextState> {
     await this.ctx.resume();
-    return this.ctxState;
-  }
-
-  get ctxState(): AudioContextState {
     return this.ctx.state;
   }
 
-  static async new(): Promise<Synth> {
-    const ctx = new AudioContext();
+  updateSample(sample: Float32Array[]) {
+    this.granularNode.send({
+      type: MessageType.UpdateSample,
+      sample,
+    });
+  }
+
+  static async new(ctx: AudioContext): Promise<Synth> {
     const granularNode = await GranularNode.new(ctx);
     granularNode.connect(ctx.destination);
     return new Synth(ctx, granularNode);

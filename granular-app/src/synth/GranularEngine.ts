@@ -1,16 +1,16 @@
 import { EngineExports, Pointer } from "./EngineExports";
 
+/**
+ * Wrapper class providing ergonomic access to an instance of the WASM granular
+ * engine.
+ */
 export class GranularEngine {
   private readonly instance: WebAssembly.Instance;
   private readonly synth: Pointer;
 
+  private outputBuffer!: Float32Array;
   private outputBufCapacity: number;
   private outputBufLen: number;
-
-  private outputChannels: Float32Array[] = [
-    new Float32Array(),
-    new Float32Array(),
-  ];
 
   constructor(
     module: WebAssembly.Module,
@@ -33,11 +33,10 @@ export class GranularEngine {
     );
     console.log("Instantiated `Synth`:", this.synth);
 
-    this.assignOutputChannels();
-    console.log("Got output channels:", this.outputChannels);
+    this.assignOutputBuffer();
   }
 
-  process(samples: number): Float32Array[] {
+  process(samples: number): Float32Array {
     // Based on the way the WASM memory model works, we cannot simply pass a
     // pointer to the WebAudio-provided `outputs` buffers from the
     // `AudioWorkletProcessor.process()` callback, which would have been
@@ -61,31 +60,59 @@ export class GranularEngine {
     // buffer size we see, KiB-aligned, in the event that we resize again.
     if (samples > this.outputBufCapacity) {
       this.outputBufLen = samples;
-      this.outputBufCapacity = Math.ceil((this.outputBufLen * 2) / 1024) * 1024;
+      this.outputBufCapacity = Math.ceil(this.outputBufLen / 1024) * 1024;
       this.engine.resize_output_buf(
         this.synth,
         this.outputBufCapacity,
         this.outputBufLen,
       );
-      this.assignOutputChannels();
+      this.assignOutputBuffer();
     }
 
     this.engine.process(this.synth);
 
-    return this.outputChannels;
+    return this.outputBuffer;
+  }
+
+  updateSample(sample: Float32Array[]) {
+    const bufLen = sample[0].length;
+    const bufPtr = this.engine.alloc_sample_buffer(this.synth, bufLen);
+    const buffer = new Float32Array(
+      this.engine.memory.buffer,
+      bufPtr,
+      bufLen * 2,
+    );
+
+    switch (sample.length) {
+      case 1:
+        for (let i = 0; i < bufLen; i++) {
+          // TODO -6db
+          buffer[i * 2] = sample[0][i];
+          buffer[i * 2 + 1] = sample[0][i];
+        }
+        break;
+      case 2:
+        for (let i = 0; i < bufLen; i++) {
+          buffer[i * 2] = sample[0][i];
+          buffer[i * 2 + 1] = sample[1][i];
+        }
+        break;
+      default:
+        throw new Error(
+          `Expected mono or stereo sample. Cannot use ${sample.length}-channel sample`,
+        );
+    }
   }
 
   private get engine(): EngineExports {
     return this.instance.exports as EngineExports;
   }
 
-  private assignOutputChannels() {
-    for (let channel = 0; channel < this.outputChannels.length; channel++) {
-      this.outputChannels[channel] = new Float32Array(
-        this.engine.memory.buffer,
-        this.engine.output_channel(this.synth, channel),
-        this.outputBufLen,
-      );
-    }
+  private assignOutputBuffer() {
+    this.outputBuffer = new Float32Array(
+      this.engine.memory.buffer,
+      this.engine.output_buffer(this.synth),
+      this.outputBufLen * 2,
+    );
   }
 }

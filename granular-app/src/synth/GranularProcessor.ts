@@ -1,7 +1,12 @@
 import { GranularEngine } from "./GranularEngine";
+import { MessageType, type Message } from "./GranularMessage";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
-import { type SynthMessage } from "./SynthMessage";
 
+/**
+ * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
+ * within the audio thread callback. This component delegates to the WASM
+ * instance by way of the {@linkcode GranularEngine}.
+ */
 class GranularProcessor extends AudioWorkletProcessor {
   private readonly engine: GranularEngine;
 
@@ -13,7 +18,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       outputBufLen: 128,
     });
 
-    this.port.onmessage = (event: MessageEvent<SynthMessage>) => {
+    this.port.onmessage = (event: MessageEvent<Message>) => {
       this.handleMessage(event.data);
     };
   }
@@ -26,16 +31,24 @@ class GranularProcessor extends AudioWorkletProcessor {
     const output = outputs[0];
     const samples = output[0].length;
     const engineOutput = this.engine.process(samples);
-    for (let channel = 0; channel < output.length; channel++) {
-      for (let sample = 0; sample < samples; sample++) {
-        output[channel][sample] = engineOutput[channel][sample];
-      }
+    for (let i = 0; i < samples; i++) {
+      output[0][i] = engineOutput[i * 2];
+      output[1][i] = engineOutput[i * 2 + 1];
     }
     return true;
   }
 
-  handleMessage(msg: SynthMessage) {
+  handleMessage(msg: Message) {
     console.log("[GranularProcessor] received event", msg);
+    switch (msg.type) {
+      case MessageType.UpdateSample:
+        this.handleUpdateSample(msg.sample);
+        break;
+    }
+  }
+
+  handleUpdateSample(sample: Float32Array[]) {
+    this.engine.updateSample(sample);
   }
 }
 

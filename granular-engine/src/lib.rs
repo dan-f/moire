@@ -14,8 +14,17 @@ pub extern "C" fn new_synth(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn output_channel(synth: *const Synth, channel: usize) -> *const f32 {
-    synth.as_ref().unwrap().output_channel(channel).as_ptr()
+pub unsafe extern "C" fn alloc_sample_buffer(synth: *mut Synth, buf_len: usize) -> *const f32 {
+    synth
+        .as_mut()
+        .unwrap()
+        .alloc_sample_buffer(buf_len)
+        .as_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn output_buffer(synth: *const Synth) -> *const f32 {
+    synth.as_ref().unwrap().output_buffer().as_ptr()
 }
 
 #[no_mangle]

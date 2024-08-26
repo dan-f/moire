@@ -1,32 +1,31 @@
-use std::array;
-
-pub struct Buffer<const C: usize> {
-    len: usize,
-    channels: [Vec<f32>; C],
+pub struct Buffer {
+    pub len: usize,
+    pub chans: usize,
+    pub data: Vec<f32>,
 }
 
-impl<const C: usize> Buffer<C> {
-    pub fn new(capacity: usize, len: usize) -> Self {
+impl Buffer {
+    /// Allocate a buffer of `chans`-many channels. `capacity` and `len` are in
+    /// terms of number of sample frames, i.e. for a 128-`len`, 1024-`capacity`
+    /// stereo buffer, we would allocate an actual buffer capable of storing
+    /// 2048 f32s, to fill with 256 interleaved f32 samples.
+    pub fn new(chans: usize, capacity: usize, len: usize) -> Self {
+        assert!(capacity >= len);
         Self {
             len,
-            channels: array::from_fn(|_| vec![0.; capacity]),
+            chans,
+            data: vec![0.; chans * capacity],
         }
     }
 
-    pub fn channel(&self, channel: usize) -> &[f32] {
-        &self.channels[channel]
-    }
-
     pub fn capacity(&self) -> usize {
-        self.channels[0].len()
+        self.data.len() / self.chans
     }
 
     pub fn resize(&mut self, new_capacity: usize, new_len: usize) {
         assert!(new_capacity >= new_len);
         if new_capacity > self.capacity() {
-            for channel in self.channels.iter_mut() {
-                channel.resize(new_capacity, 0.)
-            }
+            self.data.resize(self.chans * new_capacity, 0.);
         }
         self.len = new_len;
     }

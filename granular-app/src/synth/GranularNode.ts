@@ -1,14 +1,10 @@
 import granularWasmUrl from "../assets/granular_engine.wasm?url";
+import { Message } from "./GranularMessage";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 
-export interface GranularWorkletNodeOptions extends AudioWorkletNodeOptions {
-  processorOptions: { granularModule: WebAssembly.Module };
-}
-
-const granularModule = await WebAssembly.compileStreaming(
-  fetch(granularWasmUrl),
-);
-
+/**
+ * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
+ */
 export class GranularNode extends AudioWorkletNode {
   private constructor(ctx: AudioContext) {
     super(ctx, "GranularProcessor", {
@@ -23,4 +19,16 @@ export class GranularNode extends AudioWorkletNode {
     await ctx.audioWorklet.addModule(granularProcessorUrl);
     return new GranularNode(ctx);
   }
+
+  send(message: Message) {
+    this.port.postMessage(message);
+  }
 }
+
+export interface GranularWorkletNodeOptions extends AudioWorkletNodeOptions {
+  processorOptions: { granularModule: WebAssembly.Module };
+}
+
+const granularModule = await WebAssembly.compileStreaming(
+  fetch(granularWasmUrl),
+);

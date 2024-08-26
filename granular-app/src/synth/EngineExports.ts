@@ -1,5 +1,8 @@
 export type Pointer = number;
 
+/**
+ * Type definition for the exports of the raw WASM granular engine.
+ */
 export interface EngineExports extends WebAssembly.Exports {
   memory: WebAssembly.Memory;
 
@@ -9,7 +12,9 @@ export interface EngineExports extends WebAssembly.Exports {
     output_buf_len: number,
   ): Pointer;
 
-  output_channel(synth: Pointer, channel: number): Pointer;
+  alloc_sample_buffer(synth: Pointer, buf_len: number): Pointer;
+
+  output_buffer(synth: Pointer): Pointer;
 
   resize_output_buf(
     synth: Pointer,
