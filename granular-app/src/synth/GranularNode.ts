@@ -20,6 +20,10 @@ export class GranularNode extends AudioWorkletNode {
     return new GranularNode(ctx);
   }
 
+  get bpm(): AudioParam {
+    return this.parameters.get("bpm")!;
+  }
+
   send(message: Message) {
     this.port.postMessage(message);
   }

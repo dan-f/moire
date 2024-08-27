@@ -13,11 +13,18 @@ export class Synth {
     this.granularNode = granularNode;
   }
 
-  async start(): Promise<AudioContextState> {
+  async toggleWebAudioPlayState(): Promise<AudioContextState> {
     if (this.ctx.state !== "running") {
       await this.ctx.resume();
+    } else {
+      await this.ctx.suspend();
     }
     return this.ctx.state;
+  }
+
+  setBpm(bpm: number) {
+    this.granularNode.bpm.cancelScheduledValues(this.ctx.currentTime);
+    this.granularNode.bpm.setValueAtTime(bpm, this.ctx.currentTime);
   }
 
   updateSample(sample: Float32Array[]) {

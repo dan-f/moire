@@ -1,3 +1,5 @@
+import { ConsoleLogger } from "../lib/ConsoleLogger";
+import { Logger } from "../lib/Logger";
 import { EngineExports, Pointer } from "./EngineExports";
 
 /**
@@ -7,6 +9,7 @@ import { EngineExports, Pointer } from "./EngineExports";
 export class GranularEngine {
   private readonly instance: WebAssembly.Instance;
   private readonly engine: Pointer;
+  private readonly log: Logger;
 
   private outputBufLen: number;
   private outputBufCapacity: number;
@@ -33,7 +36,9 @@ export class GranularEngine {
       this.outputBufCapacity,
     );
 
-    this.redrawBufferViews();
+    this.log = new ConsoleLogger(GranularEngine.name);
+
+    this.createBufferViews();
   }
 
   process(samples: number): Float32Array[] {
@@ -67,7 +72,7 @@ export class GranularEngine {
         this.outputBufCapacity,
         this.outputBufLen,
       );
-      this.redrawBufferViews();
+      this.createBufferViews();
     }
 
     this.imports.process(this.engine);
@@ -76,13 +81,14 @@ export class GranularEngine {
   }
 
   updateSample(sample: Float32Array[]) {
+    this.log.debug("allocating sample buffer");
     const bufLen = sample[0].length;
     this.imports.alloc_sample_buf(this.engine, bufLen);
     // If our allocation causes the WASM memory to grow, we will have to re-draw
     // our views over its memory buffer. The WASM memory model guarantees that
     // our pointers are still accurate relative to the buffer, but the buffer
     // may itself have moved.
-    this.redrawBufferViews();
+    this.createBufferViews();
     const buf = [
       this.channelView(this.imports.sample_buf_l(this.engine), bufLen),
       this.channelView(this.imports.sample_buf_r(this.engine), bufLen),
@@ -112,7 +118,8 @@ export class GranularEngine {
     return this.instance.exports as EngineExports;
   }
 
-  private redrawBufferViews() {
+  private createBufferViews() {
+    this.log.debug("(re)creating buffer views");
     this.outputBuffer[0] = this.channelView(
       this.imports.output_buf_l(this.engine),
       this.outputBufLen,

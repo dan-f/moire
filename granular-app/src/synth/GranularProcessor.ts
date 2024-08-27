@@ -1,3 +1,5 @@
+import { ConsoleLogger } from "../lib/ConsoleLogger";
+import { Logger } from "../lib/Logger";
 import { GranularEngine } from "./GranularEngine";
 import { MessageType, type Message } from "./GranularMessage";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
@@ -9,6 +11,7 @@ import { type GranularWorkletNodeOptions } from "./GranularNode";
  */
 class GranularProcessor extends AudioWorkletProcessor {
   private readonly engine: GranularEngine;
+  private readonly log: Logger;
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
@@ -19,9 +22,23 @@ class GranularProcessor extends AudioWorkletProcessor {
       outputBufLen: 128,
     });
 
+    this.log = new ConsoleLogger(GranularProcessor.name);
+
     this.port.onmessage = (event: MessageEvent<Message>) => {
       this.handleMessage(event.data);
     };
+  }
+
+  static get parameterDescriptors() {
+    return [
+      {
+        name: "bpm",
+        automationRate: "k-rate",
+        defaultValue: 120,
+        minValue: 40,
+        maxValue: 300,
+      },
+    ];
   }
 
   process(
@@ -36,11 +53,13 @@ class GranularProcessor extends AudioWorkletProcessor {
     output[0].set(engineOutput[0]);
     output[1].set(engineOutput[1]);
 
+    this.log.debug("processed");
+
     return true;
   }
 
   handleMessage(msg: Message) {
-    console.log("[GranularProcessor] received event", msg);
+    this.log.debug("received message", msg);
     switch (msg.type) {
       case MessageType.UpdateSample:
         this.handleUpdateSample(msg.sample);

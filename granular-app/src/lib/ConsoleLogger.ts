@@ -9,25 +9,25 @@ export class ConsoleLogger implements Logger {
 
   debug(msg: string, data?: object): void {
     this.inModes(["development"], () => {
-      console.debug(...[this.fmtMsg(msg), data].filter((x) => x != null));
+      console.debug(...this.fmt(msg, data));
     });
   }
 
   info(msg: string, data?: object): void {
     this.inModes(["development"], () => {
-      console.info(...[this.fmtMsg(msg), data].filter((x) => x != null));
+      console.info(...this.fmt(msg, data));
     });
   }
 
   warn(msg: string, data?: object): void {
     this.inModes(["development", "production"], () => {
-      console.warn(...[this.fmtMsg(msg), data].filter((x) => x != null));
+      console.warn(...this.fmt(msg, data));
     });
   }
 
   error(msg: string, data?: object, error?: Error): void {
     this.inModes(["development", "production"], () => {
-      console.error(...[this.fmtMsg(msg), data].filter((x) => x != null));
+      console.error(...this.fmt(msg, data));
       if (error) {
         console.error(error);
       }
@@ -36,15 +36,17 @@ export class ConsoleLogger implements Logger {
 
   fatal(msg: string, data?: object, error?: Error): void {
     this.inModes(["development", "production"], () => {
-      console.error(...[this.fmtMsg(msg), data].filter((x) => x != null));
+      console.error(...this.fmt(msg, data));
       if (error) {
         console.error(error);
       }
     });
   }
 
-  private fmtMsg(msg: string): string {
-    return `[${this.label}] ${msg}`;
+  private fmt(msg: string, data?: object) {
+    return [`%c[${this.label}]`, "color:slategrey", msg, data].filter(
+      (x) => x != null,
+    );
   }
 
   private inModes(modes: string[], cb: (env: string) => void) {
