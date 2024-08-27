@@ -1,5 +1,6 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
 import { Logger } from "../lib/Logger";
+import { EngineParams } from "./EngineParams";
 import { GranularEngine } from "./GranularEngine";
 import { MessageType, type Message } from "./GranularMessage";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
@@ -44,16 +45,16 @@ class GranularProcessor extends AudioWorkletProcessor {
   process(
     _inputs: Float32Array[][],
     outputs: Float32Array[][],
-    _parameters: Record<string, Float32Array>,
+    params: EngineParams,
   ): boolean {
+    this.engine.setParams(params);
+
     const output = outputs[0];
     const samples = output[0].length;
     const engineOutput = this.engine.process(samples);
 
     output[0].set(engineOutput[0]);
     output[1].set(engineOutput[1]);
-
-    this.log.debug("processed");
 
     return true;
   }

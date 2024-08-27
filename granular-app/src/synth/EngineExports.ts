@@ -26,5 +26,7 @@ export interface EngineExports extends WebAssembly.Exports {
   output_buf_l(engine: Pointer): Pointer;
   output_buf_r(engine: Pointer): Pointer;
 
+  set_bpm(engine: Pointer, bpm: number): void;
+
   process(engine: Pointer): void;
 }

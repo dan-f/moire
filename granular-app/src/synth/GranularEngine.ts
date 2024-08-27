@@ -1,9 +1,10 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
 import { Logger } from "../lib/Logger";
 import { EngineExports, Pointer } from "./EngineExports";
+import { EngineParams } from "./EngineParams";
 
 /**
- * Wrapper class providing ergonomic access to an instance of the WASM granular
+ * Wrapper class providing safe access to an instance of the WASM granular
  * engine.
  */
 export class GranularEngine {
@@ -39,6 +40,11 @@ export class GranularEngine {
     this.log = new ConsoleLogger(GranularEngine.name);
 
     this.createBufferViews();
+  }
+
+  setParams(params: EngineParams) {
+    const { bpm } = params;
+    this.imports.set_bpm(this.engine, bpm[0]);
   }
 
   process(samples: number): Float32Array[] {

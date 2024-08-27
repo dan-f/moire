@@ -61,6 +61,11 @@ pub unsafe extern "C" fn output_buf_r(engine: *const Engine) -> *const f32 {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn set_bpm(engine: *mut Engine, bpm: u32) {
+    engine.as_mut().unwrap().set_bpm(bpm);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn process(engine: *mut Engine) {
     engine.as_mut().unwrap().process();
 }

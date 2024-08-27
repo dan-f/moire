@@ -4,6 +4,7 @@ pub struct Engine {
     sample_rate: usize,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
+    params: EngineParams,
 }
 
 impl Engine {
@@ -12,6 +13,7 @@ impl Engine {
             sample_rate,
             sample_buf: None,
             output_buf: Buffer::new_with_capacity(output_buf_len, output_buf_capacity),
+            params: Default::default(),
         }
     }
 
@@ -31,6 +33,10 @@ impl Engine {
         self.output_buf.resize(new_capacity, new_len);
     }
 
+    pub fn set_bpm(&mut self, bpm: u32) {
+        self.params.bpm = bpm;
+    }
+
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
             for (dst_sample, src_sample) in self.output_buf.iter_l_mut().zip(sample_buf.iter_l()) {
@@ -40,5 +46,15 @@ impl Engine {
                 *dst_sample = *src_sample;
             }
         }
+    }
+}
+
+pub struct EngineParams {
+    pub bpm: u32,
+}
+
+impl Default for EngineParams {
+    fn default() -> Self {
+        Self { bpm: 120 }
     }
 }
