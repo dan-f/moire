@@ -6,11 +6,14 @@ import { EngineExports, Pointer } from "./EngineExports";
  */
 export class GranularEngine {
   private readonly instance: WebAssembly.Instance;
-  private readonly synth: Pointer;
+  private readonly engine: Pointer;
 
-  private outputBuffer!: Float32Array;
-  private outputBufCapacity: number;
   private outputBufLen: number;
+  private outputBufCapacity: number;
+  private outputBuffer: Float32Array[] = [
+    new Float32Array(),
+    new Float32Array(),
+  ];
 
   constructor(
     module: WebAssembly.Module,
@@ -24,16 +27,16 @@ export class GranularEngine {
 
     this.outputBufCapacity = options.outputBufCapacity;
     this.outputBufLen = options.outputBufLen;
-    this.synth = this.engine.new_synth(
+    this.engine = this.imports.new_engine(
       sampleRate,
-      this.outputBufCapacity,
       this.outputBufLen,
+      this.outputBufCapacity,
     );
 
     this.redrawBufferViews();
   }
 
-  process(samples: number): Float32Array {
+  process(samples: number): Float32Array[] {
     // Based on the way the WASM memory model works, we cannot simply pass a
     // pointer to the WebAudio-provided `outputs` buffers from the
     // `AudioWorkletProcessor.process()` callback, which would have been
@@ -42,7 +45,8 @@ export class GranularEngine {
     //
     // Instead, we're stuck allocating and potentiall growing buffers within the
     // WASM instance's memory, i.e. if we get called back with a `x >
-    // 128`-length buffer to fill.
+    // 128`-length buffer to fill (which is unlikely to happen, but Web Audio
+    // claims they will build this out eventually).
     //
     // We have a couple mitigations. First, WASM instances are created with a
     // pre-allocated block of growable linear memory, meaning that in the event
@@ -58,44 +62,43 @@ export class GranularEngine {
     if (samples > this.outputBufCapacity) {
       this.outputBufLen = samples;
       this.outputBufCapacity = Math.ceil(this.outputBufLen / 1024) * 1024;
-      this.engine.alloc_output_buf(
-        this.synth,
+      this.imports.alloc_output_buf(
+        this.engine,
         this.outputBufCapacity,
         this.outputBufLen,
       );
       this.redrawBufferViews();
     }
 
-    this.engine.process(this.synth);
+    this.imports.process(this.engine);
 
     return this.outputBuffer;
   }
 
   updateSample(sample: Float32Array[]) {
     const bufLen = sample[0].length;
-    this.engine.alloc_sample_buf(this.synth, bufLen);
+    this.imports.alloc_sample_buf(this.engine, bufLen);
     // If our allocation causes the WASM memory to grow, we will have to re-draw
     // our views over its memory buffer. The WASM memory model guarantees that
     // our pointers are still accurate relative to the buffer, but the buffer
     // may itself have moved.
     this.redrawBufferViews();
-    const buffer = new Float32Array(
-      this.engine.memory.buffer,
-      this.engine.sample_buf(this.synth),
-      bufLen * 2,
-    );
+    const buf = [
+      this.channelView(this.imports.sample_buf_l(this.engine), bufLen),
+      this.channelView(this.imports.sample_buf_r(this.engine), bufLen),
+    ];
     switch (sample.length) {
       case 1:
         for (let i = 0; i < bufLen; i++) {
           // TODO -6db
-          buffer[i * 2] = sample[0][i];
-          buffer[i * 2 + 1] = sample[0][i];
+          buf[0][i] = sample[0][i];
+          buf[1][i] = sample[0][i];
         }
         break;
       case 2:
         for (let i = 0; i < bufLen; i++) {
-          buffer[i * 2] = sample[0][i];
-          buffer[i * 2 + 1] = sample[1][i];
+          buf[0][i] = sample[0][i];
+          buf[1][i] = sample[1][i];
         }
         break;
       default:
@@ -105,15 +108,22 @@ export class GranularEngine {
     }
   }
 
-  private get engine(): EngineExports {
+  private get imports(): EngineExports {
     return this.instance.exports as EngineExports;
   }
 
   private redrawBufferViews() {
-    this.outputBuffer = new Float32Array(
-      this.engine.memory.buffer,
-      this.engine.output_buf(this.synth),
-      this.outputBufLen * 2,
+    this.outputBuffer[0] = this.channelView(
+      this.imports.output_buf_l(this.engine),
+      this.outputBufLen,
     );
+    this.outputBuffer[1] = this.channelView(
+      this.imports.output_buf_r(this.engine),
+      this.outputBufLen,
+    );
+  }
+
+  private channelView(ptr: Pointer, len: number): Float32Array {
+    return new Float32Array(this.imports.memory.buffer, ptr, len);
   }
 }

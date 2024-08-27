@@ -6,19 +6,25 @@ export type Pointer = number;
 export interface EngineExports extends WebAssembly.Exports {
   memory: WebAssembly.Memory;
 
-  new_synth(
+  new_engine(
     sample_rate: number,
-    output_buf_capacity: number,
     output_buf_len: number,
+    output_buf_capacity: number,
   ): Pointer;
 
-  alloc_sample_buf(synth: Pointer, buf_len: number): void;
+  alloc_sample_buf(engine: Pointer, buf_len: number): void;
 
-  alloc_output_buf(synth: Pointer, new_capacity: number, new_len: number): void;
+  alloc_output_buf(
+    engine: Pointer,
+    new_capacity: number,
+    new_len: number,
+  ): void;
 
-  sample_buf(synth: Pointer): Pointer;
+  sample_buf_l(engine: Pointer): Pointer;
+  sample_buf_r(engine: Pointer): Pointer;
 
-  output_buf(synth: Pointer): Pointer;
+  output_buf_l(engine: Pointer): Pointer;
+  output_buf_r(engine: Pointer): Pointer;
 
-  process(synth: Pointer): void;
+  process(engine: Pointer): void;
 }

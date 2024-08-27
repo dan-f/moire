@@ -33,10 +33,8 @@ class GranularProcessor extends AudioWorkletProcessor {
     const samples = output[0].length;
     const engineOutput = this.engine.process(samples);
 
-    for (let i = 0; i < samples; i++) {
-      output[0][i] = engineOutput[i * 2];
-      output[1][i] = engineOutput[i * 2 + 1];
-    }
+    output[0].set(engineOutput[0]);
+    output[1].set(engineOutput[1]);
 
     return true;
   }
