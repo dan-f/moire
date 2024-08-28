@@ -3,6 +3,8 @@ use engine::Engine;
 mod buffer;
 mod clock;
 mod engine;
+mod grain;
+mod grain_pool;
 
 #[no_mangle]
 pub extern "C" fn new_engine(
