@@ -1,6 +1,7 @@
 use engine::Engine;
 
 mod buffer;
+mod clock;
 mod engine;
 
 #[no_mangle]

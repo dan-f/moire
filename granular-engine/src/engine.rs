@@ -1,7 +1,8 @@
-use crate::buffer::{Buffer, StereoBuffer};
+use crate::{buffer::StereoBuffer, clock::Clock};
 
 pub struct Engine {
     sample_rate: usize,
+    clock: Clock,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
     params: EngineParams,
@@ -9,16 +10,18 @@ pub struct Engine {
 
 impl Engine {
     pub fn new(sample_rate: usize, output_buf_len: usize, output_buf_capacity: usize) -> Self {
+        let params: EngineParams = Default::default();
         Self {
             sample_rate,
+            clock: Clock::new(sample_rate, params.bpm),
             sample_buf: None,
-            output_buf: Buffer::new_with_capacity(output_buf_len, output_buf_capacity),
-            params: Default::default(),
+            output_buf: StereoBuffer::new_with_capacity(output_buf_len, output_buf_capacity),
+            params,
         }
     }
 
     pub fn alloc_sample_buf(&mut self, buf_len: usize) {
-        self.sample_buf.replace(Buffer::new(buf_len));
+        self.sample_buf.replace(StereoBuffer::new(buf_len));
     }
 
     pub fn sample_buf(&self, channel: usize) -> Option<&[f32]> {
