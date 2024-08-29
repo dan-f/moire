@@ -1,8 +1,9 @@
-use crate::{buffer::StereoBuffer, clock::Clock};
+use crate::{buffer::StereoBuffer, clock::Clock, grain::Grain, grain_pool::GrainPool};
 
 pub struct Engine {
     sample_rate: usize,
     clock: Clock,
+    grains: GrainPool,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
     params: EngineParams,
@@ -14,6 +15,7 @@ impl Engine {
         Self {
             sample_rate,
             clock: Clock::new(sample_rate, params.bpm),
+            grains: GrainPool::new(1024),
             sample_buf: None,
             output_buf: StereoBuffer::new_with_capacity(output_buf_len, output_buf_capacity),
             params,
@@ -42,11 +44,19 @@ impl Engine {
 
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
-            for (dst_sample, src_sample) in self.output_buf.iter_l_mut().zip(sample_buf.iter_l()) {
-                *dst_sample = *src_sample;
-            }
-            for (dst_sample, src_sample) in self.output_buf.iter_r_mut().zip(sample_buf.iter_r()) {
-                *dst_sample = *src_sample;
+            for i in 0..self.output_buf.len {
+                if self.clock.is_beat() {
+                    self.grains.add(Grain::new(0, self.sample_rate / 4));
+                }
+
+                for mut grain in self.grains.entries_mut() {
+                    let frame = grain.render_frame(sample_buf);
+                    self.output_buf.data[0][i] += frame[0];
+                    self.output_buf.data[1][i] += frame[1];
+                    grain.tick();
+                }
+
+                self.clock.tick();
             }
         }
     }

@@ -1,4 +1,5 @@
-use std::array;
+use core::slice;
+use std::{array, iter};
 
 pub struct Buffer<const C: usize> {
     pub len: usize,
@@ -19,22 +20,45 @@ impl<const C: usize> Buffer<C> {
         }
     }
 
-    pub fn channel(&self, channel: usize) -> &[f32] {
-        &self.data[channel]
+    pub fn channel(&self, chan_idx: usize) -> &[f32] {
+        &self.data[chan_idx]
     }
 
-    pub fn channel_mut(&mut self, channel: usize) -> &mut [f32] {
-        &mut self.data[channel]
+    pub fn frame(&self, i: usize) -> [f32; C] {
+        let mut frame = [0.; C];
+        for channel in 0..C {
+            frame[channel] = self.data[channel][i];
+        }
+        frame
     }
 
-    pub fn iter(&self, channel: usize) -> impl Iterator<Item = &f32> {
-        self.channel(channel).iter().take(self.len)
-    }
+    // TODO is this remotely useful?
+    // pub fn frames(&self) -> Frames<'_, C> {
+    //     // TODO prevent allocations
+    //     Frames {
+    //         iters: self
+    //             .data
+    //             .iter()
+    //             .map(|v| v.iter())
+    //             .collect::<Vec<_>>()
+    //             .try_into()
+    //             .unwrap(),
+    //     }
+    // }
 
-    pub fn iter_mut(&mut self, channel: usize) -> impl Iterator<Item = &mut f32> {
-        let len = self.len;
-        self.channel_mut(channel).iter_mut().take(len)
-    }
+    // TODO is this remotely useful?
+    // pub fn frames_mut(&mut self) -> FramesMut<'_, C> {
+    //     // TODO prevent allocations
+    //     FramesMut {
+    //         iters: self
+    //             .data
+    //             .iter_mut()
+    //             .map(|v| v.iter_mut())
+    //             .collect::<Vec<_>>()
+    //             .try_into()
+    //             .unwrap(),
+    //     }
+    // }
 
     pub fn resize(&mut self, new_capacity: usize, new_len: usize) {
         assert!(new_capacity >= new_len);
@@ -53,20 +77,42 @@ impl<const C: usize> Buffer<C> {
 
 pub type StereoBuffer = Buffer<2>;
 
-impl StereoBuffer {
-    pub fn iter_l(&self) -> impl Iterator<Item = &f32> {
-        self.iter(0)
-    }
+struct Frames<'a, const C: usize> {
+    iters: [slice::Iter<'a, f32>; C],
+}
 
-    pub fn iter_r(&self) -> impl Iterator<Item = &f32> {
-        self.iter(1)
-    }
+impl<'a, const C: usize> Iterator for Frames<'a, C> {
+    type Item = [f32; C];
 
-    pub fn iter_l_mut(&mut self) -> impl Iterator<Item = &mut f32> {
-        self.iter_mut(0)
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut result = [0.; C];
+        for (i, it) in self.iters.iter_mut().enumerate() {
+            if let Some(&sample) = it.next() {
+                result[i] = sample;
+            } else {
+                return None;
+            }
+        }
+        Some(result)
     }
+}
 
-    pub fn iter_r_mut(&mut self) -> impl Iterator<Item = &mut f32> {
-        self.iter_mut(1)
+struct FramesMut<'a, const C: usize> {
+    iters: [slice::IterMut<'a, f32>; C],
+}
+
+impl<'a, const C: usize> Iterator for FramesMut<'a, C> {
+    type Item = [&'a mut f32; C];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut result: [Option<&mut f32>; C] = array::from_fn(|_| None);
+        for (i, it) in self.iters.iter_mut().enumerate() {
+            let sample = it.next();
+            if sample.is_none() {
+                return None;
+            }
+            result[i] = sample;
+        }
+        Some(result.map(|x| x.unwrap()))
     }
 }
