@@ -8,10 +8,15 @@ dev: app-build (app 'dev')
 preview: app-build (app 'preview')
 
 engine-build:
-  cd {{engine_dir}} && cargo build --release
+  cd {{engine_dir}} && cargo build --release --target wasm32-unknown-unknown
   cp \
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/assets/
+
+engine-test:
+  cd {{engine_dir}} && cargo test
+
+test: engine-test
 
 disassemble: engine-build
   wasm2wat {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm -o granular_engine.wat

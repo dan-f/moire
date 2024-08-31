@@ -49,7 +49,9 @@ impl Engine {
                     self.grains.add(Grain::new(0, self.sample_rate / 4));
                 }
 
-                for mut grain in self.grains.entries_mut() {
+                self.output_buf.data[0][i] = 0.;
+                self.output_buf.data[1][i] = 0.;
+                for mut grain in self.grains.handles_mut() {
                     let frame = grain.render_frame(sample_buf);
                     self.output_buf.data[0][i] += frame[0];
                     self.output_buf.data[1][i] += frame[1];

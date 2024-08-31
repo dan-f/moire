@@ -11,6 +11,10 @@ impl<const C: usize> Buffer<C> {
         Self::new_with_capacity(len, len)
     }
 
+    pub fn new_from(len: usize, data: [Vec<f32>; C]) -> Self {
+        Self { len, data }
+    }
+
     pub fn new_with_capacity(len: usize, capacity: usize) -> Self {
         assert!(C > 0);
         assert!(capacity >= len);

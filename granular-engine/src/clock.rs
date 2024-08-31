@@ -1,10 +1,9 @@
 use std::{cell::RefCell, rc::Rc, u32};
 
-use fraction::{GenericFraction, Zero};
-
-type F = GenericFraction<u32>;
+use num_rational::Rational64 as F;
 
 /// Sample-accurate clock
+#[derive(Debug)]
 pub struct Clock {
     /// Whether ticking the clock has any effect
     enabled: bool,
@@ -18,32 +17,32 @@ pub struct Clock {
     beat_dist: F,
     /// The next ideal (sub) sample we should beat on
     next_beat: F,
-    /// Clocks synced to this one
+    // /// Clocks synced to this one
     children: Vec<Rc<RefCell<Clock>>>,
 }
 
 impl Clock {
     pub fn new(sample_rate: usize, bpm: u32) -> Self {
-        let beat_dist = F::new((sample_rate as u32) * 60, bpm);
+        let beat_dist = F::new(sample_rate as i64 * 60, bpm as i64);
         Self {
             enabled: true,
             sample_rate,
             bpm,
-            i: F::zero(),
+            i: F::ZERO,
             beat_dist,
-            next_beat: beat_dist,
+            next_beat: F::ZERO,
             children: vec![],
         }
     }
 
-    pub fn new_child(&self, subdivision: u32) -> Self {
+    fn new_child(&self, subdivision: u32) -> Self {
         let bpm = self.bpm * subdivision;
-        let beat_dist = F::new((self.sample_rate as u32) * 60, bpm);
+        let beat_dist = F::new(self.sample_rate as i64 * 60, bpm as i64);
         Clock {
             enabled: false,
             sample_rate: self.sample_rate,
             bpm,
-            i: F::zero(),
+            i: F::ZERO,
             beat_dist,
             next_beat: beat_dist,
             children: vec![],
@@ -61,7 +60,7 @@ impl Clock {
     fn tick_as_child(&mut self, is_parent_beat: bool) {
         if is_parent_beat && !self.enabled {
             self.enabled = true;
-            self.i = F::zero();
+            self.i = F::ZERO;
             self.next_beat = self.beat_dist;
         }
 
@@ -72,7 +71,7 @@ impl Clock {
         let is_beat = self.is_beat();
         if is_beat {
             let dist_from_zero = self.i;
-            self.i = F::zero();
+            self.i = F::ZERO;
             self.next_beat = self.next_beat - dist_from_zero + self.beat_dist;
         }
 
@@ -87,5 +86,27 @@ impl Clock {
         let child = Rc::new(RefCell::new(self.new_child(subdivision)));
         self.children.push(Rc::clone(&child));
         child
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_clock() {
+        let mut c = Clock::new(10, 180);
+        let expected_beats = [0, 3, 6, 10, 13, 16, 20];
+        for i in 0..=20 {
+            let is_beat = c.is_beat();
+            assert_eq!(
+                expected_beats.contains(&i),
+                is_beat,
+                "Expected beat status of {} to be {}",
+                i,
+                is_beat
+            );
+            c.tick();
+        }
     }
 }
