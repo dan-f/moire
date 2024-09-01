@@ -49,12 +49,10 @@ impl Engine {
                     self.grains.add(Grain::new(0, self.sample_rate / 4));
                 }
 
-                self.output_buf.data[0][i] = 0.;
-                self.output_buf.data[1][i] = 0.;
+                self.output_buf.write_frame(i, &[0., 0.]);
                 for mut grain in self.grains.handles_mut() {
                     let frame = grain.render_frame(sample_buf);
-                    self.output_buf.data[0][i] += frame[0];
-                    self.output_buf.data[1][i] += frame[1];
+                    self.output_buf.write_frame(i, &frame);
                     grain.tick();
                 }
 

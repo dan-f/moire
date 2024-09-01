@@ -1,5 +1,4 @@
-use core::slice;
-use std::{array, iter};
+use std::array;
 
 pub struct Buffer<const C: usize> {
     pub len: usize,
@@ -9,10 +8,6 @@ pub struct Buffer<const C: usize> {
 impl<const C: usize> Buffer<C> {
     pub fn new(len: usize) -> Self {
         Self::new_with_capacity(len, len)
-    }
-
-    pub(crate) fn new_from(len: usize, data: [Vec<f32>; C]) -> Self {
-        Self { len, data }
     }
 
     pub fn new_with_capacity(len: usize, capacity: usize) -> Self {
@@ -34,6 +29,12 @@ impl<const C: usize> Buffer<C> {
             frame[channel] = self.data[channel][i];
         }
         frame
+    }
+
+    pub fn write_frame(&mut self, i: usize, frame: &[f32; C]) {
+        for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
+            dst_channel[i] = *src_sample;
+        }
     }
 
     pub fn resize(&mut self, new_capacity: usize, new_len: usize) {

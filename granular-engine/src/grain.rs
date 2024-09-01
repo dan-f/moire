@@ -58,6 +58,12 @@ mod tests {
 
     use super::*;
 
+    impl StereoBuffer {
+        fn new_from(len: usize, data: [Vec<f32>; 2]) -> Self {
+            Self { len, data }
+        }
+    }
+
     #[test]
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];

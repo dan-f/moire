@@ -1,13 +1,9 @@
 use std::{
     cell::RefCell,
-    iter,
     ops::{Deref, DerefMut},
 };
 
-use crate::{
-    buffer::StereoBuffer,
-    grain::{self, Grain},
-};
+use crate::{buffer::StereoBuffer, grain::Grain};
 
 pub struct GrainPool {
     entries: Vec<GrainEntry>,
@@ -29,20 +25,6 @@ impl GrainPool {
         } else {
             None
         }
-    }
-
-    pub fn get_mut_handle(&mut self, idx: usize) -> Option<GrainPoolHandle> {
-        self.entries.get_mut(idx).and_then(|entry| {
-            if let GrainEntry::Live(_) = entry {
-                Some(GrainPoolHandle {
-                    free_list: &self.free_list,
-                    entry,
-                    idx,
-                })
-            } else {
-                None
-            }
-        })
     }
 
     pub fn handles_mut(&mut self) -> impl Iterator<Item = GrainPoolHandle> {
@@ -130,10 +112,6 @@ impl GrainEntry {
         }
     }
 
-    pub fn is_live(&self) -> bool {
-        matches!(self, Self::Live(_))
-    }
-
     fn free(&mut self) {
         *self = Self::Free;
     }
@@ -150,6 +128,28 @@ mod tests {
     use crate::grain::Grain;
 
     use super::*;
+
+    impl GrainPool {
+        fn get_mut_handle(&mut self, idx: usize) -> Option<GrainPoolHandle> {
+            self.entries.get_mut(idx).and_then(|entry| {
+                if let GrainEntry::Live(_) = entry {
+                    Some(GrainPoolHandle {
+                        free_list: &self.free_list,
+                        entry,
+                        idx,
+                    })
+                } else {
+                    None
+                }
+            })
+        }
+    }
+
+    impl GrainEntry {
+        fn is_live(&self) -> bool {
+            matches!(self, Self::Live(_))
+        }
+    }
 
     #[test]
     fn test_entry_mgmt() {
