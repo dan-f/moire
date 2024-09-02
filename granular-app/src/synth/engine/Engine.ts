@@ -1,14 +1,15 @@
-import { ConsoleLogger } from "../lib/ConsoleLogger";
-import { Logger } from "../lib/Logger";
-import { EngineExports, Pointer } from "./EngineExports";
-import { EngineParams } from "./EngineParams";
+import { ConsoleLogger } from "../../lib/ConsoleLogger";
+import { Logger } from "../../lib/Logger";
+import { Pointer } from "./Exports";
+import { Instance } from "./Instance";
+import { Params } from "./Params";
 
 /**
  * Wrapper class providing safe access to an instance of the WASM granular
- * engine.
+ * engine
  */
-export class GranularEngine {
-  private readonly instance: WebAssembly.Instance;
+export class Engine {
+  private readonly instance: Instance;
   private readonly engine: Pointer;
   private readonly log: Logger;
 
@@ -27,24 +28,28 @@ export class GranularEngine {
       outputBufLen: number;
     },
   ) {
-    this.instance = new WebAssembly.Instance(module, {});
+    this.instance = new Instance(module, {
+      Math: {
+        random: Math.random,
+      },
+    });
 
     this.outputBufCapacity = options.outputBufCapacity;
     this.outputBufLen = options.outputBufLen;
-    this.engine = this.imports.new_engine(
+    this.engine = this.instance.exports.new_engine(
       sampleRate,
       this.outputBufLen,
       this.outputBufCapacity,
     );
 
-    this.log = new ConsoleLogger(GranularEngine.name);
+    this.log = new ConsoleLogger(Engine.name);
 
     this.createBufferViews();
   }
 
-  setParams(params: EngineParams) {
+  setParams(params: Params) {
     const { bpm } = params;
-    this.imports.set_bpm(this.engine, bpm[0]);
+    this.instance.exports.set_bpm(this.engine, bpm[0]);
   }
 
   process(samples: number): Float32Array[] {
@@ -73,7 +78,7 @@ export class GranularEngine {
     if (samples > this.outputBufCapacity) {
       this.outputBufLen = samples;
       this.outputBufCapacity = Math.ceil(this.outputBufLen / 1024) * 1024;
-      this.imports.alloc_output_buf(
+      this.instance.exports.alloc_output_buf(
         this.engine,
         this.outputBufCapacity,
         this.outputBufLen,
@@ -81,7 +86,7 @@ export class GranularEngine {
       this.createBufferViews();
     }
 
-    this.imports.process(this.engine);
+    this.instance.exports.process(this.engine);
 
     return this.outputBuffer;
   }
@@ -89,15 +94,15 @@ export class GranularEngine {
   updateSample(sample: Float32Array[]) {
     this.log.debug("allocating sample buffer");
     const bufLen = sample[0].length;
-    this.imports.alloc_sample_buf(this.engine, bufLen);
+    this.instance.exports.alloc_sample_buf(this.engine, bufLen);
     // If our allocation causes the WASM memory to grow, we will have to re-draw
     // our views over its memory buffer. The WASM memory model guarantees that
     // our pointers are still accurate relative to the buffer, but the buffer
     // may itself have moved.
     this.createBufferViews();
     const buf = [
-      this.channelView(this.imports.sample_buf_l(this.engine), bufLen),
-      this.channelView(this.imports.sample_buf_r(this.engine), bufLen),
+      this.channelView(this.instance.exports.sample_buf_l(this.engine), bufLen),
+      this.channelView(this.instance.exports.sample_buf_r(this.engine), bufLen),
     ];
     switch (sample.length) {
       case 1:
@@ -120,23 +125,19 @@ export class GranularEngine {
     }
   }
 
-  private get imports(): EngineExports {
-    return this.instance.exports as EngineExports;
-  }
-
   private createBufferViews() {
     this.log.debug("(re)creating buffer views");
     this.outputBuffer[0] = this.channelView(
-      this.imports.output_buf_l(this.engine),
+      this.instance.exports.output_buf_l(this.engine),
       this.outputBufLen,
     );
     this.outputBuffer[1] = this.channelView(
-      this.imports.output_buf_r(this.engine),
+      this.instance.exports.output_buf_r(this.engine),
       this.outputBufLen,
     );
   }
 
   private channelView(ptr: Pointer, len: number): Float32Array {
-    return new Float32Array(this.imports.memory.buffer, ptr, len);
+    return new Float32Array(this.instance.exports.memory.buffer, ptr, len);
   }
 }

@@ -1,23 +1,23 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
-import { Logger } from "../lib/Logger";
-import { EngineParams } from "./EngineParams";
-import { GranularEngine } from "./GranularEngine";
-import { MessageType, type Message } from "./GranularMessage";
+import { type Logger } from "../lib/Logger";
+import { Engine } from "./engine";
+import { type Params } from "./engine/Params";
+import { type Message, MessageType } from "./GranularMessage";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 
 /**
  * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
  * within the audio thread callback. This component delegates to the WASM
- * instance by way of the {@linkcode GranularEngine}.
+ * instance by way of the {@linkcode Engine}.
  */
 class GranularProcessor extends AudioWorkletProcessor {
-  private readonly engine: GranularEngine;
+  private readonly engine: Engine;
   private readonly log: Logger;
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
 
-    this.engine = new GranularEngine(options.processorOptions.granularModule, {
+    this.engine = new Engine(options.processorOptions.granularModule, {
       sampleRate,
       outputBufCapacity: 2048,
       outputBufLen: 128,
@@ -45,7 +45,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   process(
     _inputs: Float32Array[][],
     outputs: Float32Array[][],
-    params: EngineParams,
+    params: Params,
   ): boolean {
     this.engine.setParams(params);
 

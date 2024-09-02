@@ -1,9 +1,9 @@
 export type Pointer = number;
 
 /**
- * Type definition for the exports of the raw WASM granular engine.
+ * Exports of the WASM granular engine module
  */
-export interface EngineExports extends WebAssembly.Exports {
+export interface Exports extends WebAssembly.Exports {
   memory: WebAssembly.Memory;
 
   new_engine(
