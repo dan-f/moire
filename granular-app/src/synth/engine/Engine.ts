@@ -123,6 +123,7 @@ export class Engine {
           `Expected mono or stereo sample. Cannot use ${sample.length}-channel sample`,
         );
     }
+    this.instance.exports.reset_after_update_sample(this.engine);
   }
 
   private createBufferViews() {

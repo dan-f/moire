@@ -14,6 +14,8 @@ export interface Exports extends WebAssembly.Exports {
 
   alloc_sample_buf(engine: Pointer, buf_len: number): void;
 
+  reset_after_update_sample(engine: Pointer): void;
+
   alloc_output_buf(
     engine: Pointer,
     new_capacity: number,

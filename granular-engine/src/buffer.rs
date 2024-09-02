@@ -1,19 +1,21 @@
 use std::array;
 
 pub struct Buffer<const C: usize> {
+    pub sample_rate: usize,
     pub len: usize,
     pub data: [Vec<f32>; C],
 }
 
 impl<const C: usize> Buffer<C> {
-    pub fn new(len: usize) -> Self {
-        Self::new_with_capacity(len, len)
+    pub fn new(sample_rate: usize, len: usize) -> Self {
+        Self::new_with_capacity(sample_rate, len, len)
     }
 
-    pub fn new_with_capacity(len: usize, capacity: usize) -> Self {
+    pub fn new_with_capacity(sample_rate: usize, len: usize, capacity: usize) -> Self {
         assert!(C > 0);
         assert!(capacity >= len);
         Self {
+            sample_rate,
             len,
             data: array::from_fn(|_| vec![0.; capacity]),
         }
@@ -34,6 +36,12 @@ impl<const C: usize> Buffer<C> {
     pub fn write_frame(&mut self, i: usize, frame: &[f32; C]) {
         for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
             dst_channel[i] = *src_sample;
+        }
+    }
+
+    pub fn append_frame(&mut self, i: usize, frame: &[f32; C]) {
+        for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
+            dst_channel[i] += *src_sample;
         }
     }
 

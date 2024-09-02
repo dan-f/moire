@@ -1,29 +1,46 @@
-use crate::{buffer::StereoBuffer, clock::Clock, grain::Grain, grain_pool::GrainPool};
+use std::{cell::RefCell, rc::Rc};
+
+use crate::{buffer::StereoBuffer, clock::Clock, grain_pool::GrainPool, stream::Stream};
 
 pub struct Engine {
     sample_rate: usize,
-    clock: Clock,
+    clock: Rc<RefCell<Clock>>,
     grains: GrainPool,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
     params: EngineParams,
+    streams: Vec<Stream>,
 }
 
 impl Engine {
     pub fn new(sample_rate: usize, output_buf_len: usize, output_buf_capacity: usize) -> Self {
         let params: EngineParams = Default::default();
+        let clock = Rc::new(RefCell::new(Clock::new(sample_rate, params.bpm)));
         Self {
             sample_rate,
-            clock: Clock::new(sample_rate, params.bpm),
+            clock: Rc::clone(&clock),
             grains: GrainPool::new(1024),
             sample_buf: None,
-            output_buf: StereoBuffer::new_with_capacity(output_buf_len, output_buf_capacity),
+            output_buf: StereoBuffer::new_with_capacity(
+                sample_rate,
+                output_buf_len,
+                output_buf_capacity,
+            ),
             params,
+            streams: vec![
+                Stream::new(Rc::clone(&clock), 2, 0., 250),
+                Stream::new(Rc::clone(&clock), 3, 0., 250),
+            ],
         }
     }
 
     pub fn alloc_sample_buf(&mut self, buf_len: usize) {
-        self.sample_buf.replace(StereoBuffer::new(buf_len));
+        self.sample_buf
+            .replace(StereoBuffer::new(self.sample_rate, buf_len));
+    }
+
+    pub fn reset_after_update_sample(&mut self) {
+        self.grains.reset();
     }
 
     pub fn sample_buf(&self, channel: usize) -> Option<&[f32]> {
@@ -45,18 +62,20 @@ impl Engine {
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
             for i in 0..self.output_buf.len {
-                if self.clock.is_beat() {
-                    self.grains.add(Grain::new(0, self.sample_rate / 4));
+                for stream in self.streams.iter() {
+                    if let Some(grain) = stream.try_create_grain(&sample_buf) {
+                        self.grains.add(grain);
+                    }
                 }
 
                 self.output_buf.write_frame(i, &[0., 0.]);
                 for mut grain in self.grains.handles_mut() {
                     let frame = grain.render_frame(sample_buf);
-                    self.output_buf.write_frame(i, &frame);
+                    self.output_buf.append_frame(i, &frame);
                     grain.tick();
                 }
 
-                self.clock.tick();
+                self.clock.borrow_mut().tick();
             }
         }
     }
@@ -68,6 +87,6 @@ pub struct EngineParams {
 
 impl Default for EngineParams {
     fn default() -> Self {
-        Self { bpm: 120 }
+        Self { bpm: 60 }
     }
 }

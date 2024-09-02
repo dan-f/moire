@@ -20,7 +20,12 @@ pub extern "C" fn new_engine(
 
 #[no_mangle]
 pub unsafe extern "C" fn alloc_sample_buf(engine: *mut Engine, buf_len: usize) {
-    engine.as_mut().unwrap().alloc_sample_buf(buf_len)
+    engine.as_mut().unwrap().alloc_sample_buf(buf_len);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn reset_after_update_sample(engine: *mut Engine) {
+    engine.as_mut().unwrap().reset_after_update_sample();
 }
 
 #[no_mangle]

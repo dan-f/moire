@@ -18,6 +18,12 @@ impl GrainPool {
         }
     }
 
+    pub fn reset(&mut self) {
+        for mut handle in self.handles_mut() {
+            handle.free();
+        }
+    }
+
     pub fn add(&mut self, grain: Grain) -> Option<usize> {
         if let Some(i) = self.free_list.borrow_mut().pop() {
             self.entries[i].revive(grain);
