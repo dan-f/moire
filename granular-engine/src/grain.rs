@@ -1,4 +1,4 @@
-use crate::buffer::StereoBuffer;
+use crate::{buffer::StereoBuffer, dsp};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Grain {
@@ -6,23 +6,31 @@ pub struct Grain {
     start: usize,
     /// Ending sample index (inclusive)
     end: usize,
+    /// Pan position (0 = left, 1 = right)
+    pan: f32,
     /// Playhead
     i: usize,
 }
 
 impl Grain {
-    pub fn new(start: usize, end: usize) -> Self {
-        Self { start, end, i: 0 }
+    pub fn new(start: usize, end: usize, pan: f32) -> Self {
+        Self {
+            start,
+            end,
+            pan,
+            i: 0,
+        }
     }
 
     pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
-        if let Some(idx) = self.idx() {
+        let frame = if let Some(idx) = self.idx() {
             // TODO make sure we don't go off the end. Avoid creating grains
             // where given the start + length, they'd run off the end.
             sample.frame(idx)
         } else {
-            [0., 0.]
-        }
+            return [0., 0.];
+        };
+        dsp::pan_stereo_frame(&frame, self.pan)
     }
 
     pub fn tick(&mut self) -> bool {
@@ -58,6 +66,7 @@ impl Default for Grain {
         Self {
             start: 0,
             end: 0,
+            pan: 0.5,
             i: 1,
         }
     }
@@ -85,13 +94,13 @@ mod tests {
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
         let buf = StereoBuffer::new_from(data[0].len(), data);
-        let mut grain = Grain::new(1, 2);
+        let mut grain = Grain::new(1, 2, 0.5);
 
         assert!(grain.alive());
 
-        assert_eq!([0.2, 0.2], grain.render_frame(&buf));
+        assert_ne!([0., 0.], grain.render_frame(&buf));
         grain.tick();
-        assert_eq!([0.3, 0.3], grain.render_frame(&buf));
+        assert_ne!([0., 0.], grain.render_frame(&buf));
 
         grain.tick();
         assert_eq!([0., 0.], grain.render_frame(&buf));

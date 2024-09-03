@@ -37,6 +37,7 @@ export interface Exports extends WebAssembly.Exports {
     subdivision: number,
     grain_start: number,
     grain_size_ms: number,
+    pan: number,
   ): StreamId;
 
   process(engine: Pointer): void;

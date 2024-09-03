@@ -63,12 +63,14 @@ impl Engine {
         subdivision: u32,
         grain_start: f32,
         grain_size_ms: usize,
+        pan: f32,
     ) -> usize {
         let stream = Stream::new(
             Rc::clone(&self.clock),
             subdivision,
             grain_start,
             grain_size_ms,
+            pan,
         );
         let id = stream.id();
         self.streams.push(stream);

@@ -2,6 +2,7 @@ use engine::Engine;
 
 mod buffer;
 mod clock;
+mod dsp;
 mod engine;
 mod grain;
 mod grain_pool;
@@ -67,7 +68,7 @@ pub unsafe extern "C" fn output_buf_l(engine: *const Engine) -> *const f32 {
 
 #[no_mangle]
 pub unsafe extern "C" fn output_buf_r(engine: *const Engine) -> *const f32 {
-    engine.as_ref().unwrap().output_buf(0).as_ptr()
+    engine.as_ref().unwrap().output_buf(1).as_ptr()
 }
 
 #[no_mangle]
@@ -81,11 +82,12 @@ pub unsafe extern "C" fn add_stream(
     subdivision: u32,
     grain_start: f32,
     grain_size_ms: usize,
+    pan: f32,
 ) -> usize {
     engine
         .as_mut()
         .unwrap()
-        .add_stream(subdivision, grain_start, grain_size_ms)
+        .add_stream(subdivision, grain_start, grain_size_ms, pan)
 }
 
 #[no_mangle]

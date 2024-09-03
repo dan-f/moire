@@ -108,9 +108,8 @@ export class Engine {
     switch (sample.length) {
       case 1:
         for (let i = 0; i < bufLen; i++) {
-          // TODO -6db
-          buf[0][i] = sample[0][i];
-          buf[1][i] = sample[0][i];
+          buf[0][i] = Math.cos((Math.PI / 2) * 0.5) * sample[0][i];
+          buf[1][i] = Math.sin((Math.PI / 2) * 0.5) * sample[0][i];
         }
         break;
       case 2:
@@ -133,6 +132,7 @@ export class Engine {
       params.subdivision,
       params.grainStart,
       params.grainSizeMs,
+      params.pan,
     );
   }
 
