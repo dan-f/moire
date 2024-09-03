@@ -69,7 +69,7 @@ impl Engine {
                 }
 
                 self.output_buf.write_frame(i, &[0., 0.]);
-                for mut grain in self.grains.handles_mut() {
+                for mut grain in self.grains.entries_mut() {
                     let frame = grain.render_frame(sample_buf);
                     self.output_buf.append_frame(i, &frame);
                     grain.tick();

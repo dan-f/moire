@@ -32,6 +32,12 @@ impl Grain {
         self.alive()
     }
 
+    pub fn complete(&mut self) {
+        if let Some(_) = self.idx() {
+            self.i = self.end + 1;
+        }
+    }
+
     pub fn alive(&self) -> bool {
         self.idx().is_some()
     }
@@ -46,6 +52,17 @@ impl Grain {
     }
 }
 
+impl Default for Grain {
+    /// Build a grain which is not alive
+    fn default() -> Self {
+        Self {
+            start: 0,
+            end: 0,
+            i: 1,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::vec;
@@ -56,7 +73,11 @@ mod tests {
 
     impl StereoBuffer {
         fn new_from(len: usize, data: [Vec<f32>; 2]) -> Self {
-            Self { len, data }
+            Self {
+                sample_rate: 48000,
+                len,
+                data,
+            }
         }
     }
 

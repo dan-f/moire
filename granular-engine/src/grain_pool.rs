@@ -3,45 +3,45 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::{buffer::StereoBuffer, grain::Grain};
+use crate::grain::Grain;
 
 pub struct GrainPool {
-    entries: Vec<GrainEntry>,
+    grains: Vec<Grain>,
     free_list: RefCell<Vec<usize>>,
 }
 
 impl GrainPool {
     pub fn new(capacity: usize) -> Self {
         Self {
-            entries: vec![Default::default(); capacity],
+            grains: vec![Default::default(); capacity],
             free_list: RefCell::new((0..capacity).collect()),
         }
     }
 
     pub fn reset(&mut self) {
-        for mut handle in self.handles_mut() {
-            handle.free();
+        for mut entry in self.entries_mut() {
+            entry.free();
         }
     }
 
     pub fn add(&mut self, grain: Grain) -> Option<usize> {
         if let Some(i) = self.free_list.borrow_mut().pop() {
-            self.entries[i].revive(grain);
+            self.grains[i] = grain;
             Some(i)
         } else {
             None
         }
     }
 
-    pub fn handles_mut(&mut self) -> impl Iterator<Item = GrainPoolHandle> {
-        self.entries
+    pub fn entries_mut(&mut self) -> impl Iterator<Item = GrainPoolEntry> {
+        self.grains
             .iter_mut()
             .enumerate()
-            .filter_map(|(idx, entry)| {
-                if let GrainEntry::Live(_) = entry {
-                    Some(GrainPoolHandle {
+            .filter_map(|(idx, grain)| {
+                if grain.alive() {
+                    Some(GrainPoolEntry {
                         free_list: &self.free_list,
-                        entry,
+                        grain,
                         idx,
                     })
                 } else {
@@ -51,81 +51,36 @@ impl GrainPool {
     }
 }
 
-pub struct GrainPoolHandle<'a> {
+pub struct GrainPoolEntry<'a> {
     free_list: &'a RefCell<Vec<usize>>,
-    entry: &'a mut GrainEntry,
+    grain: &'a mut Grain,
     idx: usize,
 }
 
-impl<'a> GrainPoolHandle<'a> {
+impl<'a> GrainPoolEntry<'a> {
     pub fn free(&mut self) {
-        self.entry.free();
+        self.grain.complete();
         self.free_list.borrow_mut().push(self.idx);
     }
 
     pub fn tick(&mut self) {
-        if let Some(still_alive) = self.entry.tick() {
-            if !still_alive {
-                self.free();
-            }
+        if !self.grain.tick() {
+            self.free();
         }
     }
 }
 
-impl<'a> Deref for GrainPoolHandle<'a> {
-    type Target = GrainEntry;
+impl<'a> Deref for GrainPoolEntry<'a> {
+    type Target = Grain;
 
     fn deref(&self) -> &Self::Target {
-        self.entry
+        self.grain
     }
 }
 
-impl<'a> DerefMut for GrainPoolHandle<'a> {
+impl<'a> DerefMut for GrainPoolEntry<'a> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.entry
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum GrainEntry {
-    Live(Grain),
-    Free,
-}
-
-impl GrainEntry {
-    pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
-        match self {
-            Self::Live(grain) => grain.render_frame(sample),
-            Self::Free => [0., 0.],
-        }
-    }
-
-    pub fn tick(&mut self) -> Option<bool> {
-        if let GrainEntry::Live(grain) = self {
-            let still_live = grain.tick();
-            if !still_live {
-                self.free();
-            }
-            Some(still_live)
-        } else {
-            None
-        }
-    }
-
-    pub fn revive(&mut self, grain: Grain) {
-        if let Self::Free = self {
-            *self = Self::Live(grain);
-        }
-    }
-
-    fn free(&mut self) {
-        *self = Self::Free;
-    }
-}
-
-impl Default for GrainEntry {
-    fn default() -> Self {
-        Self::Free
+        self.grain
     }
 }
 
@@ -136,49 +91,42 @@ mod tests {
     use super::*;
 
     impl GrainPool {
-        fn get_mut_handle(&mut self, idx: usize) -> Option<GrainPoolHandle> {
-            self.entries.get_mut(idx).and_then(|entry| {
-                if let GrainEntry::Live(_) = entry {
-                    Some(GrainPoolHandle {
-                        free_list: &self.free_list,
-                        entry,
-                        idx,
-                    })
-                } else {
-                    None
-                }
+        pub fn get_mut(&mut self, idx: usize) -> Option<&mut Grain> {
+            GrainPool::mut_grain(&mut self.grains, idx)
+        }
+
+        pub fn get_mut_entry(&mut self, idx: usize) -> Option<GrainPoolEntry> {
+            let grain = GrainPool::mut_grain(&mut self.grains, idx)?;
+            Some(GrainPoolEntry {
+                free_list: &self.free_list,
+                grain,
+                idx,
             })
         }
-    }
 
-    impl GrainEntry {
-        fn is_live(&self) -> bool {
-            matches!(self, Self::Live(_))
+        fn mut_grain(grains: &mut Vec<Grain>, idx: usize) -> Option<&mut Grain> {
+            grains
+                .get_mut(idx)
+                .and_then(|g| if g.alive() { Some(g) } else { None })
         }
     }
 
     #[test]
     fn test_entry_mgmt() {
         let mut pool = GrainPool::new(2);
-        assert!(pool.entries.iter().all(|e| !e.is_live()));
+        assert!(pool.grains.iter().all(|g| !g.alive()));
         assert!(pool.free_list.borrow().eq(&vec![0, 1]));
 
         // Add one grain, half occupied
-        let grain_1 = Grain::new(0, 1);
+        let mut grain_1 = Grain::new(0, 1);
         let idx_1 = pool.add(grain_1).unwrap();
-        assert_eq!(
-            Some(&mut GrainEntry::Live(grain_1)),
-            pool.get_mut_handle(idx_1).map(|h| h.entry)
-        );
+        assert_eq!(Some(&mut grain_1), pool.get_mut(idx_1));
         assert!(pool.free_list.borrow().eq(&vec![0]));
 
         // Add another grain, fully occupied
-        let grain_2 = Grain::new(1, 2);
+        let mut grain_2 = Grain::new(1, 2);
         let idx_2 = pool.add(grain_2).unwrap();
-        assert_eq!(
-            Some(&mut GrainEntry::Live(grain_2)),
-            pool.get_mut_handle(idx_2).map(|h| h.entry)
-        );
+        assert_eq!(Some(&mut grain_2), pool.get_mut(idx_2),);
         assert!(pool.free_list.borrow().is_empty());
 
         // Try adding a third grain, addition rejected
@@ -187,28 +135,29 @@ mod tests {
         assert!(pool.free_list.borrow().is_empty());
 
         // Free first grain, entry opens up
-        pool.get_mut_handle(idx_1).unwrap().free();
-        assert!(pool.get_mut_handle(idx_1).is_none());
+        pool.get_mut_entry(idx_1).unwrap().free();
+        assert!(pool.get_mut(idx_1).is_none());
         assert!(pool.free_list.borrow().eq(&vec![idx_1]));
 
         // Free second grain, entry opens up
-        pool.get_mut_handle(idx_2).unwrap().free();
-        assert!(pool.get_mut_handle(idx_2).is_none());
+        pool.get_mut_entry(idx_2).unwrap().free();
+        assert!(pool.get_mut(idx_2).is_none());
         assert!(pool.free_list.borrow().eq(&vec![idx_1, idx_2]));
 
         // All slots free again
-        assert!(pool.entries.iter().all(|e| !e.is_live()));
+        assert!(pool.grains.iter().all(|e| !e.alive()));
     }
 
     #[test]
-    fn test_ticking_through_handle() {
+    fn test_ticking_through_entry() {
         let mut pool = GrainPool::new(1);
         let idx = pool.add(Grain::new(0, 1)).unwrap();
 
-        let mut handle = pool.get_mut_handle(idx).unwrap();
-        handle.tick();
+        let mut entry = pool.get_mut_entry(idx).unwrap();
+        entry.tick();
+        entry.tick();
 
-        assert!(pool.entries.iter().all(|e| !e.is_live()));
-        assert!(pool.get_mut_handle(idx).is_none());
+        assert!(pool.grains.iter().all(|e| !e.alive()));
+        assert!(pool.get_mut_entry(idx).is_none());
     }
 }
