@@ -27,10 +27,7 @@ impl Engine {
                 output_buf_capacity,
             ),
             params,
-            streams: vec![
-                Stream::new(Rc::clone(&clock), 2, 0., 250),
-                Stream::new(Rc::clone(&clock), 3, 0., 250),
-            ],
+            streams: Default::default(),
         }
     }
 
@@ -55,8 +52,27 @@ impl Engine {
         self.output_buf.resize(new_capacity, new_len);
     }
 
+    // TODO this doesn't actually do anything lol. We need to update the clock,
+    // or otherwise put the bpm in a shared pointer
     pub fn set_bpm(&mut self, bpm: u32) {
         self.params.bpm = bpm;
+    }
+
+    pub fn add_stream(
+        &mut self,
+        subdivision: u32,
+        grain_start: f32,
+        grain_size_ms: usize,
+    ) -> usize {
+        let stream = Stream::new(
+            Rc::clone(&self.clock),
+            subdivision,
+            grain_start,
+            grain_size_ms,
+        );
+        let id = stream.id();
+        self.streams.push(stream);
+        id
     }
 
     pub fn process(&mut self) {

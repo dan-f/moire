@@ -1,5 +1,7 @@
 export type Pointer = number;
 
+export type StreamId = number;
+
 /**
  * Exports of the WASM granular engine module
  */
@@ -29,6 +31,13 @@ export interface Exports extends WebAssembly.Exports {
   output_buf_r(engine: Pointer): Pointer;
 
   set_bpm(engine: Pointer, bpm: number): void;
+
+  add_stream(
+    engine: Pointer,
+    subdivision: number,
+    grain_start: number,
+    grain_size_ms: number,
+  ): StreamId;
 
   process(engine: Pointer): void;
 }

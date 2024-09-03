@@ -1,11 +1,14 @@
+import { Client } from "../lib/messaging";
 import engineWasmUrl from "./engine/granular_engine.wasm?url";
-import { Message } from "./GranularMessage";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
+import { type Request, type Response } from "./message";
 
 /**
  * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
  */
 export class GranularNode extends AudioWorkletNode {
+  private readonly client = new Client(this.port);
+
   private constructor(ctx: AudioContext, engineModule: WebAssembly.Module) {
     super(ctx, "GranularProcessor", {
       numberOfInputs: 0,
@@ -27,8 +30,10 @@ export class GranularNode extends AudioWorkletNode {
     return this.parameters.get("bpm")!;
   }
 
-  send(message: Message) {
-    this.port.postMessage(message);
+  request<Req extends Request, Rsp extends Response>(
+    request: Req,
+  ): Promise<Rsp> {
+    return this.client.request<Req, Rsp>(request);
   }
 }
 

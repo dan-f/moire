@@ -1,5 +1,7 @@
-import { MessageType } from "./GranularMessage";
+import { StreamId } from "./engine/Exports";
 import { GranularNode } from "./GranularNode";
+import { AddStream, ReqType } from "./message";
+import { type StreamParams } from "./StreamParams";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -22,16 +24,24 @@ export class Synth {
     return this.ctx.state;
   }
 
+  async updateSample(sample: Float32Array[]): Promise<void> {
+    await this.granularNode.request({
+      type: ReqType.UpdateSample,
+      sample,
+    });
+  }
+
   setBpm(bpm: number) {
     this.granularNode.bpm.cancelScheduledValues(this.ctx.currentTime);
     this.granularNode.bpm.setValueAtTime(bpm, this.ctx.currentTime);
   }
 
-  updateSample(sample: Float32Array[]) {
-    this.granularNode.send({
-      type: MessageType.UpdateSample,
-      sample,
+  async addStream(params: StreamParams): Promise<StreamId> {
+    const rsp = await this.granularNode.request<AddStream.Req, AddStream.Rsp>({
+      type: ReqType.AddStream,
+      params,
     });
+    return rsp.streamId;
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {

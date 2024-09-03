@@ -76,6 +76,19 @@ pub unsafe extern "C" fn set_bpm(engine: *mut Engine, bpm: u32) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn add_stream(
+    engine: *mut Engine,
+    subdivision: u32,
+    grain_start: f32,
+    grain_size_ms: usize,
+) -> usize {
+    engine
+        .as_mut()
+        .unwrap()
+        .add_stream(subdivision, grain_start, grain_size_ms)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn process(engine: *mut Engine) {
     engine.as_mut().unwrap().process();
 }

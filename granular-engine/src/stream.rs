@@ -2,7 +2,18 @@ use std::{cell::RefCell, cmp, rc::Rc};
 
 use crate::{buffer::StereoBuffer, clock::Clock, grain::Grain};
 
+static mut NEXT_ID: usize = 1;
+
+fn next_id() -> usize {
+    unsafe {
+        let id = NEXT_ID;
+        NEXT_ID += 1;
+        id
+    }
+}
+
 pub struct Stream {
+    id: usize,
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
     grain_size_ms: usize,
@@ -16,10 +27,15 @@ impl Stream {
         grain_size_ms: usize,
     ) -> Self {
         Self {
+            id: next_id(),
             clock: parent_clock.borrow_mut().add_child(subdivision),
             grain_start,
             grain_size_ms,
         }
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
     }
 
     pub fn try_create_grain(&self, sample: &StereoBuffer) -> Option<Grain> {

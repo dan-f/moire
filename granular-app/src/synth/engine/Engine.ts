@@ -1,8 +1,9 @@
 import { ConsoleLogger } from "../../lib/ConsoleLogger";
 import { Logger } from "../../lib/Logger";
-import { Pointer } from "./Exports";
+import { type StreamParams } from "../StreamParams";
+import { StreamId, type Pointer } from "./Exports";
 import { Instance } from "./Instance";
-import { Params } from "./Params";
+import { type Params } from "./Params";
 
 /**
  * Wrapper class providing safe access to an instance of the WASM granular
@@ -124,6 +125,15 @@ export class Engine {
         );
     }
     this.instance.exports.reset_after_update_sample(this.engine);
+  }
+
+  addStream(params: StreamParams): StreamId {
+    return this.instance.exports.add_stream(
+      this.engine,
+      params.subdivision,
+      params.grainStart,
+      params.grainSizeMs,
+    );
   }
 
   private createBufferViews() {

@@ -1,9 +1,9 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
-import { type Logger } from "../lib/Logger";
+import { serve } from "../lib/messaging";
 import { Engine } from "./engine";
 import { type Params } from "./engine/Params";
-import { type Message, MessageType } from "./GranularMessage";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
+import { ReqType, Response, RspType, type Request } from "./message";
 
 /**
  * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
@@ -12,7 +12,7 @@ import { type GranularWorkletNodeOptions } from "./GranularNode";
  */
 class GranularProcessor extends AudioWorkletProcessor {
   private readonly engine: Engine;
-  private readonly log: Logger;
+  private readonly log = new ConsoleLogger(GranularProcessor.name);
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
@@ -23,11 +23,9 @@ class GranularProcessor extends AudioWorkletProcessor {
       outputBufLen: 128,
     });
 
-    this.log = new ConsoleLogger(GranularProcessor.name);
+    serve(this.port, this.handleRequest.bind(this));
 
-    this.port.onmessage = (event: MessageEvent<Message>) => {
-      this.handleMessage(event.data);
-    };
+    this.log.debug("initialized processor", { sampleRate });
   }
 
   static get parameterDescriptors() {
@@ -59,17 +57,18 @@ class GranularProcessor extends AudioWorkletProcessor {
     return true;
   }
 
-  handleMessage(msg: Message) {
-    this.log.debug("received message", msg);
-    switch (msg.type) {
-      case MessageType.UpdateSample:
-        this.handleUpdateSample(msg.sample);
-        break;
+  async handleRequest(req: Request): Promise<Response> {
+    switch (req.type) {
+      case ReqType.UpdateSample:
+        this.engine.updateSample(req.sample);
+        return { type: RspType.SampleUpdated };
+      case ReqType.AddStream: {
+        return {
+          type: RspType.StreamAdded,
+          streamId: this.engine.addStream(req.params),
+        };
+      }
     }
-  }
-
-  handleUpdateSample(sample: Float32Array[]) {
-    this.engine.updateSample(sample);
   }
 }
 
