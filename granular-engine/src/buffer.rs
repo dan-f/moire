@@ -27,6 +27,9 @@ impl<const C: usize> Buffer<C> {
 
     pub fn frame(&self, i: usize) -> [f32; C] {
         let mut frame = [0.; C];
+        if i > self.len - 1 {
+            return frame;
+        }
         for channel in 0..C {
             frame[channel] = self.data[channel][i];
         }

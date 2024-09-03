@@ -24,8 +24,6 @@ impl Grain {
 
     pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
         let frame = if let Some(idx) = self.idx() {
-            // TODO make sure we don't go off the end. Avoid creating grains
-            // where given the start + length, they'd run off the end.
             sample.frame(idx)
         } else {
             return [0., 0.];
