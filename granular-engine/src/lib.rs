@@ -6,6 +6,7 @@ mod dsp;
 mod engine;
 mod grain;
 mod grain_pool;
+mod pool;
 mod rand;
 mod stream;
 mod tuning;
@@ -91,6 +92,11 @@ pub unsafe extern "C" fn add_stream(
         .as_mut()
         .unwrap()
         .add_stream(subdivision, grain_start, grain_size_ms, gain, tune, pan)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn delete_stream(engine: *mut Engine, stream_id: usize) {
+    engine.as_mut().unwrap().delete_stream(stream_id);
 }
 
 #[no_mangle]

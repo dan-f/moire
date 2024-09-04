@@ -12,3 +12,6 @@ export const globals: AppGlobals = {
   audioCtx,
   synth,
 };
+
+// test
+window.globals = globals;

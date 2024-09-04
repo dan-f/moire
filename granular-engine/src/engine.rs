@@ -81,6 +81,10 @@ impl Engine {
         id
     }
 
+    pub fn delete_stream(&mut self, stream_id: usize) {
+        // self.streams.filt
+    }
+
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
             for i in 0..self.output_buf.len {
@@ -91,7 +95,7 @@ impl Engine {
                 }
 
                 self.output_buf.write_frame(i, &[0., 0.]);
-                for mut grain in self.grains.entries_mut() {
+                for mut grain in self.grains.entries() {
                     let frame = grain.render_frame(sample_buf);
                     self.output_buf.append_frame(i, &frame);
                     grain.tick();
