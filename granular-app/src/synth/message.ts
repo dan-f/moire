@@ -39,7 +39,7 @@ export namespace AddStream {
   }
   export interface Rsp extends BaseResponse {
     type: RspType.StreamAdded;
-    streamId: StreamId;
+    streamId?: StreamId;
   }
 }
 

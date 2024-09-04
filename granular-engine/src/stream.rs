@@ -12,6 +12,7 @@ fn next_id() -> usize {
     }
 }
 
+#[derive(Clone)]
 pub struct Stream {
     id: usize,
     clock: Rc<RefCell<Clock>>,

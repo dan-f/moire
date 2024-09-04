@@ -1,25 +1,17 @@
 use crate::{
     grain::Grain,
-    pool::{Pool, PoolEntry, PoolItem},
+    pool::{Pool, PoolEntry},
 };
 
 pub type GrainPool = Pool<Grain>;
 
-impl PoolItem for Grain {
-    fn occupied(&self) -> bool {
-        self.alive()
-    }
-
-    fn free(&mut self) {
-        self.complete()
-    }
-}
-
-impl<'a> PoolEntry<'a, Grain> {
-    pub fn tick(&mut self) {
-        if !self.item().tick() {
-            self.free();
-        }
+/// Tick a grain pool entry, freeing it when we've ticked all the way through
+pub fn tick<'a>(mut entry: PoolEntry<'a, Grain>) -> Option<PoolEntry<'a, Grain>> {
+    if entry.tick() {
+        Some(entry)
+    } else {
+        entry.free();
+        None
     }
 }
 
@@ -34,9 +26,8 @@ mod tests {
         let mut pool = GrainPool::new(1);
         let idx = pool.add(Grain::new(0., 1., 1., 1., 0.5)).unwrap();
 
-        let mut entry = pool.get_entry(idx).unwrap();
-        entry.tick();
-        entry.tick();
+        let entry = pool.get_entry(idx).unwrap();
+        tick(entry).and_then(tick);
 
         assert!(pool.entries().all(|e| !e.alive()));
         assert!(pool.get_entry(idx).is_none());

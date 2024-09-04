@@ -1,5 +1,9 @@
 export type Pointer = number;
 
+/**
+ * When positive, a real handle on a stream. When negative, stream failed to be
+ * created.
+ */
 export type StreamId = number;
 
 /**

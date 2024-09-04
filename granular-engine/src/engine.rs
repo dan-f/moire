@@ -1,6 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{buffer::StereoBuffer, clock::Clock, grain_pool::GrainPool, stream::Stream};
+use crate::{
+    buffer::StereoBuffer,
+    clock::Clock,
+    grain_pool::{self, GrainPool},
+    pool::Pool,
+    stream::Stream,
+};
 
 pub struct Engine {
     sample_rate: usize,
@@ -9,7 +15,7 @@ pub struct Engine {
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
     params: EngineParams,
-    streams: Vec<Stream>,
+    streams: Pool<Stream>,
 }
 
 impl Engine {
@@ -27,7 +33,7 @@ impl Engine {
                 output_buf_capacity,
             ),
             params,
-            streams: Default::default(),
+            streams: Pool::new(16),
         }
     }
 
@@ -66,7 +72,7 @@ impl Engine {
         gain: f32,
         tune: i32,
         pan: f32,
-    ) -> usize {
+    ) -> Option<usize> {
         let stream = Stream::new(
             Rc::clone(&self.clock),
             subdivision,
@@ -76,9 +82,7 @@ impl Engine {
             tune,
             pan,
         );
-        let id = stream.id();
-        self.streams.push(stream);
-        id
+        self.streams.add(stream)
     }
 
     pub fn delete_stream(&mut self, stream_id: usize) {
@@ -88,17 +92,24 @@ impl Engine {
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
             for i in 0..self.output_buf.len {
-                for stream in self.streams.iter() {
+                for stream in self.streams.entries() {
+                    // issue: StreamEntry -> StreamItem (Option<Stream>). So we
+                    // have an optional value here.
+                    //
+                    // Can we revisit the Option-based implementation over in
+                    // Pool itself? Such that we don't have to have this
+                    // `PoolItem` type? Such that whenever we iterate over
+                    // `entries` we get actual "live" ones?
                     if let Some(grain) = stream.try_create_grain(&sample_buf) {
                         self.grains.add(grain);
                     }
                 }
 
                 self.output_buf.write_frame(i, &[0., 0.]);
-                for mut grain in self.grains.entries() {
+                for grain in self.grains.entries() {
                     let frame = grain.render_frame(sample_buf);
                     self.output_buf.append_frame(i, &frame);
-                    grain.tick();
+                    grain_pool::tick(grain);
                 }
 
                 self.clock.borrow_mut().tick();

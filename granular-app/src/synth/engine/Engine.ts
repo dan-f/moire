@@ -126,8 +126,8 @@ export class Engine {
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 
-  addStream(params: StreamParams): StreamId {
-    return this.instance.exports.add_stream(
+  addStream(params: StreamParams): StreamId | undefined {
+    const id = this.instance.exports.add_stream(
       this.engine,
       params.subdivision,
       params.grainStart,
@@ -136,6 +136,8 @@ export class Engine {
       params.tune,
       params.pan,
     );
+
+    return id >= 0 ? id : undefined;
   }
 
   private createBufferViews() {

@@ -87,11 +87,20 @@ pub unsafe extern "C" fn add_stream(
     gain: f32,
     tune: i32,
     pan: f32,
-) -> usize {
-    engine
-        .as_mut()
-        .unwrap()
-        .add_stream(subdivision, grain_start, grain_size_ms, gain, tune, pan)
+) -> isize {
+    let maybe_id = engine.as_mut().unwrap().add_stream(
+        subdivision,
+        grain_start,
+        grain_size_ms,
+        gain,
+        tune,
+        pan,
+    );
+    if let Some(id) = maybe_id {
+        id as isize
+    } else {
+        -1
+    }
 }
 
 #[no_mangle]
