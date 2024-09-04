@@ -1,4 +1,4 @@
-use std::{cell::RefCell, cmp, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{buffer::StereoBuffer, clock::Clock, grain::Grain};
 
@@ -43,10 +43,10 @@ impl Stream {
 
     pub fn try_create_grain(&self, sample: &StereoBuffer) -> Option<Grain> {
         if self.clock.borrow().is_beat() {
-            let i = (sample.len as f32 * self.grain_start) as usize;
-            let len = (sample.sample_rate / 1000) * self.grain_size_ms;
-            let end = cmp::min(sample.len, i + len);
-            Some(Grain::new(i, end, self.pan))
+            let i = sample.len as f32 * self.grain_start;
+            let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
+            let end = f32::min(sample.len as f32, i + len);
+            Some(Grain::new(i, end, 1., self.pan))
         } else {
             None
         }

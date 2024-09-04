@@ -36,6 +36,27 @@ impl<const C: usize> Buffer<C> {
         frame
     }
 
+    pub fn sub_frame(&self, i: f32) -> [f32; C] {
+        let mut frame = [0.; C];
+
+        if i > (self.len - 1) as f32 {
+            return frame;
+        }
+
+        let left_i = (i.floor() as usize).max(0);
+        let right_i = (i.ceil() as usize).min(self.len - 1);
+
+        for channel in 0..C {
+            frame[channel] = lerp(
+                self.data[channel][left_i],
+                self.data[channel][right_i],
+                i.fract(),
+            );
+        }
+
+        frame
+    }
+
     pub fn write_frame(&mut self, i: usize, frame: &[f32; C]) {
         for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
             dst_channel[i] = *src_sample;
@@ -64,3 +85,7 @@ impl<const C: usize> Buffer<C> {
 }
 
 pub type StereoBuffer = Buffer<2>;
+
+fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    (1. - t) * a + t * b
+}

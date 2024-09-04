@@ -118,19 +118,19 @@ mod tests {
         assert!(pool.free_list.borrow().eq(&vec![0, 1]));
 
         // Add one grain, half occupied
-        let mut grain_1 = Grain::new(0, 1, 0.5);
+        let mut grain_1 = Grain::new(0., 1., 1., 0.5);
         let idx_1 = pool.add(grain_1).unwrap();
         assert_eq!(Some(&mut grain_1), pool.get_mut(idx_1));
         assert!(pool.free_list.borrow().eq(&vec![0]));
 
         // Add another grain, fully occupied
-        let mut grain_2 = Grain::new(1, 2, 0.5);
+        let mut grain_2 = Grain::new(1., 2., 1., 0.5);
         let idx_2 = pool.add(grain_2).unwrap();
         assert_eq!(Some(&mut grain_2), pool.get_mut(idx_2),);
         assert!(pool.free_list.borrow().is_empty());
 
         // Try adding a third grain, addition rejected
-        let grain_3 = Grain::new(3, 4, 0.5);
+        let grain_3 = Grain::new(3., 4., 1., 0.5);
         assert_eq!(None, pool.add(grain_3));
         assert!(pool.free_list.borrow().is_empty());
 
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn test_ticking_through_entry() {
         let mut pool = GrainPool::new(1);
-        let idx = pool.add(Grain::new(0, 1, 0.5)).unwrap();
+        let idx = pool.add(Grain::new(0., 1., 1., 0.5)).unwrap();
 
         let mut entry = pool.get_mut_entry(idx).unwrap();
         entry.tick();
