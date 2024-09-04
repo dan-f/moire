@@ -10,28 +10,33 @@ pub struct Grain {
     incr: f32,
     /// Sub-sample offset position from `start`
     i: f32,
+    /// Gain value
+    gain: f32,
     /// Pan position (0 = left, 1 = right)
     pan: f32,
 }
 
 impl Grain {
-    pub fn new(start: f32, end: f32, incr: f32, pan: f32) -> Self {
+    pub fn new(start: f32, end: f32, incr: f32, gain: f32, pan: f32) -> Self {
         Self {
             start,
             end,
             incr,
             i: 0.,
+            gain,
             pan,
         }
     }
 
     pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
-        let frame = if let Some(idx) = self.idx() {
+        let mut frame = if let Some(idx) = self.idx() {
             sample.sub_frame(idx)
         } else {
             return [0., 0.];
         };
-        dsp::pan_stereo_frame(&frame, self.pan)
+        dsp::pan_stereo_frame(&mut frame, self.pan);
+        dsp::gain_frame(&mut frame, self.gain);
+        frame
     }
 
     pub fn tick(&mut self) -> bool {
@@ -69,6 +74,7 @@ impl Default for Grain {
             end: 0.,
             incr: 0.,
             i: 1.,
+            gain: 0.,
             pan: 0.5,
         }
     }
@@ -96,7 +102,7 @@ mod tests {
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
         let buf = StereoBuffer::new_from(data[0].len(), data);
-        let mut grain = Grain::new(1., 2., 1., 0.5);
+        let mut grain = Grain::new(1., 2., 1., 1., 0.5);
 
         assert!(grain.alive());
 

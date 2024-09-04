@@ -17,6 +17,7 @@ pub struct Stream {
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
     grain_size_ms: usize,
+    gain: f32,
     tune: i32,
     pan: f32,
 }
@@ -27,6 +28,7 @@ impl Stream {
         subdivision: u32,
         grain_start: f32,
         grain_size_ms: usize,
+        gain: f32,
         tune: i32,
         pan: f32,
     ) -> Self {
@@ -35,6 +37,7 @@ impl Stream {
             clock: parent_clock.borrow_mut().add_child(subdivision),
             grain_start,
             grain_size_ms,
+            gain,
             tune,
             pan,
         }
@@ -50,7 +53,7 @@ impl Stream {
             let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
             let incr = tune_equal(1., self.tune);
-            Some(Grain::new(i, end, incr, self.pan))
+            Some(Grain::new(i, end, incr, self.gain, self.pan))
         } else {
             None
         }

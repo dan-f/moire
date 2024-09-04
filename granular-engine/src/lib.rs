@@ -83,13 +83,14 @@ pub unsafe extern "C" fn add_stream(
     subdivision: u32,
     grain_start: f32,
     grain_size_ms: usize,
+    gain: f32,
     tune: i32,
     pan: f32,
 ) -> usize {
     engine
         .as_mut()
         .unwrap()
-        .add_stream(subdivision, grain_start, grain_size_ms, tune, pan)
+        .add_stream(subdivision, grain_start, grain_size_ms, gain, tune, pan)
 }
 
 #[no_mangle]
