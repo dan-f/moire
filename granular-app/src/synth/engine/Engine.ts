@@ -132,6 +132,7 @@ export class Engine {
       params.subdivision,
       params.grainStart,
       params.grainSizeMs,
+      params.tune,
       params.pan,
     );
   }

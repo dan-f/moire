@@ -8,6 +8,7 @@ mod grain;
 mod grain_pool;
 mod rand;
 mod stream;
+mod tuning;
 
 #[no_mangle]
 pub extern "C" fn new_engine(
@@ -82,12 +83,13 @@ pub unsafe extern "C" fn add_stream(
     subdivision: u32,
     grain_start: f32,
     grain_size_ms: usize,
+    tune: i32,
     pan: f32,
 ) -> usize {
     engine
         .as_mut()
         .unwrap()
-        .add_stream(subdivision, grain_start, grain_size_ms, pan)
+        .add_stream(subdivision, grain_start, grain_size_ms, tune, pan)
 }
 
 #[no_mangle]

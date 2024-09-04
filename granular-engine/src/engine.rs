@@ -63,6 +63,7 @@ impl Engine {
         subdivision: u32,
         grain_start: f32,
         grain_size_ms: usize,
+        tune: i32,
         pan: f32,
     ) -> usize {
         let stream = Stream::new(
@@ -70,6 +71,7 @@ impl Engine {
             subdivision,
             grain_start,
             grain_size_ms,
+            tune,
             pan,
         );
         let id = stream.id();
