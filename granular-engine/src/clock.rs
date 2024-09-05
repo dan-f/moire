@@ -11,6 +11,8 @@ pub struct Clock {
     sample_rate: usize,
     /// Beats per minute
     bpm: u32,
+    /// Subdivision of the BPM
+    subdivision: u32,
     /// Sample counter
     i: F,
     /// The ideal (sub) sample distance between beats
@@ -23,28 +25,14 @@ pub struct Clock {
 
 impl Clock {
     pub fn new(sample_rate: usize, bpm: u32) -> Self {
-        let beat_dist = F::new(sample_rate as i64 * 60, bpm as i64);
         Self {
             enabled: true,
             sample_rate,
             bpm,
+            subdivision: 1,
             i: F::ZERO,
-            beat_dist,
+            beat_dist: Self::calc_beat_dist(sample_rate, bpm, 1),
             next_beat: F::ZERO,
-            children: vec![],
-        }
-    }
-
-    fn new_child(&self, subdivision: u32) -> Self {
-        let bpm = self.bpm * subdivision;
-        let beat_dist = F::new(self.sample_rate as i64 * 60, bpm as i64);
-        Clock {
-            enabled: false,
-            sample_rate: self.sample_rate,
-            bpm,
-            i: F::ZERO,
-            beat_dist,
-            next_beat: beat_dist,
             children: vec![],
         }
     }
@@ -53,8 +41,58 @@ impl Clock {
         self.enabled && self.i <= self.next_beat && self.next_beat < (self.i + 1)
     }
 
+    pub fn add_child(&mut self, subdivision: u32) -> Rc<RefCell<Clock>> {
+        let child = Rc::new(RefCell::new(self.new_child(subdivision)));
+        self.children.push(Rc::clone(&child));
+        child
+    }
+
+    pub fn set_bpm(&mut self, bpm: u32) {
+        self.bpm = bpm;
+        self.i = F::ZERO;
+        self.beat_dist = Self::calc_beat_dist(self.sample_rate, bpm, self.subdivision);
+        self.next_beat = F::ZERO;
+
+        for child in self.children.iter_mut() {
+            child.borrow_mut().set_bpm(bpm);
+        }
+    }
+
+    // pub fn set_bpm(&mut self, bpm: u32) {
+    //     let new_beat_dist = Self::calc_beat_dist(self.sample_rate, self.bpm, self.subdivision);
+    //     let mut last_downbeat = F::ZERO;
+
+    //     // TODO could this be a mod / remainder? do we have that on rationals?
+    //     while last_downbeat + new_beat_dist <= self.i {
+    //         last_downbeat += new_beat_dist;
+    //     }
+
+    //     self.bpm = bpm;
+    //     self.i -= last_downbeat;
+    //     self.beat_dist = new_beat_dist;
+    //     self.next_beat = last_downbeat + new_beat_dist;
+
+    //     for child in self.children.iter_mut() {
+    //         child.borrow_mut().set_bpm(bpm);
+    //     }
+    // }
+
     pub fn tick(&mut self) {
         self.tick_as_child(false);
+    }
+
+    fn new_child(&self, subdivision: u32) -> Self {
+        let beat_dist = Self::calc_beat_dist(self.sample_rate, self.bpm, subdivision);
+        Clock {
+            enabled: false,
+            sample_rate: self.sample_rate,
+            bpm: self.bpm,
+            subdivision,
+            i: F::ZERO,
+            beat_dist,
+            next_beat: beat_dist,
+            children: vec![],
+        }
     }
 
     fn tick_as_child(&mut self, is_parent_beat: bool) {
@@ -82,10 +120,8 @@ impl Clock {
         }
     }
 
-    pub fn add_child(&mut self, subdivision: u32) -> Rc<RefCell<Clock>> {
-        let child = Rc::new(RefCell::new(self.new_child(subdivision)));
-        self.children.push(Rc::clone(&child));
-        child
+    fn calc_beat_dist(sample_rate: usize, bpm: u32, subdivision: u32) -> F {
+        F::new(sample_rate as i64 * 60, (bpm * subdivision) as i64)
     }
 }
 

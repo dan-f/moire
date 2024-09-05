@@ -58,10 +58,12 @@ impl Engine {
         self.output_buf.resize(new_capacity, new_len);
     }
 
-    // TODO this doesn't actually do anything lol. We need to update the clock,
-    // or otherwise put the bpm in a shared pointer
     pub fn set_bpm(&mut self, bpm: u32) {
+        if bpm == self.params.bpm {
+            return;
+        }
         self.params.bpm = bpm;
+        self.clock.borrow_mut().set_bpm(bpm);
     }
 
     pub fn add_stream(
