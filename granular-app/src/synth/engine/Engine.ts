@@ -140,6 +140,10 @@ export class Engine {
     return id >= 0 ? id : undefined;
   }
 
+  deleteStream(streamId: StreamId) {
+    this.instance.exports.delete_stream(this.engine, streamId);
+  }
+
   private createBufferViews() {
     this.log.debug("(re)creating buffer views");
     this.outputBuffer[0] = this.channelView(

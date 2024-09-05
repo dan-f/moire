@@ -68,6 +68,9 @@ class GranularProcessor extends AudioWorkletProcessor {
           streamId: this.engine.addStream(req.params),
         };
       }
+      case ReqType.DeleteStream:
+        this.engine.deleteStream(req.streamId);
+        return { type: RspType.StreamDeleted };
     }
   }
 }

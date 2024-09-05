@@ -86,7 +86,9 @@ impl Engine {
     }
 
     pub fn delete_stream(&mut self, stream_id: usize) {
-        // self.streams.filt
+        if let Some(entry) = self.streams.get_entry(stream_id) {
+            entry.free();
+        }
     }
 
     pub fn process(&mut self) {

@@ -1,6 +1,6 @@
 import { StreamId } from "./engine/Exports";
 import { GranularNode } from "./GranularNode";
-import { AddStream, ReqType } from "./message";
+import { AddStream, DeleteStream, ReqType } from "./message";
 import { type StreamParams } from "./StreamParams";
 
 /**
@@ -36,12 +36,19 @@ export class Synth {
     this.granularNode.bpm.setValueAtTime(bpm, this.ctx.currentTime);
   }
 
-  async addStream(params: StreamParams): Promise<StreamId> {
+  async addStream(params: StreamParams): Promise<StreamId | undefined> {
     const rsp = await this.granularNode.request<AddStream.Req, AddStream.Rsp>({
       type: ReqType.AddStream,
       params,
     });
     return rsp.streamId;
+  }
+
+  async deleteStream(streamId: StreamId): Promise<void> {
+    await this.granularNode.request<DeleteStream.Req, DeleteStream.Rsp>({
+      type: ReqType.DeleteStream,
+      streamId,
+    });
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {

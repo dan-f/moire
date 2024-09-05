@@ -5,21 +5,23 @@ import { StreamParams } from "./StreamParams";
 /**
  * Request payloads passed into the `GranularNode.port`
  */
-export type Request = UpdateSample.Req | AddStream.Req;
+export type Request = UpdateSample.Req | AddStream.Req | DeleteStream.Req;
 
 /**
  * Response payloads returned from the `GranularNode.port`
  */
-export type Response = UpdateSample.Rsp | AddStream.Rsp;
+export type Response = UpdateSample.Rsp | AddStream.Rsp | DeleteStream.Rsp;
 
 export enum ReqType {
   UpdateSample = "UpdateSample",
   AddStream = "AddStream",
+  DeleteStream = "DeleteStream",
 }
 
 export enum RspType {
   SampleUpdated = "SampleUpdated",
   StreamAdded = "StreamAdded",
+  StreamDeleted = "StreamDeleted",
 }
 
 export namespace UpdateSample {
@@ -40,6 +42,16 @@ export namespace AddStream {
   export interface Rsp extends BaseResponse {
     type: RspType.StreamAdded;
     streamId?: StreamId;
+  }
+}
+
+export namespace DeleteStream {
+  export interface Req extends BaseRequest {
+    type: ReqType.DeleteStream;
+    streamId: StreamId;
+  }
+  export interface Rsp extends BaseResponse {
+    type: RspType.StreamDeleted;
   }
 }
 
