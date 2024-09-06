@@ -48,34 +48,18 @@ impl Clock {
     }
 
     pub fn set_bpm(&mut self, bpm: u32) {
+        let new_beat_dist = Self::calc_beat_dist(self.sample_rate, bpm, self.subdivision);
+        let last_downbeat = (self.i / new_beat_dist).floor() * new_beat_dist;
+
         self.bpm = bpm;
-        self.i = F::ZERO;
-        self.beat_dist = Self::calc_beat_dist(self.sample_rate, bpm, self.subdivision);
-        self.next_beat = F::ZERO;
+        self.i -= last_downbeat;
+        self.beat_dist = new_beat_dist;
+        self.next_beat = last_downbeat + new_beat_dist;
 
         for child in self.children.iter_mut() {
             child.borrow_mut().set_bpm(bpm);
         }
     }
-
-    // pub fn set_bpm(&mut self, bpm: u32) {
-    //     let new_beat_dist = Self::calc_beat_dist(self.sample_rate, self.bpm, self.subdivision);
-    //     let mut last_downbeat = F::ZERO;
-
-    //     // TODO could this be a mod / remainder? do we have that on rationals?
-    //     while last_downbeat + new_beat_dist <= self.i {
-    //         last_downbeat += new_beat_dist;
-    //     }
-
-    //     self.bpm = bpm;
-    //     self.i -= last_downbeat;
-    //     self.beat_dist = new_beat_dist;
-    //     self.next_beat = last_downbeat + new_beat_dist;
-
-    //     for child in self.children.iter_mut() {
-    //         child.borrow_mut().set_bpm(bpm);
-    //     }
-    // }
 
     pub fn tick(&mut self) {
         self.tick_as_child(false);
