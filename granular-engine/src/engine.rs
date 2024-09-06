@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     buffer::StereoBuffer,
     clock::Clock,
+    env::Env,
     grain_pool::{self, GrainPool},
     pool::Pool,
     stream::Stream,
@@ -74,6 +75,7 @@ impl Engine {
         gain: f32,
         tune: i32,
         pan: f32,
+        env: Env,
     ) -> Option<usize> {
         let stream = Stream::new(
             Rc::clone(&self.clock),
@@ -83,6 +85,7 @@ impl Engine {
             gain,
             tune,
             pan,
+            env,
         );
         self.streams.add(stream)
     }

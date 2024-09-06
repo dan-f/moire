@@ -19,12 +19,14 @@ pub fn tick<'a>(mut entry: PoolEntry<'a, Grain>) -> Option<PoolEntry<'a, Grain>>
 mod tests {
     use super::*;
 
-    use crate::grain_pool::GrainPool;
+    use crate::{env::Env, grain_pool::GrainPool};
 
     #[test]
     fn test_ticking_through_entry() {
         let mut pool = GrainPool::new(1);
-        let idx = pool.add(Grain::new(0., 1., 1., 1., 0.5)).unwrap();
+        let idx = pool
+            .add(Grain::new(0., 1., 1., 1., 0.5, Env::None))
+            .unwrap();
 
         let entry = pool.get_entry(idx).unwrap();
         tick(entry).and_then(tick);

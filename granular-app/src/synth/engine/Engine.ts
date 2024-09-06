@@ -135,6 +135,7 @@ export class Engine {
       params.gain,
       params.tune,
       params.pan,
+      params.env,
     );
 
     return id >= 0 ? id : undefined;

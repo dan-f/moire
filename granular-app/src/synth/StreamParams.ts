@@ -1,3 +1,5 @@
+import { Env } from "./Env";
+
 export interface StreamParams {
   subdivision: number;
   grainStart: number;
@@ -5,4 +7,5 @@ export interface StreamParams {
   gain: number;
   tune: number;
   pan: number;
+  env: Env;
 }

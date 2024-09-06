@@ -1,9 +1,11 @@
 use engine::Engine;
+use env::Env;
 
 mod buffer;
 mod clock;
 mod dsp;
 mod engine;
+mod env;
 mod grain;
 mod grain_pool;
 mod pool;
@@ -87,6 +89,7 @@ pub unsafe extern "C" fn add_stream(
     gain: f32,
     tune: i32,
     pan: f32,
+    env: u32,
 ) -> isize {
     let maybe_id = engine.as_mut().unwrap().add_stream(
         subdivision,
@@ -95,6 +98,7 @@ pub unsafe extern "C" fn add_stream(
         gain,
         tune,
         pan,
+        Env::try_from(env).unwrap(),
     );
     if let Some(id) = maybe_id {
         id as isize

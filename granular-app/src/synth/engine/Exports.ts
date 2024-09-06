@@ -44,6 +44,7 @@ export interface Exports extends WebAssembly.Exports {
     gain: number,
     tune: number,
     pan: number,
+    env: number,
   ): StreamId;
 
   delete_stream(engine: Pointer, streamId: StreamId): void;

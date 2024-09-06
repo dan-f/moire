@@ -1,4 +1,4 @@
-use crate::{buffer::StereoBuffer, dsp};
+use crate::{buffer::StereoBuffer, dsp, env::Env};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Grain {
@@ -14,10 +14,12 @@ pub struct Grain {
     gain: f32,
     /// Pan position (0 = left, 1 = right)
     pan: f32,
+    /// Gain envelope
+    env: Env,
 }
 
 impl Grain {
-    pub fn new(start: f32, end: f32, incr: f32, gain: f32, pan: f32) -> Self {
+    pub fn new(start: f32, end: f32, incr: f32, gain: f32, pan: f32, env: Env) -> Self {
         Self {
             start,
             end,
@@ -25,6 +27,7 @@ impl Grain {
             i: 0.,
             gain,
             pan,
+            env,
         }
     }
 
@@ -34,8 +37,9 @@ impl Grain {
         } else {
             return [0., 0.];
         };
+        let gain = self.gain * self.env.at(self.pos());
         dsp::pan_stereo_frame(&mut frame, self.pan);
-        dsp::gain_frame(&mut frame, self.gain);
+        dsp::gain_frame(&mut frame, gain);
         frame
     }
 
@@ -44,12 +48,6 @@ impl Grain {
             self.i += self.incr;
         }
         self.alive()
-    }
-
-    pub fn complete(&mut self) {
-        if let Some(_) = self.idx() {
-            self.i = self.end + 1.;
-        }
     }
 
     pub fn alive(&self) -> bool {
@@ -64,6 +62,14 @@ impl Grain {
             Some(idx)
         }
     }
+
+    fn pos(&self) -> f32 {
+        if self.alive() {
+            self.i / (self.end - self.start)
+        } else {
+            1.
+        }
+    }
 }
 
 impl Default for Grain {
@@ -76,6 +82,7 @@ impl Default for Grain {
             i: 1.,
             gain: 0.,
             pan: 0.5,
+            env: Env::None,
         }
     }
 }
@@ -102,7 +109,7 @@ mod tests {
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
         let buf = StereoBuffer::new_from(data[0].len(), data);
-        let mut grain = Grain::new(1., 2., 1., 1., 0.5);
+        let mut grain = Grain::new(1., 2., 1., 1., 0.5, Env::None);
 
         assert!(grain.alive());
 

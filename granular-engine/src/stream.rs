@@ -1,26 +1,16 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{buffer::StereoBuffer, clock::Clock, grain::Grain, tuning::tune_equal};
-
-static mut NEXT_ID: usize = 1;
-
-fn next_id() -> usize {
-    unsafe {
-        let id = NEXT_ID;
-        NEXT_ID += 1;
-        id
-    }
-}
+use crate::{buffer::StereoBuffer, clock::Clock, env::Env, grain::Grain, tuning::tune_equal};
 
 #[derive(Clone)]
 pub struct Stream {
-    id: usize,
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
     grain_size_ms: usize,
     gain: f32,
     tune: i32,
     pan: f32,
+    env: Env,
 }
 
 impl Stream {
@@ -32,20 +22,17 @@ impl Stream {
         gain: f32,
         tune: i32,
         pan: f32,
+        env: Env,
     ) -> Self {
         Self {
-            id: next_id(),
             clock: parent_clock.borrow_mut().add_child(subdivision),
             grain_start,
             grain_size_ms,
             gain,
             tune,
             pan,
+            env,
         }
-    }
-
-    pub fn id(&self) -> usize {
-        self.id
     }
 
     pub fn try_create_grain(&self, sample: &StereoBuffer) -> Option<Grain> {
@@ -54,7 +41,7 @@ impl Stream {
             let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
             let incr = tune_equal(1., self.tune);
-            Some(Grain::new(i, end, incr, self.gain, self.pan))
+            Some(Grain::new(i, end, incr, self.gain, self.pan, self.env))
         } else {
             None
         }
