@@ -18,8 +18,15 @@ pub extern "C" fn new_engine(
     sample_rate: usize,
     output_buf_capacity: usize,
     output_buf_len: usize,
+    max_streams: usize,
 ) -> *const Engine {
-    let boxed: Box<Engine> = Engine::new(sample_rate, output_buf_capacity, output_buf_len).into();
+    let boxed: Box<Engine> = Engine::new(
+        sample_rate,
+        output_buf_capacity,
+        output_buf_len,
+        max_streams,
+    )
+    .into();
     Box::into_raw(boxed)
 }
 

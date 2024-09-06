@@ -11,7 +11,7 @@ engine-build:
   cd {{engine_dir}} && cargo build --release --target wasm32-unknown-unknown
   cp \
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
-    {{app_dir}}/src/synth/engine/
+    {{app_dir}}/src/synth/granular/engine/
 
 engine-test:
   cd {{engine_dir}} && cargo test

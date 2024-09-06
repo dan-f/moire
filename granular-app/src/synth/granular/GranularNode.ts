@@ -1,5 +1,5 @@
-import { Client } from "../lib/messaging";
-import engineWasmUrl from "./engine/granular_engine.wasm?url";
+import { Client } from "../../lib/messaging";
+import { EngineWasmUrl } from "./engine";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 import { type Request, type Response } from "./message";
 
@@ -20,7 +20,7 @@ export class GranularNode extends AudioWorkletNode {
 
   static async new(ctx: AudioContext): Promise<GranularNode> {
     const [engineModule] = await Promise.all([
-      WebAssembly.compileStreaming(fetch(engineWasmUrl)),
+      WebAssembly.compileStreaming(fetch(EngineWasmUrl)),
       ctx.audioWorklet.addModule(granularProcessorUrl),
     ]);
     return new GranularNode(ctx, engineModule);

@@ -20,7 +20,12 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(sample_rate: usize, output_buf_len: usize, output_buf_capacity: usize) -> Self {
+    pub fn new(
+        sample_rate: usize,
+        output_buf_len: usize,
+        output_buf_capacity: usize,
+        max_streams: usize,
+    ) -> Self {
         let params: EngineParams = Default::default();
         let clock = Rc::new(RefCell::new(Clock::new(sample_rate, params.bpm)));
         Self {
@@ -34,7 +39,7 @@ impl Engine {
                 output_buf_capacity,
             ),
             params,
-            streams: Pool::new(16),
+            streams: Pool::new(max_streams),
         }
     }
 

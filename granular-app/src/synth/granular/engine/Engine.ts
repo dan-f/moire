@@ -1,9 +1,8 @@
-import { ConsoleLogger } from "../../lib/ConsoleLogger";
-import { Logger } from "../../lib/Logger";
-import { type StreamParams } from "../StreamParams";
-import { StreamId, type Pointer } from "./Exports";
+import { ConsoleLogger } from "../../../lib/ConsoleLogger";
+import { type Logger } from "../../../lib/Logger";
+import { type ProcessorParams, type StreamParams } from "../params";
+import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
-import { type Params } from "./Params";
 
 /**
  * Wrapper class providing safe access to an instance of the WASM granular
@@ -27,6 +26,7 @@ export class Engine {
       sampleRate: number;
       outputBufCapacity: number;
       outputBufLen: number;
+      maxStreams: number;
     },
   ) {
     this.instance = new Instance(module, {
@@ -41,6 +41,7 @@ export class Engine {
       sampleRate,
       this.outputBufLen,
       this.outputBufCapacity,
+      options.maxStreams,
     );
 
     this.log = new ConsoleLogger(Engine.name);
@@ -48,7 +49,7 @@ export class Engine {
     this.createBufferViews();
   }
 
-  setParams(params: Params) {
+  setParams(params: ProcessorParams) {
     const { bpm } = params;
     this.instance.exports.set_bpm(this.engine, bpm[0]);
   }
@@ -126,7 +127,7 @@ export class Engine {
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 
-  addStream(params: StreamParams): StreamId | undefined {
+  addStream(params: StreamParams): number | undefined {
     const id = this.instance.exports.add_stream(
       this.engine,
       params.subdivision,
@@ -141,7 +142,7 @@ export class Engine {
     return id >= 0 ? id : undefined;
   }
 
-  deleteStream(streamId: StreamId) {
+  deleteStream(streamId: number) {
     this.instance.exports.delete_stream(this.engine, streamId);
   }
 

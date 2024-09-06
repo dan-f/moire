@@ -1,12 +1,6 @@
 export type Pointer = number;
 
 /**
- * When positive, a real handle on a stream. When negative, stream failed to be
- * created.
- */
-export type StreamId = number;
-
-/**
  * Exports of the WASM granular engine module
  */
 export interface Exports extends WebAssembly.Exports {
@@ -16,6 +10,7 @@ export interface Exports extends WebAssembly.Exports {
     sample_rate: number,
     output_buf_len: number,
     output_buf_capacity: number,
+    max_streams: number,
   ): Pointer;
 
   alloc_sample_buf(engine: Pointer, buf_len: number): void;
@@ -45,9 +40,9 @@ export interface Exports extends WebAssembly.Exports {
     tune: number,
     pan: number,
     env: number,
-  ): StreamId;
+  ): number;
 
-  delete_stream(engine: Pointer, streamId: StreamId): void;
+  delete_stream(engine: Pointer, streamId: number): void;
 
   process(engine: Pointer): void;
 }

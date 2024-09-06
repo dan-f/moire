@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { StreamId } from "./engine/Exports";
-import { StreamParams } from "./StreamParams";
+import { StreamParams } from "./params";
 
 /**
  * Request payloads passed into the `GranularNode.port`
@@ -41,14 +40,14 @@ export namespace AddStream {
   }
   export interface Rsp extends BaseResponse {
     type: RspType.StreamAdded;
-    streamId?: StreamId;
+    streamId?: number;
   }
 }
 
 export namespace DeleteStream {
   export interface Req extends BaseRequest {
     type: ReqType.DeleteStream;
-    streamId: StreamId;
+    streamId: number;
   }
   export interface Rsp extends BaseResponse {
     type: RspType.StreamDeleted;

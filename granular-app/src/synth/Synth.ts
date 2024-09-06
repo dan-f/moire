@@ -1,7 +1,4 @@
-import { StreamId } from "./engine/Exports";
-import { GranularNode } from "./GranularNode";
-import { AddStream, DeleteStream, ReqType } from "./message";
-import { type StreamParams } from "./StreamParams";
+import { GranularNode, Message as M, StreamParams } from "./granular";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -26,7 +23,7 @@ export class Synth {
 
   async updateSample(sample: Float32Array[]): Promise<void> {
     await this.granularNode.request({
-      type: ReqType.UpdateSample,
+      type: M.ReqType.UpdateSample,
       sample,
     });
   }
@@ -36,17 +33,20 @@ export class Synth {
     this.granularNode.bpm.setValueAtTime(bpm, this.ctx.currentTime);
   }
 
-  async addStream(params: StreamParams): Promise<StreamId | undefined> {
-    const rsp = await this.granularNode.request<AddStream.Req, AddStream.Rsp>({
-      type: ReqType.AddStream,
+  async addStream(params: StreamParams): Promise<number | undefined> {
+    const rsp = await this.granularNode.request<
+      M.AddStream.Req,
+      M.AddStream.Rsp
+    >({
+      type: M.ReqType.AddStream,
       params,
     });
     return rsp.streamId;
   }
 
-  async deleteStream(streamId: StreamId): Promise<void> {
-    await this.granularNode.request<DeleteStream.Req, DeleteStream.Rsp>({
-      type: ReqType.DeleteStream,
+  async deleteStream(streamId: number): Promise<void> {
+    await this.granularNode.request<M.DeleteStream.Req, M.DeleteStream.Rsp>({
+      type: M.ReqType.DeleteStream,
       streamId,
     });
   }

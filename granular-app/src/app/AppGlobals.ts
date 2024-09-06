@@ -1,4 +1,4 @@
-import { Synth } from "../synth/Synth";
+import { Synth } from "../synth";
 
 export interface AppGlobals {
   audioCtx: AudioContext;
