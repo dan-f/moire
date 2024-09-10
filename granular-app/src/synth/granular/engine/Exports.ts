@@ -42,6 +42,32 @@ export interface Exports extends WebAssembly.Exports {
     env: number,
   ): number;
 
+  set_stream_subdivision(
+    engine: Pointer,
+    stream_id: number,
+    subdivision: number,
+  ): void;
+
+  set_stream_grain_start(
+    engine: Pointer,
+    stream_id: number,
+    grain_start: number,
+  ): void;
+
+  set_stream_grain_size_ms(
+    engine: Pointer,
+    stream_id: number,
+    grain_size_ms: number,
+  ): void;
+
+  set_stream_gain(engine: Pointer, stream_id: number, gain: number): void;
+
+  set_stream_tune(engine: Pointer, stream_id: number, tune: number): void;
+
+  set_stream_pan(engine: Pointer, stream_id: number, pan: number): void;
+
+  set_stream_env(engine: Pointer, stream_id: number, env: number): void;
+
   delete_stream(engine: Pointer, streamId: number): void;
 
   process(engine: Pointer): void;
