@@ -1,11 +1,22 @@
 # granular
 
+A work-in-progress browser-based polyrhithmic granular synthesizer. It operates on multiple dynamic "streams", each of which acts as a sort of playhead over the sample. Streams can be combined using relative rhythmic subdivisions and pitch shifting.
+
+## TODO
+
+- [ ] clock streams to other streams
+- [ ] control parameters of running streams
+- [ ] controlled randomization
+- [ ] ui
+- [ ] midi
+
 ## Developing
 
 Install the dependencies:
 
 - [rustup](https://rustup.rs/)
-- [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
 - [nix](https://nixos.org/download/)
+  - Run `nix shell` (or use `nix-direnv`) for a functioning environment
+  - Otherwise if you aren't using `nix`, make sure all of the dependencies listed in the [shell.nix](./shell.nix) are available
 
-Ideally nix would manage rustup & wasm-pack, but this isn't working currently. If you don't want to use nix, manually install the dependencies listed in the [shell.nix](./shell.nix). Assuming you are using nix, run `nix shell` to get a functioning development session.
+Scripts for testing, running, and building are in the [justfile](https://just.systems/).
