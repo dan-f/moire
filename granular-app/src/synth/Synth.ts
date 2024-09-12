@@ -1,3 +1,5 @@
+import { ConsoleLogger } from "../lib/ConsoleLogger";
+import * as Buffer from "./Buffer";
 import { GranularNode, Message as M, StreamParams } from "./granular";
 
 /**
@@ -6,6 +8,7 @@ import { GranularNode, Message as M, StreamParams } from "./granular";
 export class Synth {
   private ctx: AudioContext;
   private granularNode: GranularNode;
+  private readonly log = new ConsoleLogger(Synth.name);
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
@@ -21,11 +24,24 @@ export class Synth {
     return this.ctx.state;
   }
 
-  async updateSample(sample: Float32Array[]): Promise<void> {
-    await this.granularNode.request({
-      type: M.ReqType.UpdateSample,
-      sample,
-    });
+  async uploadSample(file: File): Promise<Buffer.UploadResult> {
+    const result = await Buffer.upload(this.ctx, file);
+
+    switch (result.type) {
+      case "SUCCESS":
+        await this.updateSample(result.buffer);
+        break;
+      case "CHANNEL_ERROR":
+        this.log.info(
+          `Samples must be mono or stereo. Cannot handle ${result.numChannels}-channel sample`,
+        );
+        break;
+      case "READ_ERROR":
+        this.log.info("Error reading sample", result.event);
+        break;
+    }
+
+    return result;
   }
 
   setBpm(bpm: number) {
@@ -67,6 +83,13 @@ export class Synth {
     const granularNode = await GranularNode.new(ctx);
     granularNode.connect(ctx.destination);
     return new Synth(ctx, granularNode);
+  }
+
+  private async updateSample(sample: Float32Array[]): Promise<void> {
+    await this.granularNode.request({
+      type: M.ReqType.UpdateSample,
+      sample,
+    });
   }
 
   private setParamNow(param: AudioParam, value: number) {

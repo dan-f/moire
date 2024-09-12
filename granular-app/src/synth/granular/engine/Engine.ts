@@ -1,5 +1,6 @@
 import { ConsoleLogger } from "../../../lib/ConsoleLogger";
 import { type Logger } from "../../../lib/Logger";
+import * as Buffer from "../../Buffer";
 import {
   fromProcessorParam,
   type ProcessorParams,
@@ -20,10 +21,7 @@ export class Engine {
 
   private outputBufLen: number;
   private outputBufCapacity: number;
-  private outputBuffer: Float32Array[] = [
-    new Float32Array(),
-    new Float32Array(),
-  ];
+  private outputBuffer: Buffer.T = [new Float32Array(), new Float32Array()];
 
   constructor(
     module: WebAssembly.Module,
@@ -147,7 +145,7 @@ export class Engine {
 
   updateSample(sample: Float32Array[]) {
     this.log.debug("allocating sample buffer");
-    const bufLen = sample[0].length;
+    const bufLen = Buffer.length(sample);
     this.instance.exports.alloc_sample_buf(this.engine, bufLen);
     // If our allocation causes the WASM memory to grow, we will have to re-draw
     // our views over its memory buffer. The WASM memory model guarantees that
@@ -158,24 +156,7 @@ export class Engine {
       this.channelView(this.instance.exports.sample_buf_l(this.engine), bufLen),
       this.channelView(this.instance.exports.sample_buf_r(this.engine), bufLen),
     ];
-    switch (sample.length) {
-      case 1:
-        for (let i = 0; i < bufLen; i++) {
-          buf[0][i] = Math.cos((Math.PI / 2) * 0.5) * sample[0][i];
-          buf[1][i] = Math.sin((Math.PI / 2) * 0.5) * sample[0][i];
-        }
-        break;
-      case 2:
-        for (let i = 0; i < bufLen; i++) {
-          buf[0][i] = sample[0][i];
-          buf[1][i] = sample[1][i];
-        }
-        break;
-      default:
-        throw new Error(
-          `Expected mono or stereo sample. Cannot use ${sample.length}-channel sample`,
-        );
-    }
+    Buffer.copyStereo(sample, buf);
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 

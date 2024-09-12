@@ -1,34 +1,20 @@
 import { useState } from "react";
+import * as AsyncResult from "../lib/AsyncResult";
+import { Buffer } from "../synth";
 import cls from "./App.module.css";
 import { AppContext, useSynth } from "./AppContext";
 import { globals } from "./AppGlobals";
-import { SampleUpload, SampleUploadResult } from "./SampleUpload";
-import { useLogger } from "./logging";
+import { FileUpload } from "./FileUpload";
+import { Sample } from "./Sample";
 
 function ProvidedApp() {
-  const log = useLogger(App.name);
   const synth = useSynth();
+  const [sampleResult, setSampleResult] =
+    useState<AsyncResult.T<Buffer.UploadResult>>();
 
-  const [uploadingSample, setUploadingSample] = useState(false);
-
-  async function handleUpload(upload: Promise<SampleUploadResult>) {
-    setUploadingSample(true);
-    const result = await upload;
-    setUploadingSample(false);
-
-    switch (result.type) {
-      case "SUCCESS":
-        synth.updateSample(result.sample);
-        break;
-      case "CHANNEL_ERROR":
-        log.error(
-          `Samples must be mono or stereo. Cannot handle ${result.numChannels}-channel sample`,
-        );
-        break;
-      case "READ_ERROR":
-        log.error("Error reading sample", result.event);
-        break;
-    }
+  async function handleUpload(file: File) {
+    setSampleResult(AsyncResult.loading());
+    setSampleResult(AsyncResult.done(await synth.uploadSample(file)));
   }
 
   return (
@@ -38,8 +24,8 @@ function ProvidedApp() {
         toggle playback
       </button>
       <div className={cls.card}>
-        <SampleUpload onUpload={handleUpload} />
-        {uploadingSample && <div>uploading</div>}
+        <FileUpload onUpload={handleUpload} />
+        <Sample uploadResult={sampleResult} />
       </div>
     </>
   );
