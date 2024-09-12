@@ -2,7 +2,6 @@ use engine::Engine;
 use env::Env;
 
 mod buffer;
-mod clock;
 mod dsp;
 mod engine;
 mod env;
@@ -11,6 +10,7 @@ mod grain_pool;
 mod pool;
 mod rand;
 mod stream;
+mod timing;
 mod tuning;
 
 #[no_mangle]
@@ -112,6 +112,65 @@ pub unsafe extern "C" fn add_stream(
     } else {
         -1
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_subdivision(
+    engine: *mut Engine,
+    stream_id: usize,
+    subdivision: u32,
+) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_stream_subdivision(stream_id, subdivision);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_grain_start(
+    engine: *mut Engine,
+    stream_id: usize,
+    grain_start: f32,
+) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_stream_grain_start(stream_id, grain_start);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_grain_size_ms(
+    engine: *mut Engine,
+    stream_id: usize,
+    grain_size_ms: usize,
+) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_stream_grain_size_ms(stream_id, grain_size_ms);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_gain(engine: *mut Engine, stream_id: usize, gain: f32) {
+    engine.as_mut().unwrap().set_stream_gain(stream_id, gain);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_tune(engine: *mut Engine, stream_id: usize, tune: i32) {
+    engine.as_mut().unwrap().set_stream_tune(stream_id, tune);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_pan(engine: *mut Engine, stream_id: usize, pan: f32) {
+    engine.as_mut().unwrap().set_stream_pan(stream_id, pan);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_env(engine: *mut Engine, stream_id: usize, env: u32) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_stream_env(stream_id, Env::try_from(env).unwrap());
 }
 
 #[no_mangle]

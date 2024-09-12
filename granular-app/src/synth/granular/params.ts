@@ -24,6 +24,21 @@ export function toProcessorParam(
 }
 
 /**
+ * Get the stream ID and logical param key from a processor param key
+ */
+export function fromProcessorParam(
+  param: StreamParam,
+): [number, keyof StreamParams] | undefined {
+  const re = /^stream_(\d+)_(\w+)$/;
+  const match = param.match(re);
+  if (!match) {
+    return;
+  }
+  const [_, streamId, key] = match;
+  return [parseInt(streamId), key as keyof StreamParams];
+}
+
+/**
  * Type of the `params` parameter map passed into the
  * `GranularProcessor.process` callback
  */

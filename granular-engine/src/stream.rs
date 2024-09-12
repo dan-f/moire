@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{buffer::StereoBuffer, clock::Clock, env::Env, grain::Grain, tuning::tune_equal};
+use crate::{buffer::StereoBuffer, env::Env, grain::Grain, timing::Clock, tuning::tune_equal};
 
 #[derive(Clone)]
 pub struct Stream {
@@ -25,7 +25,7 @@ impl Stream {
         env: Env,
     ) -> Self {
         Self {
-            clock: parent_clock.borrow_mut().add_child(subdivision),
+            clock: Clock::add_child(&parent_clock, subdivision as i64),
             grain_start,
             grain_size_ms,
             gain,
@@ -45,5 +45,33 @@ impl Stream {
         } else {
             None
         }
+    }
+
+    pub fn set_subdivision(&mut self, subdivision: u32) {
+        self.clock.borrow_mut().set_subdivision(subdivision as i64);
+    }
+
+    pub fn set_grain_start(&mut self, grain_start: f32) {
+        self.grain_start = grain_start;
+    }
+
+    pub fn set_grain_size_ms(&mut self, grain_size_ms: usize) {
+        self.grain_size_ms = grain_size_ms;
+    }
+
+    pub fn set_gain(&mut self, gain: f32) {
+        self.gain = gain;
+    }
+
+    pub fn set_tune(&mut self, tune: i32) {
+        self.tune = tune;
+    }
+
+    pub fn set_pan(&mut self, pan: f32) {
+        self.pan = pan;
+    }
+
+    pub fn set_env(&mut self, env: Env) {
+        self.env = env;
     }
 }

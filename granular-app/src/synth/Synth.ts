@@ -29,8 +29,20 @@ export class Synth {
   }
 
   setBpm(bpm: number) {
-    this.granularNode.bpm.cancelScheduledValues(this.ctx.currentTime);
-    this.granularNode.bpm.setValueAtTime(bpm, this.ctx.currentTime);
+    this.setParamNow(this.granularNode.bpm, bpm);
+  }
+
+  setStreamParam(
+    streamId: number,
+    key: keyof StreamParams,
+    value: number,
+  ): boolean {
+    const param = this.granularNode.streamParam(streamId, key);
+    if (!param) {
+      return false;
+    }
+    this.setParamNow(param, value);
+    return true;
   }
 
   async addStream(params: StreamParams): Promise<number | undefined> {
@@ -55,5 +67,10 @@ export class Synth {
     const granularNode = await GranularNode.new(ctx);
     granularNode.connect(ctx.destination);
     return new Synth(ctx, granularNode);
+  }
+
+  private setParamNow(param: AudioParam, value: number) {
+    param.cancelScheduledValues(this.ctx.currentTime);
+    param.setValueAtTime(value, this.ctx.currentTime);
   }
 }

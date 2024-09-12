@@ -2,6 +2,7 @@ import { Client } from "../../lib/messaging";
 import { EngineWasmUrl } from "./engine";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 import { type Request, type Response } from "./message";
+import { toProcessorParam, type StreamParams } from "./params";
 
 /**
  * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
@@ -28,6 +29,13 @@ export class GranularNode extends AudioWorkletNode {
 
   get bpm(): AudioParam {
     return this.parameters.get("bpm")!;
+  }
+
+  streamParam(
+    streamId: number,
+    param: keyof StreamParams,
+  ): AudioParam | undefined {
+    return this.parameters.get(toProcessorParam(streamId, param));
   }
 
   request<Req extends Request, Rsp extends Response>(

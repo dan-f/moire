@@ -2,11 +2,11 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     buffer::StereoBuffer,
-    clock::Clock,
     env::Env,
     grain_pool::{self, GrainPool},
     pool::Pool,
     stream::Stream,
+    timing::{self, Clock},
 };
 
 pub struct Engine {
@@ -27,7 +27,10 @@ impl Engine {
         max_streams: usize,
     ) -> Self {
         let params: EngineParams = Default::default();
-        let clock = Rc::new(RefCell::new(Clock::new(sample_rate, params.bpm)));
+        let clock = Rc::new(RefCell::new(Clock::new(
+            sample_rate,
+            timing::bpm_to_freq(params.bpm),
+        )));
         Self {
             sample_rate,
             clock: Rc::clone(&clock),
@@ -69,7 +72,7 @@ impl Engine {
             return;
         }
         self.params.bpm = bpm;
-        self.clock.borrow_mut().set_bpm(bpm);
+        self.clock.borrow_mut().set_freq(timing::bpm_to_freq(bpm));
     }
 
     pub fn add_stream(
@@ -93,6 +96,48 @@ impl Engine {
             env,
         );
         self.streams.add(stream)
+    }
+
+    pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_subdivision(subdivision);
+        }
+    }
+
+    pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_grain_start(grain_start);
+        }
+    }
+
+    pub fn set_stream_grain_size_ms(&mut self, stream_id: usize, grain_size_ms: usize) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_grain_size_ms(grain_size_ms);
+        }
+    }
+
+    pub fn set_stream_gain(&mut self, stream_id: usize, gain: f32) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_gain(gain);
+        }
+    }
+
+    pub fn set_stream_tune(&mut self, stream_id: usize, tune: i32) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_tune(tune);
+        }
+    }
+
+    pub fn set_stream_pan(&mut self, stream_id: usize, pan: f32) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_pan(pan);
+        }
+    }
+
+    pub fn set_stream_env(&mut self, stream_id: usize, env: Env) {
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_env(env);
+        }
     }
 
     pub fn delete_stream(&mut self, stream_id: usize) {

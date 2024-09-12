@@ -1,6 +1,11 @@
 import { ConsoleLogger } from "../../../lib/ConsoleLogger";
 import { type Logger } from "../../../lib/Logger";
-import { type ProcessorParams, type StreamParams } from "../params";
+import {
+  fromProcessorParam,
+  type ProcessorParams,
+  type StreamParam,
+  type StreamParams,
+} from "../params";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
 
@@ -50,8 +55,55 @@ export class Engine {
   }
 
   setParams(params: ProcessorParams) {
-    const { bpm } = params;
+    const { bpm, ...streamParams } = params;
     this.instance.exports.set_bpm(this.engine, bpm[0]);
+
+    for (const [streamParam, [val]] of Object.entries(streamParams)) {
+      const result = fromProcessorParam(streamParam as StreamParam);
+      if (!result) {
+        this.log.warn("unable to parse StreamParam", { streamParam });
+        continue;
+      }
+      const [streamId, param] = result;
+      switch (param) {
+        case "subdivision":
+          this.instance.exports.set_stream_subdivision(
+            this.engine,
+            streamId,
+            val,
+          );
+          break;
+        case "grainStart":
+          this.instance.exports.set_stream_grain_start(
+            this.engine,
+            streamId,
+            val,
+          );
+          break;
+        case "grainSizeMs":
+          this.instance.exports.set_stream_grain_size_ms(
+            this.engine,
+            streamId,
+            val,
+          );
+          break;
+        case "gain":
+          this.instance.exports.set_stream_gain(this.engine, streamId, val);
+          break;
+        case "tune":
+          this.instance.exports.set_stream_tune(this.engine, streamId, val);
+          break;
+        case "pan":
+          this.instance.exports.set_stream_pan(this.engine, streamId, val);
+          break;
+        case "env":
+          this.instance.exports.set_stream_env(this.engine, streamId, val);
+          break;
+        default:
+          this.log.warn(`unexpected param type ${param}`);
+          break;
+      }
+    }
   }
 
   process(samples: number): Float32Array[] {
