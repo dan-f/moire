@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    buffer::StereoBuffer,
+    buffer::{MonoBuffer, StereoBuffer},
     env::Env,
     grain_pool::{self, GrainPool},
     pool::Pool,
@@ -15,6 +15,7 @@ pub struct Engine {
     grains: GrainPool,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
+    playhead_bufs: Vec<MonoBuffer>,
     params: EngineParams,
     streams: Pool<Stream>,
 }
@@ -41,6 +42,12 @@ impl Engine {
                 output_buf_len,
                 output_buf_capacity,
             ),
+            playhead_bufs: (0..max_streams)
+                .into_iter()
+                .map(|_| {
+                    MonoBuffer::new_with_capacity(sample_rate, output_buf_len, output_buf_capacity)
+                })
+                .collect(),
             params,
             streams: Pool::new(max_streams),
         }
@@ -63,8 +70,15 @@ impl Engine {
         &self.output_buf.channel(channel)
     }
 
-    pub fn alloc_output_buf(&mut self, new_capacity: usize, new_len: usize) {
+    pub fn playhead_buf(&self, idx: usize) -> &[f32] {
+        &self.playhead_bufs[idx].channel(0)
+    }
+
+    pub fn alloc_output_bufs(&mut self, new_capacity: usize, new_len: usize) {
         self.output_buf.resize(new_capacity, new_len);
+        for buf in self.playhead_bufs.iter_mut() {
+            buf.resize(new_capacity, new_len);
+        }
     }
 
     pub fn set_bpm(&mut self, bpm: u32) {
@@ -150,22 +164,24 @@ impl Engine {
         if let Some(sample_buf) = &self.sample_buf {
             for i in 0..self.output_buf.len {
                 for stream in self.streams.entries() {
-                    // issue: StreamEntry -> StreamItem (Option<Stream>). So we
-                    // have an optional value here.
-                    //
-                    // Can we revisit the Option-based implementation over in
-                    // Pool itself? Such that we don't have to have this
-                    // `PoolItem` type? Such that whenever we iterate over
-                    // `entries` we get actual "live" ones?
-                    if let Some(grain) = stream.try_create_grain(&sample_buf) {
+                    if let Some(grain) = stream.try_create_grain(stream.idx(), &sample_buf) {
                         self.grains.add(grain);
                     }
                 }
 
                 self.output_buf.write_frame(i, &[0., 0.]);
+                for buf in self.playhead_bufs.iter_mut() {
+                    buf.write_frame(i, &[-1.]);
+                }
+
                 for grain in self.grains.entries() {
                     let frame = grain.render_frame(sample_buf);
                     self.output_buf.append_frame(i, &frame);
+
+                    let stream_idx = grain.stream_idx();
+                    let position = grain.normalized_pos(sample_buf);
+                    self.playhead_bufs[stream_idx].write_frame(i, &[position]);
+
                     grain_pool::tick(grain);
                 }
 

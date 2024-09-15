@@ -35,13 +35,15 @@ impl Stream {
         }
     }
 
-    pub fn try_create_grain(&self, sample: &StereoBuffer) -> Option<Grain> {
+    pub fn try_create_grain(&self, stream_idx: usize, sample: &StereoBuffer) -> Option<Grain> {
         if self.clock.borrow().is_beat() {
             let i = sample.len as f32 * self.grain_start;
             let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
             let incr = tune_equal(1., self.tune);
-            Some(Grain::new(i, end, incr, self.gain, self.pan, self.env))
+            Some(Grain::new(
+                stream_idx, i, end, incr, self.gain, self.pan, self.env,
+            ))
         } else {
             None
         }

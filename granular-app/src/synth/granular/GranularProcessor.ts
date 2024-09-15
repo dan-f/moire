@@ -1,5 +1,8 @@
 import { ConsoleLogger } from "../../lib/ConsoleLogger";
+import { range } from "../../lib/iter";
 import { serve } from "../../lib/messaging";
+import * as Buffer from "../Buffer";
+import { Config } from "./Config";
 import { Engine } from "./engine";
 import { MAX_ENV, MIN_ENV } from "./Env";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
@@ -12,7 +15,6 @@ import { StreamParams, toProcessorParam, type ProcessorParams } from "./params";
  * instance by way of the {@linkcode Engine}.
  */
 class GranularProcessor extends AudioWorkletProcessor {
-  private static readonly MAX_STREAMS = 10;
   private readonly engine: Engine;
   private readonly log = new ConsoleLogger(GranularProcessor.name);
 
@@ -23,7 +25,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       sampleRate,
       outputBufCapacity: 2048,
       outputBufLen: 128,
-      maxStreams: GranularProcessor.MAX_STREAMS,
+      maxStreams: Config.MaxStreams,
     });
 
     serve(this.port, this.handleRequest.bind(this));
@@ -45,18 +47,22 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 
   process(
-    _inputs: Float32Array[][],
-    outputs: Float32Array[][],
+    _inputs: Buffer.T[],
+    outputs: Buffer.T[],
     params: ProcessorParams,
   ): boolean {
     this.engine.setParams(params);
 
-    const output = outputs[0];
-    const samples = output[0].length;
-    const engineOutput = this.engine.process(samples);
+    const [dstAudio, ...dstPlayheads] = outputs;
+    const [srcAudio, ...srcPlayheads] = this.engine.process(
+      Buffer.length(dstAudio),
+    );
 
-    output[0].set(engineOutput[0]);
-    output[1].set(engineOutput[1]);
+    Buffer.copy(srcAudio, dstAudio);
+
+    for (let i = 0; i < Config.MaxStreams; i++) {
+      Buffer.copy(srcPlayheads[i], dstPlayheads[i]);
+    }
 
     return true;
   }
@@ -79,7 +85,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 
   private static allStreamParamDescriptors(): ParamDescriptor[] {
-    return Array.from(Array(GranularProcessor.MAX_STREAMS).keys()).flatMap(
+    return Array.from(range(Config.MaxStreams)).flatMap(
       GranularProcessor.perStreamParamDescriptors,
     );
   }

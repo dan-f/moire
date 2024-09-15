@@ -17,7 +17,7 @@ export interface Exports extends WebAssembly.Exports {
 
   reset_after_update_sample(engine: Pointer): void;
 
-  alloc_output_buf(
+  alloc_output_bufs(
     engine: Pointer,
     new_capacity: number,
     new_len: number,
@@ -28,6 +28,8 @@ export interface Exports extends WebAssembly.Exports {
 
   output_buf_l(engine: Pointer): Pointer;
   output_buf_r(engine: Pointer): Pointer;
+
+  playhead_buf(engine: Pointer, idx: number): Pointer;
 
   set_bpm(engine: Pointer, bpm: number): void;
 

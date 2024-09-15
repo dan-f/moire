@@ -1,4 +1,6 @@
+import { range } from "../../lib/iter";
 import { Client } from "../../lib/messaging";
+import { Config } from "./Config";
 import { EngineWasmUrl } from "./engine";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 import { type Request, type Response } from "./message";
@@ -6,6 +8,14 @@ import { toProcessorParam, type StreamParams } from "./params";
 
 /**
  * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
+ *
+ * - Inputs: None
+ * - Outputs:
+ *  - 0: stereo audio out
+ *  - 1-{@linkcode Config.MaxStreams}: per-stream mono signal of playhead
+ *    position. A sample value < 0 indicates the stream is not playing, while a
+ *    value > 0 indicates the normalized position (0 = start, 1 = end) of the
+ *    playhead over the sample buffer.
  */
 export class GranularNode extends AudioWorkletNode {
   private readonly client = new Client(this.port);
@@ -13,8 +23,11 @@ export class GranularNode extends AudioWorkletNode {
   private constructor(ctx: AudioContext, engineModule: WebAssembly.Module) {
     super(ctx, "GranularProcessor", {
       numberOfInputs: 0,
-      numberOfOutputs: 1,
-      outputChannelCount: [2],
+      numberOfOutputs: 1 + Config.MaxStreams,
+      outputChannelCount: [
+        2,
+        ...Array.from(range(Config.MaxStreams)).map(() => 1),
+      ],
       processorOptions: { granularModule: engineModule },
     });
   }

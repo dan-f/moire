@@ -1,6 +1,8 @@
 import { ConsoleLogger } from "../../../lib/ConsoleLogger";
+import { range } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
+import { Config } from "../Config";
 import {
   fromProcessorParam,
   type ProcessorParams,
@@ -19,9 +21,12 @@ export class Engine {
   private readonly engine: Pointer;
   private readonly log: Logger;
 
-  private outputBufLen: number;
-  private outputBufCapacity: number;
-  private outputBuffer: Buffer.T = [new Float32Array(), new Float32Array()];
+  private audioBufLen: number;
+  private audioBufCapacity: number;
+  private audioBuffer: Buffer.T = Buffer.create(2);
+  private playheadBuffers: Buffer.T[] = Array.from(
+    range(Config.MaxStreams),
+  ).map(() => Buffer.create(1));
 
   constructor(
     module: WebAssembly.Module,
@@ -38,12 +43,12 @@ export class Engine {
       },
     });
 
-    this.outputBufCapacity = options.outputBufCapacity;
-    this.outputBufLen = options.outputBufLen;
+    this.audioBufCapacity = options.outputBufCapacity;
+    this.audioBufLen = options.outputBufLen;
     this.engine = this.instance.exports.new_engine(
       sampleRate,
-      this.outputBufLen,
-      this.outputBufCapacity,
+      this.audioBufLen,
+      this.audioBufCapacity,
       options.maxStreams,
     );
 
@@ -104,7 +109,7 @@ export class Engine {
     }
   }
 
-  process(samples: number): Float32Array[] {
+  process(samples: number): Buffer.T[] {
     // Based on the way the WASM memory model works, we cannot simply pass a
     // pointer to the WebAudio-provided `outputs` buffers from the
     // `AudioWorkletProcessor.process()` callback, which would have been
@@ -127,23 +132,23 @@ export class Engine {
     //
     // When we do resize a buffer, we allocate a capacity that's roughly 2x the
     // buffer size we see, KiB-aligned, in the event that we resize again.
-    if (samples > this.outputBufCapacity) {
-      this.outputBufLen = samples;
-      this.outputBufCapacity = Math.ceil(this.outputBufLen / 1024) * 1024;
-      this.instance.exports.alloc_output_buf(
+    if (samples > this.audioBufCapacity) {
+      this.audioBufLen = samples;
+      this.audioBufCapacity = Math.ceil(this.audioBufLen / 1024) * 1024;
+      this.instance.exports.alloc_output_bufs(
         this.engine,
-        this.outputBufCapacity,
-        this.outputBufLen,
+        this.audioBufCapacity,
+        this.audioBufLen,
       );
       this.createBufferViews();
     }
 
     this.instance.exports.process(this.engine);
 
-    return this.outputBuffer;
+    return [this.audioBuffer, ...this.playheadBuffers];
   }
 
-  updateSample(sample: Float32Array[]) {
+  updateSample(sample: Buffer.T) {
     this.log.debug("allocating sample buffer");
     const bufLen = Buffer.length(sample);
     this.instance.exports.alloc_sample_buf(this.engine, bufLen);
@@ -181,14 +186,22 @@ export class Engine {
 
   private createBufferViews() {
     this.log.debug("(re)creating buffer views");
-    this.outputBuffer[0] = this.channelView(
+
+    this.audioBuffer[0] = this.channelView(
       this.instance.exports.output_buf_l(this.engine),
-      this.outputBufLen,
+      this.audioBufLen,
     );
-    this.outputBuffer[1] = this.channelView(
+    this.audioBuffer[1] = this.channelView(
       this.instance.exports.output_buf_r(this.engine),
-      this.outputBufLen,
+      this.audioBufLen,
     );
+
+    for (let i = 0; i < Config.MaxStreams; i++) {
+      this.playheadBuffers[i][0] = this.channelView(
+        this.instance.exports.playhead_buf(this.engine, i),
+        this.audioBufLen,
+      );
+    }
   }
 
   private channelView(ptr: Pointer, len: number): Float32Array {

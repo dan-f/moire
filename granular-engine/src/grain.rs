@@ -2,6 +2,8 @@ use crate::{buffer::StereoBuffer, dsp, env::Env};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Grain {
+    /// Identifier of the parent stream in its pool
+    stream_idx: usize,
     /// Starting sub-sample index
     start: f32,
     /// Ending sub-sample index (inclusive)
@@ -19,8 +21,17 @@ pub struct Grain {
 }
 
 impl Grain {
-    pub fn new(start: f32, end: f32, incr: f32, gain: f32, pan: f32, env: Env) -> Self {
+    pub fn new(
+        stream_idx: usize,
+        start: f32,
+        end: f32,
+        incr: f32,
+        gain: f32,
+        pan: f32,
+        env: Env,
+    ) -> Self {
         Self {
+            stream_idx,
             start,
             end,
             incr,
@@ -28,6 +39,18 @@ impl Grain {
             gain,
             pan,
             env,
+        }
+    }
+
+    pub fn stream_idx(&self) -> usize {
+        self.stream_idx
+    }
+
+    pub fn normalized_pos(&self, buf: &StereoBuffer) -> f32 {
+        if let Some(idx) = self.idx() {
+            idx / (buf.len as f32)
+        } else {
+            -1.
         }
     }
 
@@ -72,21 +95,6 @@ impl Grain {
     }
 }
 
-impl Default for Grain {
-    /// Build a grain which is not alive
-    fn default() -> Self {
-        Self {
-            start: 0.,
-            end: 0.,
-            incr: 0.,
-            i: 1.,
-            gain: 0.,
-            pan: 0.5,
-            env: Env::None,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::vec;
@@ -109,7 +117,7 @@ mod tests {
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
         let buf = StereoBuffer::new_from(data[0].len(), data);
-        let mut grain = Grain::new(1., 2., 1., 1., 0.5, Env::None);
+        let mut grain = Grain::new(0, 1., 2., 1., 1., 0.5, Env::None);
 
         assert!(grain.alive());
 

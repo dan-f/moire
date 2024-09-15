@@ -1,3 +1,5 @@
+import { range } from "../lib/iter";
+
 export type T = Float32Array[];
 
 export type UploadResult =
@@ -43,6 +45,11 @@ export function upload(
   });
 }
 
+export function create(channelCount: number, length?: number): T {
+  const make = () => (length ? new Float32Array(length) : new Float32Array());
+  return Array.from(range(channelCount)).map(make);
+}
+
 export function channels(buffer: T): number {
   return buffer.length;
 }
@@ -51,6 +58,9 @@ export function length(buffer: T): number {
   return buffer[0].length;
 }
 
+/**
+ * Copy a mono or stereo source to a stereo destination.
+ */
 export function copyStereo(src: T, dst: T) {
   if (channels(dst) !== 2) {
     throw new Error("Expected stereo destination for copy");
@@ -70,15 +80,25 @@ export function copyStereo(src: T, dst: T) {
       }
       break;
     case 2:
-      for (let i = 0; i < bufLen; i++) {
-        dst[0][i] = src[0][i];
-        dst[1][i] = src[1][i];
-      }
+      dst[0].set(src[0]);
+      dst[1].set(src[1]);
       break;
     default:
       throw new Error(
         `Expected mono or stereo source. Cannot use ${channels(src)}-channel sample`,
       );
+  }
+}
+
+/**
+ * Copy an N-channel source to an N-channel destination
+ */
+export function copy(src: T, dst: T) {
+  if (length(src) !== length(dst)) {
+    throw new Error("Expected buffers of equal channel counts");
+  }
+  for (let c = 0; c < channels(src); c++) {
+    dst[c].set(src[c]);
   }
 }
 

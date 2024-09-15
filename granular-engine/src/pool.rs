@@ -69,6 +69,10 @@ pub struct PoolEntry<'a, T> {
 }
 
 impl<'a, T> PoolEntry<'a, T> {
+    pub fn idx(&self) -> usize {
+        self.idx
+    }
+
     pub fn free(self) {
         self.item.take();
         self.free_list.borrow_mut().push(self.idx);

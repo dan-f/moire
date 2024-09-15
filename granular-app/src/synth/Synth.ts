@@ -1,18 +1,27 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
+import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
-import { GranularNode, Message as M, StreamParams } from "./granular";
+import { Config, GranularNode, Message as M, StreamParams } from "./granular";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
  */
 export class Synth {
-  private ctx: AudioContext;
-  private granularNode: GranularNode;
+  private readonly ctx: AudioContext;
+  private readonly granularNode: GranularNode;
+  private readonly analysers: AnalyserNode[];
+  private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new ConsoleLogger(Synth.name);
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
     this.granularNode = granularNode;
+    this.analysers = Array(Config.MaxStreams);
+    for (const s of range(Config.MaxStreams)) {
+      const analyser = ctx.createAnalyser();
+      this.granularNode.connect(analyser, s + 1, 0);
+      this.analysers[s] = analyser;
+    }
   }
 
   async toggleWebAudioPlayState(): Promise<AudioContextState> {
@@ -62,14 +71,23 @@ export class Synth {
   }
 
   async addStream(params: StreamParams): Promise<number | undefined> {
-    const rsp = await this.granularNode.request<
+    const { streamId } = await this.granularNode.request<
       M.AddStream.Req,
       M.AddStream.Rsp
     >({
       type: M.ReqType.AddStream,
       params,
     });
-    return rsp.streamId;
+
+    if (typeof streamId === "number") {
+      for (const [key, val] of Object.entries(params)) {
+        const paramKey = key as keyof StreamParams;
+        const paramVal: StreamParams[typeof paramKey] = val;
+        this.setStreamParam(streamId, paramKey, paramVal);
+      }
+    }
+
+    return streamId;
   }
 
   async deleteStream(streamId: number): Promise<void> {
@@ -77,6 +95,11 @@ export class Synth {
       type: M.ReqType.DeleteStream,
       streamId,
     });
+  }
+
+  playheadPosition(streamId: number): number {
+    this.analysers[streamId].getFloatTimeDomainData(this.analyserResultBuf);
+    return this.analyserResultBuf[0];
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {

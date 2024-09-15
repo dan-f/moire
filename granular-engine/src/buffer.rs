@@ -84,6 +84,8 @@ impl<const C: usize> Buffer<C> {
     }
 }
 
+pub type MonoBuffer = Buffer<1>;
+
 pub type StereoBuffer = Buffer<2>;
 
 fn lerp(a: f32, b: f32, t: f32) -> f32 {

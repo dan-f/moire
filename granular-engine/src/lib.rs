@@ -41,7 +41,7 @@ pub unsafe extern "C" fn reset_after_update_sample(engine: *mut Engine) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn alloc_output_buf(
+pub unsafe extern "C" fn alloc_output_bufs(
     engine: *mut Engine,
     new_capacity: usize,
     new_len: usize,
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn alloc_output_buf(
     engine
         .as_mut()
         .unwrap()
-        .alloc_output_buf(new_capacity, new_len);
+        .alloc_output_bufs(new_capacity, new_len);
 }
 
 #[no_mangle]
@@ -80,6 +80,11 @@ pub unsafe extern "C" fn output_buf_l(engine: *const Engine) -> *const f32 {
 #[no_mangle]
 pub unsafe extern "C" fn output_buf_r(engine: *const Engine) -> *const f32 {
     engine.as_ref().unwrap().output_buf(1).as_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn playhead_buf(engine: *const Engine, idx: usize) -> *const f32 {
+    engine.as_ref().unwrap().playhead_buf(idx).as_ptr()
 }
 
 #[no_mangle]
