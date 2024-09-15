@@ -3,12 +3,8 @@ import { range } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
-import {
-  fromProcessorParam,
-  type ProcessorParams,
-  type StreamParam,
-  type StreamParams,
-} from "../params";
+import * as PP from "../ProcessorParam";
+import * as Stream from "../Stream";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
 
@@ -57,12 +53,12 @@ export class Engine {
     this.createBufferViews();
   }
 
-  setParams(params: ProcessorParams) {
+  setParams(params: PP.ProcessorParams) {
     const { bpm, ...streamParams } = params;
     this.instance.exports.set_bpm(this.engine, bpm[0]);
 
     for (const [streamParam, [val]] of Object.entries(streamParams)) {
-      const result = fromProcessorParam(streamParam as StreamParam);
+      const result = PP.unpackStreamParam(streamParam as PP.StreamParam);
       if (!result) {
         this.log.warn("unable to parse StreamParam", { streamParam });
         continue;
@@ -165,16 +161,16 @@ export class Engine {
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 
-  addStream(params: StreamParams): number | undefined {
+  addStream(stream: Stream.T): number | undefined {
     const id = this.instance.exports.add_stream(
       this.engine,
-      params.subdivision,
-      params.grainStart,
-      params.grainSizeMs,
-      params.gain,
-      params.tune,
-      params.pan,
-      params.env,
+      stream.subdivision,
+      stream.grainStart,
+      stream.grainSizeMs,
+      stream.gain,
+      stream.tune,
+      stream.pan,
+      stream.env,
     );
 
     return id >= 0 ? id : undefined;

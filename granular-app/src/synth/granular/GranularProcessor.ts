@@ -7,7 +7,8 @@ import { Engine } from "./engine";
 import { MAX_ENV, MIN_ENV } from "./Env";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 import { ReqType, Response, RspType, type Request } from "./message";
-import { StreamParams, toProcessorParam, type ProcessorParams } from "./params";
+import * as PP from "./ProcessorParam";
+import * as Stream from "./Stream";
 
 /**
  * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
@@ -49,7 +50,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   process(
     _inputs: Buffer.T[],
     outputs: Buffer.T[],
-    params: ProcessorParams,
+    params: PP.ProcessorParams,
   ): boolean {
     this.engine.setParams(params);
 
@@ -75,7 +76,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       case ReqType.AddStream: {
         return {
           type: RspType.StreamAdded,
-          streamId: this.engine.addStream(req.params),
+          streamId: this.engine.addStream(req.stream),
         };
       }
       case ReqType.DeleteStream:
@@ -93,8 +94,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   private static perStreamParamDescriptors(
     streamId: number,
   ): ParamDescriptor[] {
-    const name = (label: keyof StreamParams) =>
-      toProcessorParam(streamId, label);
+    const name = (key: Stream.Key) => PP.packStreamParam(streamId, key);
     return [
       {
         name: name("subdivision"),

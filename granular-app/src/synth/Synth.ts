@@ -1,7 +1,7 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
 import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
-import { Config, GranularNode, Message as M, StreamParams } from "./granular";
+import { Config, GranularNode, Message as M, Stream } from "./granular";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -57,11 +57,7 @@ export class Synth {
     this.setParamNow(this.granularNode.bpm, bpm);
   }
 
-  setStreamParam(
-    streamId: number,
-    key: keyof StreamParams,
-    value: number,
-  ): boolean {
+  setStreamParam(streamId: number, key: Stream.Key, value: number): boolean {
     const param = this.granularNode.streamParam(streamId, key);
     if (!param) {
       return false;
@@ -70,19 +66,19 @@ export class Synth {
     return true;
   }
 
-  async addStream(params: StreamParams): Promise<number | undefined> {
+  async addStream(stream: Stream.T): Promise<number | undefined> {
     const { streamId } = await this.granularNode.request<
       M.AddStream.Req,
       M.AddStream.Rsp
     >({
       type: M.ReqType.AddStream,
-      params,
+      stream: stream,
     });
 
     if (typeof streamId === "number") {
-      for (const [key, val] of Object.entries(params)) {
-        const paramKey = key as keyof StreamParams;
-        const paramVal: StreamParams[typeof paramKey] = val;
+      for (const [key, val] of Object.entries(stream)) {
+        const paramKey = key as Stream.Key;
+        const paramVal: Stream.T[typeof paramKey] = val;
         this.setStreamParam(streamId, paramKey, paramVal);
       }
     }
