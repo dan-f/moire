@@ -12,3 +12,14 @@ export interface T {
 }
 
 export type Key = keyof T;
+
+export const initial: T = {
+  gate: 0,
+  subdivision: 1,
+  grainStart: 0,
+  grainSizeMs: 150,
+  gain: 1,
+  tune: 0,
+  pan: 0.5,
+  env: Env.Tri,
+};

@@ -1,6 +1,7 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
 import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
+import * as SynthState from "./SynthState";
 import { Config, GranularNode, Message as Msg, StreamParams } from "./granular";
 
 /**
@@ -12,12 +13,14 @@ export class Synth {
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new ConsoleLogger(Synth.name);
+  private readonly state$ = SynthState.newSubject();
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
     this.granularNode = granularNode;
     this.analysers = Array(Config.MaxStreams);
     for (const s of range(Config.MaxStreams)) {
+      this.addStream(StreamParams.initial);
       const analyser = ctx.createAnalyser();
       this.granularNode.connect(analyser, s + 1, 0);
       this.analysers[s] = analyser;
@@ -57,6 +60,16 @@ export class Synth {
     this.setParamNow(this.granularNode.bpm, bpm);
   }
 
+  toggleStreamEnabled(streamId: number) {
+    if (SynthState.streamEnabled(SynthState.getState(this.state$), streamId)) {
+      this.setStreamParam(streamId, "gate", 0);
+    }
+    SynthState.updateSubject(
+      this.state$,
+      SynthState.toggleStreamEnabled(streamId),
+    );
+  }
+
   setStreamParam(
     streamId: number,
     key: StreamParams.Key,
@@ -66,11 +79,25 @@ export class Synth {
     if (!param) {
       return false;
     }
-    this.setParamNow(param, value);
-    return true;
+    if (SynthState.streamEnabled(SynthState.getState(this.state$), streamId)) {
+      this.setParamNow(param, value);
+      return true;
+    }
+    return false;
   }
 
-  async addStream(stream: StreamParams.T): Promise<number | undefined> {
+  playheadPosition(streamId: number): number {
+    this.analysers[streamId].getFloatTimeDomainData(this.analyserResultBuf);
+    return this.analyserResultBuf[0];
+  }
+
+  static async new(ctx: AudioContext): Promise<Synth> {
+    const granularNode = await GranularNode.new(ctx);
+    granularNode.connect(ctx.destination);
+    return new Synth(ctx, granularNode);
+  }
+
+  private async addStream(stream: StreamParams.T): Promise<number | undefined> {
     const { streamId } = await this.granularNode.request<
       Msg.AddStream.Req,
       Msg.AddStream.Rsp
@@ -88,26 +115,6 @@ export class Synth {
     }
 
     return streamId;
-  }
-
-  async deleteStream(streamId: number): Promise<void> {
-    await this.granularNode.request<Msg.DeleteStream.Req, Msg.DeleteStream.Rsp>(
-      {
-        type: Msg.ReqType.DeleteStream,
-        streamId,
-      },
-    );
-  }
-
-  playheadPosition(streamId: number): number {
-    this.analysers[streamId].getFloatTimeDomainData(this.analyserResultBuf);
-    return this.analyserResultBuf[0];
-  }
-
-  static async new(ctx: AudioContext): Promise<Synth> {
-    const granularNode = await GranularNode.new(ctx);
-    granularNode.connect(ctx.destination);
-    return new Synth(ctx, granularNode);
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {
