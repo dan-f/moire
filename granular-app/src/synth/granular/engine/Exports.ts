@@ -44,6 +44,8 @@ export interface Exports extends WebAssembly.Exports {
     env: number,
   ): number;
 
+  set_stream_gate(engine: Pointer, stream_id: number, gate: number): void;
+
   set_stream_subdivision(
     engine: Pointer,
     stream_id: number,

@@ -1,4 +1,4 @@
-import { range } from "../lib/iter";
+import { repeat } from "../lib/iter";
 
 export type T = Float32Array[];
 
@@ -46,8 +46,11 @@ export function upload(
 }
 
 export function create(channelCount: number, length?: number): T {
-  const make = () => (length ? new Float32Array(length) : new Float32Array());
-  return Array.from(range(channelCount)).map(make);
+  return Array.from(
+    repeat(channelCount, () =>
+      length ? new Float32Array(length) : new Float32Array(),
+    ),
+  );
 }
 
 export function channels(buffer: T): number {

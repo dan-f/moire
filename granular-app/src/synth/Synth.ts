@@ -1,7 +1,7 @@
 import { ConsoleLogger } from "../lib/ConsoleLogger";
 import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
-import { Config, GranularNode, Message as M, Stream } from "./granular";
+import { Config, GranularNode, Message as Msg, StreamParams } from "./granular";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -57,7 +57,11 @@ export class Synth {
     this.setParamNow(this.granularNode.bpm, bpm);
   }
 
-  setStreamParam(streamId: number, key: Stream.Key, value: number): boolean {
+  setStreamParam(
+    streamId: number,
+    key: StreamParams.Key,
+    value: number,
+  ): boolean {
     const param = this.granularNode.streamParam(streamId, key);
     if (!param) {
       return false;
@@ -66,19 +70,19 @@ export class Synth {
     return true;
   }
 
-  async addStream(stream: Stream.T): Promise<number | undefined> {
+  async addStream(stream: StreamParams.T): Promise<number | undefined> {
     const { streamId } = await this.granularNode.request<
-      M.AddStream.Req,
-      M.AddStream.Rsp
+      Msg.AddStream.Req,
+      Msg.AddStream.Rsp
     >({
-      type: M.ReqType.AddStream,
+      type: Msg.ReqType.AddStream,
       stream: stream,
     });
 
     if (typeof streamId === "number") {
       for (const [key, val] of Object.entries(stream)) {
-        const paramKey = key as Stream.Key;
-        const paramVal: Stream.T[typeof paramKey] = val;
+        const paramKey = key as StreamParams.Key;
+        const paramVal: StreamParams.T[typeof paramKey] = val;
         this.setStreamParam(streamId, paramKey, paramVal);
       }
     }
@@ -87,10 +91,12 @@ export class Synth {
   }
 
   async deleteStream(streamId: number): Promise<void> {
-    await this.granularNode.request<M.DeleteStream.Req, M.DeleteStream.Rsp>({
-      type: M.ReqType.DeleteStream,
-      streamId,
-    });
+    await this.granularNode.request<Msg.DeleteStream.Req, Msg.DeleteStream.Rsp>(
+      {
+        type: Msg.ReqType.DeleteStream,
+        streamId,
+      },
+    );
   }
 
   playheadPosition(streamId: number): number {
@@ -106,7 +112,7 @@ export class Synth {
 
   private async updateSample(sample: Float32Array[]): Promise<void> {
     await this.granularNode.request({
-      type: M.ReqType.UpdateSample,
+      type: Msg.ReqType.UpdateSample,
       sample,
     });
   }

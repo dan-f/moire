@@ -1,11 +1,11 @@
-import { range } from "../../lib/iter";
+import { repeat } from "../../lib/iter";
 import { Client } from "../../lib/messaging";
 import { Config } from "./Config";
 import { EngineWasmUrl } from "./engine";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 import { type Request, type Response } from "./message";
 import * as PP from "./ProcessorParam";
-import * as Stream from "./Stream";
+import * as StreamParams from "./StreamParams";
 
 /**
  * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
@@ -27,7 +27,7 @@ export class GranularNode extends AudioWorkletNode {
       numberOfOutputs: 1 + Config.MaxStreams,
       outputChannelCount: [
         2,
-        ...Array.from(range(Config.MaxStreams)).map(() => 1),
+        ...Array.from(repeat(Config.MaxStreams, () => 1)),
       ],
       processorOptions: { granularModule: engineModule },
     });
@@ -45,7 +45,10 @@ export class GranularNode extends AudioWorkletNode {
     return this.parameters.get("bpm")!;
   }
 
-  streamParam(streamId: number, param: Stream.Key): AudioParam | undefined {
+  streamParam(
+    streamId: number,
+    param: StreamParams.Key,
+  ): AudioParam | undefined {
     return this.parameters.get(PP.packStreamParam(streamId, param));
   }
 

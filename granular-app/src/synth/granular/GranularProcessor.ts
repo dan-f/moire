@@ -8,7 +8,7 @@ import { MAX_ENV, MIN_ENV } from "./Env";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 import { ReqType, Response, RspType, type Request } from "./message";
 import * as PP from "./ProcessorParam";
-import * as Stream from "./Stream";
+import * as StreamParams from "./StreamParams";
 
 /**
  * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
@@ -94,8 +94,15 @@ class GranularProcessor extends AudioWorkletProcessor {
   private static perStreamParamDescriptors(
     streamId: number,
   ): ParamDescriptor[] {
-    const name = (key: Stream.Key) => PP.packStreamParam(streamId, key);
+    const name = (key: StreamParams.Key) => PP.packStreamParam(streamId, key);
     return [
+      {
+        name: name("gate"),
+        automationRate: "k-rate",
+        defaultValue: 0,
+        minValue: 0,
+        maxValue: 1,
+      },
       {
         name: name("subdivision"),
         automationRate: "k-rate",

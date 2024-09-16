@@ -112,6 +112,16 @@ impl Engine {
         self.streams.add(stream)
     }
 
+    pub fn set_stream_gate(&mut self, stream_id: usize, gate: u32) {
+        let gate = match gate {
+            0 => false,
+            _ => true,
+        };
+        if let Some(mut stream) = self.streams.get_entry(stream_id) {
+            stream.set_gate(gate);
+        }
+    }
+
     pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
         if let Some(mut stream) = self.streams.get_entry(stream_id) {
             stream.set_subdivision(subdivision);

@@ -2,6 +2,8 @@ use crate::{buffer::StereoBuffer, dsp, env::Env};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Grain {
+    /// Whether we're playing or not
+    gate: bool,
     /// Identifier of the parent stream in its pool
     stream_idx: usize,
     /// Starting sub-sample index
@@ -22,6 +24,7 @@ pub struct Grain {
 
 impl Grain {
     pub fn new(
+        gate: bool,
         stream_idx: usize,
         start: f32,
         end: f32,
@@ -31,6 +34,7 @@ impl Grain {
         env: Env,
     ) -> Self {
         Self {
+            gate,
             stream_idx,
             start,
             end,
@@ -47,7 +51,7 @@ impl Grain {
     }
 
     pub fn normalized_pos(&self, buf: &StereoBuffer) -> f32 {
-        if let Some(idx) = self.idx() {
+        if let Some(idx) = self.gated_idx() {
             idx / (buf.len as f32)
         } else {
             -1.
@@ -55,7 +59,7 @@ impl Grain {
     }
 
     pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
-        let mut frame = if let Some(idx) = self.idx() {
+        let mut frame = if let Some(idx) = self.gated_idx() {
             sample.sub_frame(idx)
         } else {
             return [0., 0.];
@@ -83,6 +87,14 @@ impl Grain {
             None
         } else {
             Some(idx)
+        }
+    }
+
+    fn gated_idx(&self) -> Option<f32> {
+        if self.gate {
+            self.idx()
+        } else {
+            None
         }
     }
 
@@ -117,7 +129,7 @@ mod tests {
     fn test_playback() {
         let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
         let buf = StereoBuffer::new_from(data[0].len(), data);
-        let mut grain = Grain::new(0, 1., 2., 1., 1., 0.5, Env::None);
+        let mut grain = Grain::new(true, 0, 1., 2., 1., 1., 0.5, Env::None);
 
         assert!(grain.alive());
 

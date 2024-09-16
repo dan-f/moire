@@ -1,6 +1,7 @@
 import { Env } from "./Env";
 
 export interface T {
+  gate: number;
   subdivision: number;
   grainStart: number;
   grainSizeMs: number;

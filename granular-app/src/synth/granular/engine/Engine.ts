@@ -1,10 +1,10 @@
 import { ConsoleLogger } from "../../../lib/ConsoleLogger";
-import { range } from "../../../lib/iter";
+import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
 import * as PP from "../ProcessorParam";
-import * as Stream from "../Stream";
+import * as StreamParams from "../StreamParams";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
 
@@ -21,8 +21,8 @@ export class Engine {
   private audioBufCapacity: number;
   private audioBuffer: Buffer.T = Buffer.create(2);
   private playheadBuffers: Buffer.T[] = Array.from(
-    range(Config.MaxStreams),
-  ).map(() => Buffer.create(1));
+    repeat(Config.MaxStreams, () => Buffer.create(1)),
+  );
 
   constructor(
     module: WebAssembly.Module,
@@ -65,6 +65,9 @@ export class Engine {
       }
       const [streamId, param] = result;
       switch (param) {
+        case "gate":
+          this.instance.exports.set_stream_gate(this.engine, streamId, val);
+          break;
         case "subdivision":
           this.instance.exports.set_stream_subdivision(
             this.engine,
@@ -161,7 +164,7 @@ export class Engine {
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 
-  addStream(stream: Stream.T): number | undefined {
+  addStream(stream: StreamParams.T): number | undefined {
     const id = this.instance.exports.add_stream(
       this.engine,
       stream.subdivision,

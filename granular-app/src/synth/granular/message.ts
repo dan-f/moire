@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import * as Stream from "./Stream";
+import * as StreamParams from "./StreamParams";
 
 /**
  * Request payloads passed into the `GranularNode.port`
@@ -36,7 +36,7 @@ export namespace UpdateSample {
 export namespace AddStream {
   export interface Req extends BaseRequest {
     type: ReqType.AddStream;
-    stream: Stream.T;
+    stream: StreamParams.T;
   }
   export interface Rsp extends BaseResponse {
     type: RspType.StreamAdded;

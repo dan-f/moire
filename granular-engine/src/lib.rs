@@ -120,6 +120,11 @@ pub unsafe extern "C" fn add_stream(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn set_stream_gate(engine: *mut Engine, stream_id: usize, gate: u32) {
+    engine.as_mut().unwrap().set_stream_gate(stream_id, gate);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn set_stream_subdivision(
     engine: *mut Engine,
     stream_id: usize,
