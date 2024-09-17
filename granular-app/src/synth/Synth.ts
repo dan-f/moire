@@ -27,11 +27,9 @@ export class Synth {
     }
   }
 
-  async toggleWebAudioPlayState(): Promise<AudioContextState> {
+  async resumeWebAudio(): Promise<AudioContextState> {
     if (this.ctx.state !== "running") {
       await this.ctx.resume();
-    } else {
-      await this.ctx.suspend();
     }
     return this.ctx.state;
   }

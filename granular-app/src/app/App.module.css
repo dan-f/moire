@@ -1,5 +1,6 @@
-.card {
-  padding: 2em;
+.sample {
+  display: flex;
+  flex-direction: column;
 }
 
 .read-the-docs {

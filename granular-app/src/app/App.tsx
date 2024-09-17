@@ -20,11 +20,7 @@ function ProvidedApp() {
 
   return (
     <>
-      <h1>Granular</h1>
-      <button onClick={synth.toggleWebAudioPlayState.bind(synth)}>
-        toggle audio
-      </button>
-      <div className={cls.card}>
+      <div onClick={() => synth.resumeWebAudio()} className={cls.sample}>
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
       </div>
