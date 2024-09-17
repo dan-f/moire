@@ -5,6 +5,7 @@ import cls from "./App.module.css";
 import { AppContext, useSynth } from "./AppContext";
 import { globals } from "./AppGlobals";
 import { FileUpload } from "./FileUpload";
+import { Midi } from "./Midi";
 import { Sample } from "./Sample";
 
 function ProvidedApp() {
@@ -21,12 +22,13 @@ function ProvidedApp() {
     <>
       <h1>Granular</h1>
       <button onClick={synth.toggleWebAudioPlayState.bind(synth)}>
-        toggle playback
+        toggle audio
       </button>
       <div className={cls.card}>
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
       </div>
+      <Midi />
     </>
   );
 }

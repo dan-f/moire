@@ -70,6 +70,12 @@ export class Synth {
     );
   }
 
+  setStreamParams(streamId: number, params: Partial<StreamParams.T>) {
+    for (const [key, val] of Object.entries(params)) {
+      this.setStreamParam(streamId, key as StreamParams.Key, val);
+    }
+  }
+
   setStreamParam(
     streamId: number,
     key: StreamParams.Key,
@@ -79,11 +85,14 @@ export class Synth {
     if (!param) {
       return false;
     }
-    if (SynthState.streamEnabled(SynthState.getState(this.state$), streamId)) {
-      this.setParamNow(param, value);
-      return true;
+    if (
+      !SynthState.streamEnabled(SynthState.getState(this.state$), streamId) &&
+      key === "gate"
+    ) {
+      return false;
     }
-    return false;
+    this.setParamNow(param, value);
+    return true;
   }
 
   playheadPosition(streamId: number): number {
