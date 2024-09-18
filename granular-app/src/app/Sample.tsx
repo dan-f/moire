@@ -110,7 +110,7 @@ class SampleAnimation {
 
   private drawPlayheads(ctx: CanvasRenderingContext2D) {
     ctx.strokeStyle = "black";
-    for (let s = 0; s < Config.MaxStreams; s++) {
+    for (let s = 0; s < Config.NumStreams; s++) {
       const x = this.synth.playheadPosition(s) * WIDTH;
       if (x > 0) {
         ctx.beginPath();

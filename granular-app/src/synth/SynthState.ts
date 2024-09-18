@@ -33,5 +33,5 @@ export const toggleStreamEnabled =
   };
 
 const initial: T = {
-  streams: Array.from(repeat(Config.MaxStreams, () => true)),
+  streams: Array.from(repeat(Config.NumStreams, () => true)),
 };

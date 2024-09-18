@@ -1,4 +1,12 @@
+.synth {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
 .sample {
+  grid-column: 1 / 7;
+
   display: flex;
   flex-direction: column;
 }

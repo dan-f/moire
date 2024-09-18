@@ -21,7 +21,7 @@ export class Engine {
   private audioBufCapacity: number;
   private audioBuffer: Buffer.T = Buffer.create(2);
   private playheadBuffers: Buffer.T[] = Array.from(
-    repeat(Config.MaxStreams, () => Buffer.create(1)),
+    repeat(Config.NumStreams, () => Buffer.create(1)),
   );
 
   constructor(
@@ -195,7 +195,7 @@ export class Engine {
       this.audioBufLen,
     );
 
-    for (let i = 0; i < Config.MaxStreams; i++) {
+    for (let i = 0; i < Config.NumStreams; i++) {
       this.playheadBuffers[i][0] = this.channelView(
         this.instance.exports.playhead_buf(this.engine, i),
         this.audioBufLen,

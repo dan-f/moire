@@ -1,16 +1,21 @@
 import { useState } from "react";
 import * as AsyncResult from "../lib/AsyncResult";
+import { mapNoteEvents, noteEvents$, toStreamGates } from "../midi";
 import { Buffer } from "../synth";
 import { useSynth } from "./AppContext";
 import { FileUpload } from "./FileUpload";
-import { Midi } from "./Midi";
 import { Sample } from "./Sample";
 import cls from "./Synth.module.css";
+import { useSubscription } from "./hooks/observable";
 
 export function Synth() {
   const synth = useSynth();
   const [sampleResult, setSampleResult] =
     useState<AsyncResult.T<Buffer.UploadResult>>();
+
+  useSubscription(mapNoteEvents(toStreamGates, noteEvents$), (params) => {
+    synth.setParams(params);
+  });
 
   async function handleUpload(file: File) {
     setSampleResult(AsyncResult.loading());
@@ -18,12 +23,11 @@ export function Synth() {
   }
 
   return (
-    <>
-      <div onClick={() => synth.resumeWebAudio()} className={cls.sample}>
+    <div className={cls.synth} onClick={() => synth.resumeWebAudio()}>
+      <div className={cls.sample}>
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
       </div>
-      <Midi />
-    </>
+    </div>
   );
 }

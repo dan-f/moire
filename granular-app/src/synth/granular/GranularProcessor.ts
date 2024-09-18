@@ -26,7 +26,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       sampleRate,
       outputBufCapacity: 2048,
       outputBufLen: 128,
-      maxStreams: Config.MaxStreams,
+      maxStreams: Config.NumStreams,
     });
 
     serve(this.port, this.handleRequest.bind(this));
@@ -61,7 +61,7 @@ class GranularProcessor extends AudioWorkletProcessor {
 
     Buffer.copy(srcAudio, dstAudio);
 
-    for (let i = 0; i < Config.MaxStreams; i++) {
+    for (let i = 0; i < Config.NumStreams; i++) {
       Buffer.copy(srcPlayheads[i], dstPlayheads[i]);
     }
 
@@ -86,7 +86,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 
   private static allStreamParamDescriptors(): ParamDescriptor[] {
-    return Array.from(range(Config.MaxStreams)).flatMap(
+    return Array.from(range(Config.NumStreams)).flatMap(
       GranularProcessor.perStreamParamDescriptors,
     );
   }
