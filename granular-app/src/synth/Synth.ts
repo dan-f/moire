@@ -61,10 +61,13 @@ export class Synth {
     return result;
   }
 
+  getParamVal(key: SynthParam.T): number | undefined {
+    return this.findParam(key)?.value;
+  }
+
   setParam(key: SynthParam.T, val: number) {
-    const param = this.granularNode.parameters.get(key);
+    const param = this.findParam(key);
     if (!param) {
-      this.log.info("unknown parameter key", { key });
       return;
     }
     this.setParamNow(param, val);
@@ -115,6 +118,14 @@ export class Synth {
       type: Msg.ReqType.UpdateSample,
       sample,
     });
+  }
+
+  private findParam(key: SynthParam.T): AudioParam | undefined {
+    const param = this.granularNode.parameters.get(key);
+    if (!param) {
+      this.log.info("unknown parameter key", { key });
+    }
+    return param;
   }
 
   private setParamNow(param: AudioParam, value: number) {

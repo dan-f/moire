@@ -20,7 +20,7 @@ import { Config } from "./synth/granular";
 
 const log = new ConsoleLogger("midi");
 
-export const noteEvents$ = defer(enableMidi).pipe(
+export const noteEvents$: Observable<NoteMessageEvent> = defer(enableMidi).pipe(
   map((w) => w.inputs[0]),
   concatMap((input) =>
     merge(noteEvent$("noteon", input), noteEvent$("noteoff", input)),
@@ -66,13 +66,13 @@ type NoteEvent = "noteon" | "noteoff";
 
 function noteEvent$(
   event: NoteEvent,
-  input: Input,
+  input?: Input,
 ): Observable<NoteMessageEvent> {
   const addHandler = (handler: InputEventMap[NoteEvent]) => {
-    input.addListener(event, handler);
+    input?.addListener(event, handler);
   };
   const removeHandler = (handler: InputEventMap[NoteEvent]) => {
-    input.removeListener(event, handler);
+    input?.removeListener(event, handler);
   };
   return fromEventPattern(addHandler, removeHandler);
 }

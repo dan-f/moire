@@ -4,7 +4,7 @@ import { serve } from "../../lib/messaging";
 import * as Buffer from "../Buffer";
 import { Config } from "./Config";
 import { Engine } from "./engine";
-import { MAX_ENV, MIN_ENV } from "./Env";
+import { Max, Min } from "./Env";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 import { ReqType, Response, RspType, type Request } from "./message";
 import * as PP from "./ProcessorParam";
@@ -149,8 +149,8 @@ class GranularProcessor extends AudioWorkletProcessor {
         name: name("env"),
         automationRate: "k-rate",
         defaultValue: 1,
-        minValue: MIN_ENV,
-        maxValue: MAX_ENV,
+        minValue: Min,
+        maxValue: Max,
       },
     ];
   }

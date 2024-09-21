@@ -1,12 +1,15 @@
 import { useState } from "react";
 import * as AsyncResult from "../lib/AsyncResult";
+import { range } from "../lib/iter";
 import { mapNoteEvents, noteEvents$, toStreamGates } from "../midi";
 import { Buffer } from "../synth";
+import { Config } from "../synth/granular";
 import { useSynth } from "./AppContext";
 import { FileUpload } from "./FileUpload";
-import { Sample } from "./Sample";
-import cls from "./Synth.module.css";
 import { useSubscription } from "./hooks/observable";
+import { Sample } from "./Sample";
+import { Stream } from "./Stream";
+import cls from "./Synth.module.css";
 
 export function Synth() {
   const synth = useSynth();
@@ -28,6 +31,11 @@ export function Synth() {
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
       </div>
+      {[...range(Config.NumStreams)].map((stream) => (
+        <div key={stream} className={cls.stream}>
+          <Stream stream={stream} />
+        </div>
+      ))}
     </div>
   );
 }

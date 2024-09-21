@@ -9,5 +9,5 @@ export const enum Env {
   Rxpo,
 }
 
-export const MIN_ENV = 0;
-export const MAX_ENV = 4;
+export const Min = 0;
+export const Max = 4;
