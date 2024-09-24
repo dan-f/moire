@@ -15,7 +15,7 @@ export function Stream(props: StreamProps) {
   }
 
   return (
-    <div className={cls.container}>
+    <div className={[cls.container, cls[`stream-${stream}`]].join(" ")}>
       <Param.Discrete param={synthParam("subdivision")} range={[1, 100]} />
       <Param.Knob param={synthParam("grainStart")} />
       <Param.Knob param={synthParam("grainSizeMs")} range={[10, 500]} />

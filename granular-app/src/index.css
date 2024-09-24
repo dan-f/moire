@@ -13,6 +13,49 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+
+    --stream-color-0: #2c2772;
+    --stream-color-1: #7b2a8d;
+    --stream-color-2: #aa2c63;
+    --stream-color-3: #c95b2c;
+    --stream-color-4: #d3db39;
+    --stream-color-5: #6ce44e;
+    --stream-color-6: #64edaf;
+    --stream-color-7: #7cd0f4;
+    --stream-color-8: #9a95f9;
+    --stream-color-9: #edb0fd;
+    --stream-color-10: #ffcce3;
+    --stream-color-11: #fff0eb;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stream-color-0: #2c2772;
+    --stream-color-1: #7b2a8d;
+    --stream-color-2: #aa2c63;
+    --stream-color-3: #c95b2c;
+    --stream-color-4: #d3db39;
+    --stream-color-5: #6ce44e;
+    --stream-color-6: #64edaf;
+    --stream-color-7: #7cd0f4;
+    --stream-color-8: #9a95f9;
+    --stream-color-9: #edb0fd;
+    --stream-color-10: #ffcce3;
+    --stream-color-11: #fff0eb;
+  }
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -59,17 +102,4 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }

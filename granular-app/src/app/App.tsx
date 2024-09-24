@@ -2,13 +2,16 @@ import { AppContext } from "./AppContext";
 import { globals } from "./AppGlobals";
 import { Drag } from "./Drag";
 import { Synth } from "./Synth";
+import { ThemeProvider } from "./theme";
 
 export function App() {
   return (
     <AppContext.Provider value={globals}>
-      <Drag.Area>
-        <Synth />
-      </Drag.Area>
+      <ThemeProvider>
+        <Drag.Area>
+          <Synth />
+        </Drag.Area>
+      </ThemeProvider>
     </AppContext.Provider>
   );
 }
