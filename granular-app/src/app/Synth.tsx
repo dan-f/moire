@@ -10,7 +10,7 @@ import { FileUpload } from "./FileUpload";
 import { useSubscription } from "./hooks/observable";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
-import cls from "./Synth.module.css";
+import style from "./Synth.module.css";
 
 export function Synth() {
   const synth = useSynth();
@@ -27,13 +27,13 @@ export function Synth() {
   }
 
   return (
-    <div className={cls.synth} onClick={() => synth.resumeWebAudio()}>
-      <div className={cls.sample}>
+    <div className={style.container} onClick={() => synth.resumeWebAudio()}>
+      <div className={style.sample}>
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
       </div>
       {[...range(Config.NumStreams)].map((stream) => (
-        <div key={stream} className={cls.stream}>
+        <div key={stream} className={style.stream}>
           <Stream stream={stream} />
         </div>
       ))}
@@ -48,9 +48,9 @@ const gateStreams: NoteEventMapper = (event) => {
   }
   switch (event.type) {
     case "noteon":
-      return [[SynthParam.forStream(stream, "gate"), 1]];
+      return [[SynthParam.packStreamParam(stream, "gate"), 1]];
     case "noteoff":
-      return [[SynthParam.forStream(stream, "gate"), 0]];
+      return [[SynthParam.packStreamParam(stream, "gate"), 0]];
     default:
       return;
   }

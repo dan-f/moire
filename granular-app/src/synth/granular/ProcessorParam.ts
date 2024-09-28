@@ -18,6 +18,13 @@ export type StreamParam = `stream_${number}_${keyof StreamParams.T}`;
 export type ProcessorParams = Record<T, Float32Array>;
 
 /**
+ * Test whether the given param key is stream-specific
+ */
+export function isStreamParam(t: T): t is StreamParam {
+  return t.startsWith("stream");
+}
+
+/**
  * Get the stream param for a given stream param
  */
 export function packStreamParam(

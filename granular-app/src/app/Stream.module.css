@@ -1,59 +1,66 @@
-.container {
-  --accent: lightpink;
+@value sm from "../ui-lib/sizing.module.css";
 
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;
-
   width: 100%;
   height: 100%;
-  border: 1px solid var(--test-border-color);
+  padding: sm;
+
+  &.disabled {
+    background-color: darkgrey;
+  }
 }
 
-.stream-0 {
+.container.disabled {
+  background-color: darkgrey;
+}
+
+.stream0 {
   background-color: var(--stream-color-0);
 }
 
-.stream-1 {
+.stream1 {
   background-color: var(--stream-color-1);
 }
 
-.stream-2 {
+.stream2 {
   background-color: var(--stream-color-2);
 }
 
-.stream-3 {
+.stream3 {
   background-color: var(--stream-color-3);
 }
 
-.stream-4 {
+.stream4 {
   background-color: var(--stream-color-4);
 }
 
-.stream-5 {
+.stream5 {
   background-color: var(--stream-color-5);
 }
 
-.stream-6 {
+.stream6 {
   background-color: var(--stream-color-6);
 }
 
-.stream-7 {
+.stream7 {
   background-color: var(--stream-color-7);
 }
 
-.stream-8 {
+.stream8 {
   background-color: var(--stream-color-8);
 }
 
-.stream-9 {
+.stream9 {
   background-color: var(--stream-color-9);
 }
 
-.stream-10 {
+.stream10 {
   background-color: var(--stream-color-10);
 }
 
-.stream-11 {
+.stream11 {
   background-color: var(--stream-color-11);
 }

@@ -1,0 +1,7 @@
+@value xs from "./sizing.module.css";
+
+.container {
+  display: flex;
+  border: xs solid var(--foreground-secondary);
+  border-radius: xs;
+}

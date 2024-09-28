@@ -1,3 +1,4 @@
+import { GridLayout } from "../ui-lib/GridLayout";
 import { AppContext } from "./AppContext";
 import { globals } from "./AppGlobals";
 import { Drag } from "./Drag";
@@ -9,7 +10,9 @@ export function App() {
     <AppContext.Provider value={globals}>
       <ThemeProvider>
         <Drag.Area>
-          <Synth />
+          <GridLayout>
+            <Synth />
+          </GridLayout>
         </Drag.Area>
       </ThemeProvider>
     </AppContext.Provider>

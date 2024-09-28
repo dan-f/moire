@@ -2,9 +2,10 @@ import { RefObject, useCallback, useMemo, useRef } from "react";
 import * as AsyncResult from "../lib/AsyncResult";
 import { Buffer, Synth } from "../synth";
 import { Config } from "../synth/granular";
+import { Bordered } from "../ui-lib/Bordered";
 import { useSynth } from "./AppContext";
 import { useAnimationFrame } from "./hooks/animation";
-import cls from "./Sample.module.css";
+import style from "./Sample.module.css";
 import { Theme, useTheme } from "./theme";
 
 interface SampleProps {
@@ -17,12 +18,14 @@ export function Sample(props: SampleProps) {
   useAnimateSample(canvasRef, uploadResult);
 
   return (
-    <canvas
-      className={cls.canvas}
-      width={Width}
-      height={Height}
-      ref={canvasRef}
-    ></canvas>
+    <Bordered>
+      <canvas
+        className={style.canvas}
+        width={Width}
+        height={Height}
+        ref={canvasRef}
+      ></canvas>
+    </Bordered>
   );
 }
 
@@ -66,15 +69,17 @@ class SampleAnimation {
   }
 
   drawFrame() {
-    const ctx = this.canvasRef.current?.getContext("2d");
-    if (ctx) {
-      this.drawSampleWindow(ctx);
+    const canvasRef = this.canvasRef.current;
+    if (canvasRef) {
+      canvasRef.width = this.width;
+      canvasRef.height = this.height;
+      this.drawSampleWindow(canvasRef.getContext("2d")!);
     }
   }
 
   private drawSampleWindow(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, Width, Height);
+    ctx.fillStyle = this.theme.colors.backgroundSecondary;
+    ctx.fillRect(0, 0, this.width, this.height);
 
     if (
       this.uploadResult?.state === AsyncResult.ResultState.Done &&
@@ -86,15 +91,15 @@ class SampleAnimation {
   }
 
   private drawWave(ctx: CanvasRenderingContext2D, buffer: Buffer.T) {
-    const verticalOffset = Height / 2;
-    const centerPosition = Height / 2;
+    const verticalOffset = this.height / 2;
+    const centerPosition = this.height / 2;
 
-    ctx.strokeStyle = "black";
-    ctx.fillStyle = "black";
+    ctx.strokeStyle = this.theme.colors.foregroundSecondary;
+    ctx.lineWidth = 2;
     ctx.beginPath();
 
-    for (let x = 0; x < Width; x++) {
-      const subSample = (x / Width) * Buffer.length(buffer);
+    for (let x = 0; x < this.width; x++) {
+      const subSample = (x / this.width) * Buffer.length(buffer);
       const frame = Buffer.subFrame(buffer, subSample);
       ctx.lineTo(x, centerPosition + frame[0] * verticalOffset);
     }
@@ -103,17 +108,25 @@ class SampleAnimation {
   }
 
   private drawPlayheads(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "black";
     for (let s = 0; s < Config.NumStreams; s++) {
-      const x = this.synth.playheadPosition(s) * Width;
+      const x = this.synth.playheadPosition(s) * this.width;
       if (x > 0) {
         ctx.strokeStyle = this.theme.colors.stream[s];
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, Height);
+        ctx.lineTo(x, this.height);
         ctx.stroke();
       }
     }
+  }
+
+  private get width() {
+    return this.canvasRef.current?.clientWidth ?? Width;
+  }
+
+  private get height() {
+    return this.canvasRef.current?.clientHeight ?? Height;
   }
 }
 

@@ -4,6 +4,14 @@ import { ProcessorParam, StreamParams } from "./granular";
 // expand down the line
 export type T = ProcessorParam.T;
 
-export function forStream(stream: number, key: StreamParams.Key) {
+export function packStreamParam(stream: number, key: StreamParams.Key) {
   return ProcessorParam.packStreamParam(stream, key);
+}
+
+export function unpackStreamParam(
+  t: T,
+): [stream: number, key: StreamParams.Key] | undefined {
+  if (ProcessorParam.isStreamParam(t)) {
+    return ProcessorParam.unpackStreamParam(t);
+  }
 }

@@ -20,7 +20,7 @@ export class Synth {
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new ConsoleLogger(Synth.name);
-  private readonly state$ = SynthState.newSubject();
+  readonly state$ = SynthState.newSubject();
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
@@ -61,6 +61,13 @@ export class Synth {
     return result;
   }
 
+  toggleStreamEnabled(stream: number) {
+    SynthState.updateSubject(
+      this.state$,
+      SynthState.toggleStreamEnabled(stream),
+    );
+  }
+
   getParamVal(key: SynthParam.T): number | undefined {
     return this.findParam(key)?.value;
   }
@@ -69,6 +76,18 @@ export class Synth {
     const param = this.findParam(key);
     if (!param) {
       return;
+    }
+    const isStreamParam = SynthParam.unpackStreamParam(key);
+    if (isStreamParam) {
+      const [stream, key] = isStreamParam;
+      const streamEnabled = SynthState.streamEnabled(stream)(
+        this.state$.getValue(),
+      );
+      // Disabled streams don't accept param changes unless that param is to
+      // gate them off
+      if (!streamEnabled && !(key === "gate" && val === 0)) {
+        return;
+      }
     }
     this.setParamNow(param, val);
   }
