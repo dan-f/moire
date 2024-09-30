@@ -9,10 +9,11 @@ interface KnobProps {
   range: [min: number, max: number];
   setVal(val: number): void;
   dragEvents$: Observable<DragEvent.T>;
+  disabled?: boolean;
 }
 
 export function Knob(props: KnobProps) {
-  const { size, val, range, setVal, dragEvents$ } = props;
+  const { size, val, range, setVal, dragEvents$, disabled = false } = props;
 
   const deltaY$ = dragEvents$.pipe(
     pairwise(),
@@ -21,7 +22,9 @@ export function Knob(props: KnobProps) {
   );
 
   useSubscription(deltaY$, (y) => {
-    setVal(calcNewVal(val, range, y));
+    if (!disabled) {
+      setVal(calcNewVal(val, range, y));
+    }
   });
 
   return (

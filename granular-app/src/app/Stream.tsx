@@ -32,13 +32,29 @@ export function Stream(props: StreamProps) {
     <Bordered>
       <div className={classes.join(" ")}>
         <IconButton icon={<PowerIcon />} onClick={toggleEnabled} />
-        <Param.Discrete param={synthParam("subdivision")} range={[1, 100]} />
-        <Param.Knob param={synthParam("grainStart")} />
-        <Param.Knob param={synthParam("grainSizeMs")} range={[10, 500]} />
-        <Param.Knob param={synthParam("gain")} />
-        <Param.Discrete param={synthParam("tune")} range={[-24, 24]} />
-        <Param.Knob param={synthParam("pan")} />
-        <Param.Discrete param={synthParam("env")} range={[Env.Min, Env.Max]} />
+        <Param.Discrete
+          param={synthParam("subdivision")}
+          enabled={enabled}
+          range={[1, 100]}
+        />
+        <Param.Knob param={synthParam("grainStart")} enabled={enabled} />
+        <Param.Knob
+          param={synthParam("grainSizeMs")}
+          enabled={enabled}
+          range={[10, 500]}
+        />
+        <Param.Knob param={synthParam("gain")} enabled={enabled} />
+        <Param.Discrete
+          param={synthParam("tune")}
+          enabled={enabled}
+          range={[-24, 24]}
+        />
+        <Param.Knob param={synthParam("pan")} enabled={enabled} />
+        <Param.Discrete
+          param={synthParam("env")}
+          enabled={enabled}
+          range={[Env.Min, Env.Max]}
+        />
       </div>
     </Bordered>
   );

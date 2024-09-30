@@ -4,6 +4,7 @@ import { useParamVal } from "./hooks";
 
 export function DiscreteParam(props: ParamProps.T) {
   const {
+    enabled,
     range: [min, max],
   } = ParamProps.withDefaultRange(props);
   const { val, set } = useParamVal(props);
@@ -16,6 +17,7 @@ export function DiscreteParam(props: ParamProps.T) {
 
   return (
     <input
+      disabled={!enabled}
       type="number"
       value={val}
       min={min}
