@@ -1,4 +1,5 @@
 /* 8-point grid-based sizing values */
+@value sz0: 0.125rem;
 @value sz1: 0.25rem;
 @value sz2: 0.5rem;
 @value sz3: 0.75rem;
@@ -9,6 +10,7 @@
 @value sz10: 2.5rem;
 
 /* Common sizes */
+@value xxs: sz0;
 @value xs: sz1;
 @value sm: sz2;
 @value md: sz4;

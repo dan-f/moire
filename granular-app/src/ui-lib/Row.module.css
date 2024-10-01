@@ -1,0 +1,48 @@
+@value xxs, xs, sm, md, lg from "./sizing.module.css";
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.gap-xxs {
+  gap: xxs;
+}
+
+.gap-xs {
+  gap: xs;
+}
+
+.gap-sm {
+  gap: sm;
+}
+
+.gap-md {
+  gap: md;
+}
+
+.gap-lg {
+  gap: lg;
+}
+
+.pad-xxs {
+  padding: xxs;
+}
+
+.pad-xs {
+  padding: xs;
+}
+
+.pad-sm {
+  padding: sm;
+}
+
+.pad-md {
+  padding: md;
+}
+
+.pad-lg {
+  padding: lg;
+}

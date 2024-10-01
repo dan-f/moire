@@ -1,4 +1,5 @@
 import { clamp } from "../../lib/math";
+import { NumberInput } from "../../ui-lib/NumberInput";
 import * as ParamProps from "./ParamProps";
 import { useParamVal } from "./hooks";
 
@@ -16,9 +17,8 @@ export function DiscreteParam(props: ParamProps.T) {
   }
 
   return (
-    <input
+    <NumberInput
       disabled={!enabled}
-      type="number"
       value={val}
       min={min}
       max={max}

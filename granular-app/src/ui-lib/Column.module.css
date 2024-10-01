@@ -1,0 +1,46 @@
+@value row: "./Row.module.css";
+
+.container {
+  composes: container from row;
+  flex-direction: column;
+}
+
+.gap-xxs {
+  composes: gap-xxs from row;
+}
+
+.gap-xs {
+  composes: gap-xs from row;
+}
+
+.gap-sm {
+  composes: gap-sm from row;
+}
+
+.gap-md {
+  composes: gap-md from row;
+}
+
+.gap-lg {
+  composes: gap-lg from row;
+}
+
+.pad-xxs {
+  composes: pad-xxs from row;
+}
+
+.pad-xs {
+  composes: pad-xs from row;
+}
+
+.pad-sm {
+  composes: pad-sm from row;
+}
+
+.pad-md {
+  composes: pad-md from row;
+}
+
+.pad-lg {
+  composes: pad-lg from row;
+}

@@ -1,1 +1,0 @@
-export { PowerIcon } from "./PowerIcon";

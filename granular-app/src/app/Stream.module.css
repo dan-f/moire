@@ -1,20 +1,12 @@
 @value sm from "../ui-lib/sizing.module.css";
 
 .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   height: 100%;
-  padding: sm;
 
   &.disabled {
     background-color: darkgrey;
   }
-}
-
-.container.disabled {
-  background-color: darkgrey;
 }
 
 .stream0 {

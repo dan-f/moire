@@ -1,8 +1,7 @@
-@value xs from "./sizing.module.css";
+@value xxs from "./sizing.module.css";
 
 .iconButton {
-  background-color: #ffffff80;
+  background-color: #fff0;
   border: none;
-  border-radius: xs;
-  padding: xs;
+  padding: xxs;
 }

@@ -1,0 +1,20 @@
+@value xxs, xs from "./sizing.module.css";
+
+.container {
+  display: flex;
+  flex-direction: row;
+}
+
+.input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+
+  border: none;
+  padding: xs;
+  text-align: center;
+}
+
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}

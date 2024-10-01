@@ -1,0 +1,7 @@
+@value md from "./sizing.module.css";
+
+.icon {
+  display: block;
+  width: md;
+  height: md;
+}

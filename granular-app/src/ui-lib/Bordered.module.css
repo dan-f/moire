@@ -1,7 +1,7 @@
-@value xs from "./sizing.module.css";
+@value xs, xxs from "./sizing.module.css";
 
 .container {
   display: flex;
-  border: xs solid var(--foreground-secondary);
+  border: xxs solid var(--foreground-secondary);
   border-radius: xs;
 }

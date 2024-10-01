@@ -3,12 +3,14 @@ import { select } from "../lib/observable";
 import { Env, type Synth, SynthParam, SynthState } from "../synth";
 import { StreamParams } from "../synth/granular";
 import { Bordered } from "../ui-lib/Bordered";
+import { Column } from "../ui-lib/Column";
+import { Icon } from "../ui-lib/Icon";
 import { IconButton } from "../ui-lib/IconButton";
 import { useSynth } from "./AppContext";
 import { Param } from "./Param";
 import style from "./Stream.module.css";
 import { useObservableState } from "./hooks/observable";
-import { PowerIcon } from "./icons";
+import { i18n } from "./i18n";
 
 interface StreamProps {
   stream: number;
@@ -23,38 +25,48 @@ export function Stream(props: StreamProps) {
     return SynthParam.packStreamParam(stream, key);
   }
 
-  const classes = [style.container, style[`stream${stream}`]];
+  const containerClasses = [style.container, style[`stream${stream}`]];
   if (!enabled) {
-    classes.push(style.disabled);
+    containerClasses.push(style.disabled);
   }
 
   return (
     <Bordered>
-      <div className={classes.join(" ")}>
-        <IconButton icon={<PowerIcon />} onClick={toggleEnabled} />
-        <Param.Discrete
-          param={synthParam("subdivision")}
-          enabled={enabled}
-          range={[1, 100]}
-        />
-        <Param.Knob param={synthParam("grainStart")} enabled={enabled} />
-        <Param.Knob
-          param={synthParam("grainSizeMs")}
-          enabled={enabled}
-          range={[10, 500]}
-        />
-        <Param.Knob param={synthParam("gain")} enabled={enabled} />
-        <Param.Discrete
-          param={synthParam("tune")}
-          enabled={enabled}
-          range={[-24, 24]}
-        />
-        <Param.Knob param={synthParam("pan")} enabled={enabled} />
-        <Param.Discrete
-          param={synthParam("env")}
-          enabled={enabled}
-          range={[Env.Min, Env.Max]}
-        />
+      <div className={containerClasses.join(" ")}>
+        <Column>
+          <IconButton
+            icon={
+              <Icon
+                name="power"
+                alt={i18n(enabled ? "DisableStream" : "EnableStream")}
+              />
+            }
+            onClick={toggleEnabled}
+          />
+          <Param.Discrete
+            param={synthParam("subdivision")}
+            enabled={enabled}
+            range={[1, 100]}
+          />
+          <Param.Knob param={synthParam("grainStart")} enabled={enabled} />
+          <Param.Knob
+            param={synthParam("grainSizeMs")}
+            enabled={enabled}
+            range={[10, 500]}
+          />
+          <Param.Knob param={synthParam("gain")} enabled={enabled} />
+          <Param.Discrete
+            param={synthParam("tune")}
+            enabled={enabled}
+            range={[-24, 24]}
+          />
+          <Param.Knob param={synthParam("pan")} enabled={enabled} />
+          <Param.Discrete
+            param={synthParam("env")}
+            enabled={enabled}
+            range={[Env.Min, Env.Max]}
+          />
+        </Column>
       </div>
     </Bordered>
   );
@@ -73,6 +85,9 @@ function useEnabled(
   );
 
   function toggleEnabled() {
+    if (enabled) {
+      synth.setParam(SynthParam.packStreamParam(stream, "gate"), 0);
+    }
     synth.toggleStreamEnabled(stream);
   }
 
