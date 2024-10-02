@@ -10,6 +10,7 @@
   -moz-appearance: textfield;
 
   border: none;
+  border-radius: xs;
   padding: xs;
   text-align: center;
 }

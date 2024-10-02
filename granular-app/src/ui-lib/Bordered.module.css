@@ -4,4 +4,5 @@
   display: flex;
   border: xxs solid var(--foreground-secondary);
   border-radius: xs;
+  overflow: hidden;
 }

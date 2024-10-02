@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { i18n } from "../app/i18n";
-import { Bordered } from "./Bordered";
 import { Icon } from "./Icon";
 import { IconButton } from "./IconButton";
 import style from "./NumberInput.module.css";
@@ -19,9 +18,7 @@ export function NumberInput(props: Props) {
         disabled={disabled}
         onClick={decrement}
       />
-      <Bordered>
-        <input ref={ref} {...props} size={1} className={style.input} />
-      </Bordered>
+      <input ref={ref} {...props} size={1} className={style.input} />
       <IconButton
         icon={<Icon name="arrowRight" alt={i18n("Increment")} />}
         disabled={disabled}
