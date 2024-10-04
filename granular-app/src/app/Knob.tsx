@@ -1,3 +1,4 @@
+import { createRef, useEffect } from "react";
 import { filter, map, pairwise, type Observable } from "rxjs";
 import { clamp } from "../lib/math";
 import { DragEvent } from "./Drag";
@@ -22,10 +23,14 @@ export function Knob(props: KnobProps) {
     map(([a, b]) => b.y - a.y),
   );
 
-  useSubscription(deltaY$, (y) => {
+  function set(val: number) {
     if (!disabled) {
-      setVal(calcNewVal(val, range, y));
+      setVal(val);
     }
+  }
+
+  useSubscription(deltaY$, (y) => {
+    set(calcNewVal(val, range, y));
   });
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -58,25 +63,48 @@ export function Knob(props: KnobProps) {
     }
 
     e.preventDefault();
-    setVal(clamp(val + delta, range[0], range[1]));
+    set(clamp(val + delta, range[0], range[1]));
   }
+
+  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
+    e.preventDefault();
+    set(calcNewVal(val, range, e.deltaY));
+  }
+
+  const ringRef = createRef<HTMLDivElement>();
+  const notchRef = createRef<HTMLDivElement>();
+
+  useEffect(() => {
+    const handleWheel = (e: Event) => {
+      if (e.target === ringRef.current || e.target === notchRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => document.removeEventListener("wheel", handleWheel);
+  }, [notchRef, ringRef]);
 
   return (
     <div
-      tabIndex={0}
+      ref={ringRef}
+      tabIndex={disabled ? -1 : 0}
       role="slider"
+      aria-disabled={disabled}
       aria-valuemin={range[0]}
       aria-valuemax={range[1]}
       aria-valuenow={val}
       onKeyDown={handleKeyDown}
+      onWheel={handleWheel}
       className={style.ring}
       style={{
         width: size,
         height: size,
-        transform: `scale(0.9) rotate(${valToTurn(val, range)}turn)`,
+        transform: `rotate(${valToTurn(val, range)}turn)`,
       }}
     >
-      <div className={style.notch} />
+      <div ref={notchRef} className={style.notch} />
     </div>
   );
 }
