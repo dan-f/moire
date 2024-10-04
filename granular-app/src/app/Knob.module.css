@@ -1,0 +1,16 @@
+@value black, lightgrey from "../ui-lib/color.module.css";
+@value xxs from "../ui-lib/sizing.module.css";
+
+.ring {
+  border-radius: 100%;
+  background-color: lightgrey;
+  border: xxs solid black;
+  display: flex;
+  justify-content: center;
+}
+
+.notch {
+  width: xxs;
+  background-color: black;
+  height: 20%;
+}

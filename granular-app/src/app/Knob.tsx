@@ -2,6 +2,7 @@ import { filter, map, pairwise, type Observable } from "rxjs";
 import { clamp } from "../lib/math";
 import { DragEvent } from "./Drag";
 import { useSubscription } from "./hooks/observable";
+import style from "./Knob.module.css";
 
 interface KnobProps {
   size: string;
@@ -27,26 +28,55 @@ export function Knob(props: KnobProps) {
     }
   });
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    const fullRange = range[1] - range[0];
+    const onePct = fullRange / 100;
+    const tenPct = fullRange / 10;
+
+    let delta: number;
+    switch (e.key) {
+      case "ArrowUp":
+        delta = onePct;
+        break;
+      case "ArrowDown":
+        delta = -onePct;
+        break;
+      case "PageUp":
+        delta = tenPct;
+        break;
+      case "PageDown":
+        delta = -tenPct;
+        break;
+      case "Home":
+        delta = range[0] - val;
+        break;
+      case "End":
+        delta = range[1] - val;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    setVal(clamp(val + delta, range[0], range[1]));
+  }
+
   return (
     <div
+      tabIndex={0}
+      role="slider"
+      aria-valuemin={range[0]}
+      aria-valuemax={range[1]}
+      aria-valuenow={val}
+      onKeyDown={handleKeyDown}
+      className={style.ring}
       style={{
         width: size,
         height: size,
-        borderRadius: "100%",
-        backgroundColor: "lightgray",
-        border: "0.1rem solid black",
         transform: `scale(0.9) rotate(${valToTurn(val, range)}turn)`,
-        display: "flex",
-        justifyContent: "center",
       }}
     >
-      <div
-        style={{
-          width: "0.1rem",
-          backgroundColor: "black",
-          height: "20%",
-        }}
-      />
+      <div className={style.notch} />
     </div>
   );
 }
