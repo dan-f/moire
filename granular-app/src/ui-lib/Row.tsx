@@ -1,3 +1,4 @@
+import { classes } from "./css";
 import styles from "./Row.module.css";
 import { type Size } from "./sizing";
 
@@ -10,11 +11,15 @@ interface Props {
 export function Row(props: Props) {
   const { children, gap = "sm", pad = "sm" } = props;
 
-  const classes = [
-    styles.container,
-    styles[`gap-${gap}`],
-    styles[`pad-${pad}`],
-  ].join(" ");
-
-  return <div className={classes}>{children}</div>;
+  return (
+    <div
+      className={classes(
+        styles.container,
+        styles[`gap-${gap}`],
+        styles[`pad-${pad}`],
+      )}
+    >
+      {children}
+    </div>
+  );
 }

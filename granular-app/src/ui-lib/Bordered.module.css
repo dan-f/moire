@@ -1,8 +1,8 @@
-@value xs, xxs from "./sizing.module.css";
+@value xs, border from "./sizing.module.css";
 
 .container {
   display: flex;
-  border: xxs solid var(--foreground-secondary);
+  border: border solid var(--foreground-secondary);
   border-radius: xs;
   overflow: hidden;
 }

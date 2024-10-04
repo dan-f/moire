@@ -1,8 +1,13 @@
-@value xxs, xs from "./sizing.module.css";
+@value xs from "./sizing.module.css";
 
 .container {
   display: flex;
   flex-direction: row;
+}
+
+.iconButton {
+  /* works better with :focus-visible styling */
+  z-index: 1;
 }
 
 .input {

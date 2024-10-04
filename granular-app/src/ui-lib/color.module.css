@@ -1,6 +1,8 @@
 @value black: #121813;
 @value slate: #253131;
 @value white: #f2ead5;
+@value lightgrey: hsl(50 10% 75% / 1);
+@value grey: hsl(50 10% 34% / 1);
 @value royalBlue: #234292;
 @value darkCrimson: #93240b;
 @value lightCrimson: #b84243;

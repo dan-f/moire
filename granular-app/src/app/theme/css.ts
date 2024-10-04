@@ -1,5 +1,6 @@
 import { range } from "../../lib/iter";
 import { Config } from "../../synth/granular";
+import { getCssVar } from "../../ui-lib/css";
 import { type Theme } from "./theme";
 
 export function loadTheme(): Theme {
@@ -16,12 +17,6 @@ export function loadTheme(): Theme {
   };
 
   return theme;
-}
-
-function getCssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(
-    `--${name}`,
-  );
 }
 
 function streamColorCssVar(i: number): string {

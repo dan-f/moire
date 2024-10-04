@@ -1,3 +1,4 @@
+@value border, xs from "./ui-lib/sizing.module.css";
 @value fontFamily, lineHeight, fontWeight from "./ui-lib/typography.module.css";
 @value (
   lightForeground,
@@ -40,6 +41,7 @@
   --foreground-secondary: lightForegroundSecondary;
   --background: lightBackground;
   --background-secondary: lightBackgroundSecondary;
+
   --stream-color-0: stream0;
   --stream-color-1: stream1;
   --stream-color-2: stream2;
@@ -100,4 +102,9 @@ button {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+:focus-visible {
+  outline: border solid var(--foreground);
+  border-radius: xs;
 }

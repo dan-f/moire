@@ -2,6 +2,7 @@
   black,
   slate,
   white,
+  grey,
   royalBlue,
   darkCrimson,
   lightCrimson,
@@ -26,7 +27,7 @@
 
 /* Dark mode */
 @value darkForeground: white;
-@value darkForegroundSecondary: moon;
+@value darkForegroundSecondary: grey;
 @value darkBackground: black;
 @value darkBackgroundSecondary: slate;
 

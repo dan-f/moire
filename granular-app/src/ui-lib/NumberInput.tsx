@@ -14,6 +14,7 @@ export function NumberInput(props: Props) {
   return (
     <div className={style.container}>
       <IconButton
+        className={style.iconButton}
         icon={<Icon name="arrowLeft" alt={i18n("Decrement")} />}
         disabled={disabled}
         onClick={decrement}

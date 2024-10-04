@@ -6,6 +6,7 @@ import { Bordered } from "../ui-lib/Bordered";
 import { Column } from "../ui-lib/Column";
 import { Icon } from "../ui-lib/Icon";
 import { IconButton } from "../ui-lib/IconButton";
+import { classes } from "../ui-lib/css";
 import { useSynth } from "./AppContext";
 import { Param } from "./Param";
 import style from "./Stream.module.css";
@@ -25,14 +26,15 @@ export function Stream(props: StreamProps) {
     return SynthParam.packStreamParam(stream, key);
   }
 
-  const containerClasses = [style.container, style[`stream${stream}`]];
-  if (!enabled) {
-    containerClasses.push(style.disabled);
-  }
+  const containerClasses = classes(
+    style.container,
+    style[`stream${stream}`],
+    !enabled ? style.disabled : undefined,
+  );
 
   return (
     <Bordered>
-      <div className={containerClasses.join(" ")}>
+      <div className={containerClasses}>
         <Column>
           <IconButton
             icon={

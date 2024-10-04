@@ -1,4 +1,5 @@
 import styles from "./Column.module.css";
+import { classes } from "./css";
 import { type Size } from "./sizing";
 
 interface Props {
@@ -10,11 +11,15 @@ interface Props {
 export function Column(props: Props) {
   const { children, gap = "sm", pad = "sm" } = props;
 
-  const classes = [
-    styles.container,
-    styles[`gap-${gap}`],
-    styles[`pad-${pad}`],
-  ].join(" ");
-
-  return <div className={classes}>{children}</div>;
+  return (
+    <div
+      className={classes(
+        styles.container,
+        styles[`gap-${gap}`],
+        styles[`pad-${pad}`],
+      )}
+    >
+      {children}
+    </div>
+  );
 }
