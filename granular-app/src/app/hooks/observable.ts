@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { type Observable } from "rxjs";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Subject, type Observable } from "rxjs";
 
 /**
  * Run an effect on every emitted value from the observable
@@ -23,4 +23,22 @@ export function useObservableState<T>(
   const [state, setState] = useState<T | undefined>(initial);
   useSubscription(obs$, setState);
   return state;
+}
+
+/**
+ * Returns an observable of values which are pushed via `capture`.
+ */
+export function useObservableCallback<T>(): [
+  values$: Observable<T>,
+  capture: (val: T) => void,
+] {
+  const values$ = useMemo(() => new Subject<T>(), []);
+  const capture = useCallback(
+    (e: T) => {
+      values$.next(e);
+    },
+    [values$],
+  );
+
+  return [values$, capture];
 }

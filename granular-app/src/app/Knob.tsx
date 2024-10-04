@@ -1,8 +1,8 @@
 import { createRef, useEffect } from "react";
-import { filter, map, pairwise, type Observable } from "rxjs";
+import { filter, map, merge, pairwise, type Observable } from "rxjs";
 import { clamp } from "../lib/math";
 import { DragEvent } from "./Drag";
-import { useSubscription } from "./hooks/observable";
+import { useObservableCallback, useSubscription } from "./hooks/observable";
 import style from "./Knob.module.css";
 
 interface KnobProps {
@@ -17,11 +17,12 @@ interface KnobProps {
 export function Knob(props: KnobProps) {
   const { size, val, range, setVal, dragEvents$, disabled = false } = props;
 
-  const deltaY$ = dragEvents$.pipe(
-    pairwise(),
-    filter(([a, _]) => a.type !== "DragEnd"),
-    map(([a, b]) => b.y - a.y),
-  );
+  const [wheel$, handleWheel] =
+    useObservableCallback<React.WheelEvent<HTMLDivElement>>();
+  const [key$, handleKeyDown] = useObservableCallback<React.KeyboardEvent>();
+
+  const ringRef = createRef<HTMLDivElement>();
+  const notchRef = createRef<HTMLDivElement>();
 
   function set(val: number) {
     if (!disabled) {
@@ -29,62 +30,27 @@ export function Knob(props: KnobProps) {
     }
   }
 
-  useSubscription(deltaY$, (y) => {
-    set(calcNewVal(val, range, y));
+  const dragDelta$ = dragEvents$.pipe(
+    pairwise(),
+    filter(([a, _]) => a.type !== "DragEnd"),
+    map(([a, b]) => b.y - a.y),
+    map((pixelDelta) => pixelDeltaToValDelta(range, pixelDelta)),
+  );
+
+  const wheelDelta$ = wheel$.pipe(
+    map((e) => wheelDeltaToValDelta(range, e.deltaY)),
+  );
+
+  const keyDelta$ = key$.pipe(
+    map((e) => keyEventToValDelta(range, e)),
+    filter((n) => typeof n !== "undefined"),
+  );
+
+  useSubscription(merge(dragDelta$, wheelDelta$, keyDelta$), (delta) => {
+    set(clamp(val + delta, range[0], range[1]));
   });
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    const fullRange = range[1] - range[0];
-    const onePct = fullRange / 100;
-    const tenPct = fullRange / 10;
-
-    let delta: number;
-    switch (e.key) {
-      case "ArrowUp":
-        delta = onePct;
-        break;
-      case "ArrowDown":
-        delta = -onePct;
-        break;
-      case "PageUp":
-        delta = tenPct;
-        break;
-      case "PageDown":
-        delta = -tenPct;
-        break;
-      case "Home":
-        delta = range[0] - val;
-        break;
-      case "End":
-        delta = range[1] - val;
-        break;
-      default:
-        return;
-    }
-
-    e.preventDefault();
-    set(clamp(val + delta, range[0], range[1]));
-  }
-
-  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
-    e.preventDefault();
-    set(calcNewVal(val, range, e.deltaY));
-  }
-
-  const ringRef = createRef<HTMLDivElement>();
-  const notchRef = createRef<HTMLDivElement>();
-
-  useEffect(() => {
-    const handleWheel = (e: Event) => {
-      if (e.target === ringRef.current || e.target === notchRef.current) {
-        e.preventDefault();
-      }
-    };
-
-    document.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => document.removeEventListener("wheel", handleWheel);
-  }, [notchRef, ringRef]);
+  usePreventWheelScrolling(notchRef, ringRef);
 
   return (
     <div
@@ -109,31 +75,61 @@ export function Knob(props: KnobProps) {
   );
 }
 
-const PixelScale = 1 / 75;
+function usePreventWheelScrolling(...refs: React.RefObject<Element>[]) {
+  useEffect(() => {
+    function handleWheel(e: Event) {
+      if (refs.some((ref) => ref.current === e.target)) {
+        e.preventDefault();
+      }
+    }
 
-function normalize(x: number, range: [min: number, max: number]): number {
-  const [min, max] = range;
-  return (x - min) / (max - min);
+    document.addEventListener("wheel", handleWheel, { passive: false });
+    return () => document.removeEventListener("wheel", handleWheel);
+  }, [refs]);
 }
 
-function denormalize(x: number, range: [min: number, max: number]): number {
-  const [min, max] = range;
-  return (max - min) * x + min;
-}
-
-function calcNewVal(
-  val: number,
+function pixelDeltaToValDelta(
   range: [min: number, max: number],
-  pixelDelta: number,
+  delta: number,
 ): number {
-  const normalized = clamp(
-    normalize(val, range) - pixelDelta * PixelScale,
-    0,
-    1,
-  );
-  return denormalize(normalized, range);
+  return (-delta / 75) * (range[1] - range[0]);
+}
+
+function wheelDeltaToValDelta(
+  range: [min: number, max: number],
+  delta: number,
+): number {
+  return (-delta / 1000) * (range[1] - range[0]);
+}
+
+function keyEventToValDelta(
+  range: [min: number, max: number],
+  e: React.KeyboardEvent<Element>,
+): number | undefined {
+  const fullRange = range[1] - range[0];
+  const onePct = fullRange / 100;
+  const tenPct = fullRange / 10;
+
+  const tbl: Record<string, number> = {
+    ArrowUp: onePct,
+    ArrowDown: -onePct,
+    PageUp: tenPct,
+    PageDown: -tenPct,
+    Home: Number.NEGATIVE_INFINITY,
+    End: Number.POSITIVE_INFINITY,
+  };
+
+  if (e.key in tbl) {
+    e.preventDefault();
+    return tbl[e.key];
+  }
 }
 
 function valToTurn(x: number, range: [min: number, max: number]): number {
   return (normalize(x, range) - 0.5) * 0.75;
+}
+
+function normalize(x: number, range: [min: number, max: number]): number {
+  const [min, max] = range;
+  return (x - min) / (max - min);
 }
