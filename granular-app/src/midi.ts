@@ -6,14 +6,19 @@ import {
   merge,
   type Observable,
 } from "rxjs";
-import { type Input, type InputEventMap, type NoteMessageEvent } from "webmidi";
-import { init } from "./init";
+import {
+  WebMidi,
+  type Input,
+  type InputEventMap,
+  type NoteMessageEvent,
+} from "webmidi";
+import { ConsoleLogger } from "./lib/ConsoleLogger";
 
 /**
  * Lazy observable of "noteon"/"noteoff" {@linkcode NoteMessageEvent}s.
  * Subscribing forces a MIDI permissions prompt.
  */
-export const noteEvents$: Observable<NoteMessageEvent> = defer(init).pipe(
+export const NoteMessageEvent$: Observable<NoteMessageEvent> = defer(init).pipe(
   map((w) => w.inputs[0]),
   concatMap((input) =>
     merge(noteEvent$("noteon", input), noteEvent$("noteoff", input)),
@@ -33,4 +38,16 @@ function noteEvent$(
     input?.removeListener(event, handler);
   };
   return fromEventPattern(addHandler, removeHandler);
+}
+
+const log = new ConsoleLogger("midi");
+
+async function init(): Promise<typeof WebMidi> {
+  try {
+    await WebMidi.enable();
+    return WebMidi;
+  } catch (error) {
+    log.info("could not enable MIDI", error as Error);
+    return WebMidi;
+  }
 }

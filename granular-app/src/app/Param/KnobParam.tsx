@@ -1,6 +1,6 @@
 import { type Observable } from "rxjs";
-import { Drag, DragEvent } from "../Drag";
-import { Knob } from "../Knob";
+import { DragEvent, DragTarget } from "../../ui-lib/Drag";
+import { Knob } from "../../ui-lib/Knob";
 import { useParamVal } from "./hooks";
 import * as ParamProps from "./ParamProps";
 
@@ -21,5 +21,5 @@ export function KnobParam(props: ParamProps.T) {
     );
   };
 
-  return <Drag.Target id={props.param} render={render} />;
+  return <DragTarget id={props.param} render={render} />;
 }

@@ -1,8 +1,11 @@
 import { createRef, useEffect } from "react";
 import { filter, map, merge, pairwise, type Observable } from "rxjs";
+import {
+  useObservableCallback,
+  useSubscription,
+} from "../app/hooks/observable";
 import { clamp } from "../lib/math";
 import { DragEvent } from "./Drag";
-import { useObservableCallback, useSubscription } from "./hooks/observable";
 import style from "./Knob.module.css";
 
 interface KnobProps {
