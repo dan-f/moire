@@ -1,7 +1,7 @@
 import { range } from "../../lib/iter";
 import { Config } from "../../synth/granular";
 import { getCssVar } from "../../ui-lib/css";
-import { type Theme } from "./theme";
+import { type Theme } from "./Theme";
 
 export function loadTheme(): Theme {
   const theme = {
