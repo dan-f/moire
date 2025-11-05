@@ -11,6 +11,7 @@ const toNote = pipe(
  */
 export const KeyboardNoteEvent$ = merge(
   fromEvent<KeyboardEvent>(window, "keydown").pipe(
+    filter((e) => !e.repeat),
     toNote,
     map(NoteEvent.noteon),
   ),

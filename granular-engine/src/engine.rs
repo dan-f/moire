@@ -186,7 +186,7 @@ impl Engine {
 
                 for grain in self.grains.entries() {
                     let frame = grain.render_frame(sample_buf);
-                    self.output_buf.append_frame(i, &frame);
+                    self.output_buf.sum_frame(i, &frame);
 
                     let stream_idx = grain.stream_idx();
                     let position = grain.normalized_pos(sample_buf);

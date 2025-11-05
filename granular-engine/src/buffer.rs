@@ -52,7 +52,7 @@ impl<const C: usize> Buffer<C> {
         }
     }
 
-    pub fn append_frame(&mut self, i: usize, frame: &[f32; C]) {
+    pub fn sum_frame(&mut self, i: usize, frame: &[f32; C]) {
         for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
             dst_channel[i] += *src_sample;
         }
