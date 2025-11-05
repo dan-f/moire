@@ -1,4 +1,4 @@
-import { ConsoleLogger } from "../../../lib/ConsoleLogger";
+import { DefaultLogger } from "../../../lib/DefaultLogger";
 import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
@@ -48,7 +48,7 @@ export class Engine {
       options.maxStreams,
     );
 
-    this.log = new ConsoleLogger(Engine.name);
+    this.log = new DefaultLogger(Engine.name);
 
     this.createBufferViews();
   }

@@ -12,7 +12,7 @@ import {
   type InputEventMap,
   type NoteMessageEvent,
 } from "webmidi";
-import { ConsoleLogger } from "./lib/ConsoleLogger";
+import { DefaultLogger } from "./lib/DefaultLogger";
 
 /**
  * Lazy observable of "noteon"/"noteoff" {@linkcode NoteMessageEvent}s.
@@ -40,7 +40,7 @@ function noteEvent$(
   return fromEventPattern(addHandler, removeHandler);
 }
 
-const log = new ConsoleLogger("midi");
+const log = new DefaultLogger("midi");
 
 async function init(): Promise<typeof WebMidi> {
   try {

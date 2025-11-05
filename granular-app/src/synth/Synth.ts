@@ -1,4 +1,4 @@
-import { ConsoleLogger } from "../lib/ConsoleLogger";
+import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
 import {
@@ -19,7 +19,7 @@ export class Synth {
   private readonly granularNode: GranularNode;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
-  private readonly log = new ConsoleLogger(Synth.name);
+  private readonly log = new DefaultLogger(Synth.name);
   readonly state$ = SynthState.newSubject();
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {

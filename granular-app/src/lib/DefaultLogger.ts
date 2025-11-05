@@ -1,6 +1,6 @@
 import { type Logger } from "./Logger";
 
-export class ConsoleLogger implements Logger {
+export class DefaultLogger implements Logger {
   private label: string;
 
   constructor(context: string) {

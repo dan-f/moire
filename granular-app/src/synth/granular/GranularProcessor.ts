@@ -1,4 +1,4 @@
-import { ConsoleLogger } from "../../lib/ConsoleLogger";
+import { DefaultLogger } from "../../lib/DefaultLogger";
 import { range } from "../../lib/iter";
 import { serve } from "../../lib/messaging";
 import * as Buffer from "../Buffer";
@@ -17,7 +17,7 @@ import * as StreamParams from "./StreamParams";
  */
 class GranularProcessor extends AudioWorkletProcessor {
   private readonly engine: Engine;
-  private readonly log = new ConsoleLogger(GranularProcessor.name);
+  private readonly log = new DefaultLogger(GranularProcessor.name);
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
