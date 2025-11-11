@@ -26,7 +26,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       sampleRate,
       outputBufCapacity: 2048,
       outputBufLen: 128,
-      maxStreams: Config.NumStreams,
+      numStreams: Config.NumStreams,
     });
 
     serve(this.port, this.handleRequest.bind(this));
@@ -42,6 +42,23 @@ class GranularProcessor extends AudioWorkletProcessor {
         defaultValue: 120,
         minValue: 40,
         maxValue: 300,
+      },
+      // TODO(poly): refactor these/rework `allStreamParamDescriptors` to
+      // generate per-voice param descriptors (and a level down per-stream
+      // descriptors)
+      {
+        name: "gate",
+        automationRate: "k-rate",
+        defaultValue: 0,
+        minValue: 0,
+        maxValue: 1,
+      },
+      {
+        name: "note",
+        automationRate: "k-rate",
+        defaultValue: 0,
+        minValue: 0,
+        maxValue: 127,
       },
       ...GranularProcessor.allStreamParamDescriptors(),
     ];
@@ -74,13 +91,14 @@ class GranularProcessor extends AudioWorkletProcessor {
         this.engine.updateSample(req.sample);
         return { type: RspType.SampleUpdated };
       case ReqType.AddStream: {
+        // TODO delete these AddStream/DeleteStream request types
         return {
           type: RspType.StreamAdded,
-          streamId: this.engine.addStream(req.stream),
+          streamId: 999,
         };
       }
       case ReqType.DeleteStream:
-        this.engine.deleteStream(req.streamId);
+        // TODO as stated above, delete me too
         return { type: RspType.StreamDeleted };
     }
   }
@@ -96,13 +114,6 @@ class GranularProcessor extends AudioWorkletProcessor {
   ): ParamDescriptor[] {
     const name = (key: StreamParams.Key) => PP.packStreamParam(streamId, key);
     return [
-      {
-        name: name("gate"),
-        automationRate: "k-rate",
-        defaultValue: 0,
-        minValue: 0,
-        maxValue: 1,
-      },
       {
         name: name("subdivision"),
         automationRate: "k-rate",

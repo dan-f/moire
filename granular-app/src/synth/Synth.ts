@@ -1,13 +1,7 @@
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
-import {
-  Config,
-  GranularNode,
-  Message as Msg,
-  ProcessorParam,
-  StreamParams,
-} from "./granular";
+import { Config, GranularNode, Message as Msg } from "./granular";
 import * as SynthParam from "./SynthParam";
 import * as SynthState from "./SynthState";
 
@@ -27,7 +21,6 @@ export class Synth {
     this.granularNode = granularNode;
     this.analysers = Array(Config.NumStreams);
     for (const s of range(Config.NumStreams)) {
-      this.addStream(StreamParams.initial);
       const analyser = ctx.createAnalyser();
       this.granularNode.connect(analyser, s + 1, 0);
       this.analysers[s] = analyser;
@@ -79,13 +72,11 @@ export class Synth {
     }
     const isStreamParam = SynthParam.unpackStreamParam(key);
     if (isStreamParam) {
-      const [stream, key] = isStreamParam;
+      const [stream] = isStreamParam;
       const streamEnabled = SynthState.streamEnabled(stream)(
         this.state$.getValue(),
       );
-      // Disabled streams don't accept param changes unless that param is to
-      // gate them off
-      if (!streamEnabled && !(key === "gate" && val === 0)) {
+      if (!streamEnabled) {
         return;
       }
     }
@@ -107,29 +98,6 @@ export class Synth {
     const granularNode = await GranularNode.new(ctx);
     granularNode.connect(ctx.destination);
     return new Synth(ctx, granularNode);
-  }
-
-  private async addStream(stream: StreamParams.T): Promise<number | undefined> {
-    const { streamId } = await this.granularNode.request<
-      Msg.AddStream.Req,
-      Msg.AddStream.Rsp
-    >({
-      type: Msg.ReqType.AddStream,
-      stream: stream,
-    });
-
-    if (typeof streamId === "number") {
-      for (const [key, val] of Object.entries(stream)) {
-        const paramKey = key as StreamParams.Key;
-        const paramVal: StreamParams.T[typeof paramKey] = val;
-        this.setParam(
-          ProcessorParam.packStreamParam(streamId, paramKey),
-          paramVal,
-        );
-      }
-    }
-
-    return streamId;
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {

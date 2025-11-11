@@ -1,7 +1,6 @@
 import { Env } from "./Env";
 
 export interface T {
-  gate: number;
   subdivision: number;
   grainStart: number;
   grainSizeMs: number;
@@ -14,7 +13,6 @@ export interface T {
 export type Key = keyof T;
 
 export const initial: T = {
-  gate: 0,
   subdivision: 1,
   grainStart: 0,
   grainSizeMs: 150,

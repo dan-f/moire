@@ -4,13 +4,12 @@ import { type NoteMessageEvent } from "webmidi";
 import * as AsyncResult from "../lib/AsyncResult";
 import { range } from "../lib/iter";
 import { NoteMessageEvent$ } from "../midi";
-import { KeyboardNoteEvent$, mapNoteEvents, NoteEvent } from "../note";
+import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Buffer } from "../synth";
 import { Config } from "../synth/granular";
 import { useSynth } from "./AppContext";
 import { FileUpload } from "./FileUpload";
 import { useSubscription } from "./hooks/observable";
-import { mono } from "./note-mapping";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
 import style from "./Synth.module.css";
@@ -20,8 +19,15 @@ export function Synth() {
   const [sampleResult, setSampleResult] =
     useState<AsyncResult.T<Buffer.UploadResult>>();
 
-  useSubscription(mapNoteEvents(mono, AllNoteEvents$), (params) => {
-    synth.setParams(params);
+  useSubscription(AllNoteEvents$, (noteEvent) => {
+    if (noteEvent.type === "noteon") {
+      synth.setParams([
+        ["gate", 1],
+        ["note", noteEvent.note],
+      ]);
+    } else {
+      synth.setParam("gate", 0);
+    }
   });
 
   async function handleUpload(file: File) {

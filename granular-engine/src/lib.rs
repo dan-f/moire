@@ -119,6 +119,19 @@ pub unsafe extern "C" fn add_stream(
     }
 }
 
+// TODO(poly) add voice param
+#[no_mangle]
+pub unsafe extern "C" fn set_gate(engine: *mut Engine, gate: u32) {
+    todo!("implement set_gate handling in engine")
+}
+
+// TODO(poly) add voice param
+#[no_mangle]
+pub unsafe extern "C" fn set_note(engine: *mut Engine, note: u32) {
+    todo!("implement set_note handling in engine")
+}
+
+// TODO remove after API changes
 #[no_mangle]
 pub unsafe extern "C" fn set_stream_gate(engine: *mut Engine, stream_id: usize, gate: u32) {
     engine.as_mut().unwrap().set_stream_gate(stream_id, gate);

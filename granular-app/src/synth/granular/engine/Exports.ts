@@ -10,7 +10,7 @@ export interface Exports extends WebAssembly.Exports {
     sample_rate: number,
     output_buf_len: number,
     output_buf_capacity: number,
-    max_streams: number,
+    num_streams: number,
   ): Pointer;
 
   alloc_sample_buf(engine: Pointer, buf_len: number): void;
@@ -33,18 +33,9 @@ export interface Exports extends WebAssembly.Exports {
 
   set_bpm(engine: Pointer, bpm: number): void;
 
-  add_stream(
-    engine: Pointer,
-    subdivision: number,
-    grain_start: number,
-    grain_size_ms: number,
-    gain: number,
-    tune: number,
-    pan: number,
-    env: number,
-  ): number;
+  set_gate(engine: Pointer, gate: number): void;
 
-  set_stream_gate(engine: Pointer, stream_id: number, gate: number): void;
+  set_note(engine: Pointer, note: number): void;
 
   set_stream_subdivision(
     engine: Pointer,
@@ -71,8 +62,6 @@ export interface Exports extends WebAssembly.Exports {
   set_stream_pan(engine: Pointer, stream_id: number, pan: number): void;
 
   set_stream_env(engine: Pointer, stream_id: number, env: number): void;
-
-  delete_stream(engine: Pointer, streamId: number): void;
 
   process(engine: Pointer): void;
 }

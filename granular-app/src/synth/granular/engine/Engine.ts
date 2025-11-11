@@ -4,7 +4,6 @@ import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
 import * as PP from "../ProcessorParam";
-import * as StreamParams from "../StreamParams";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
 
@@ -30,7 +29,7 @@ export class Engine {
       sampleRate: number;
       outputBufCapacity: number;
       outputBufLen: number;
-      maxStreams: number;
+      numStreams: number;
     },
   ) {
     this.instance = new Instance(module, {
@@ -45,7 +44,7 @@ export class Engine {
       sampleRate,
       this.audioBufLen,
       this.audioBufCapacity,
-      options.maxStreams,
+      options.numStreams,
     );
 
     this.log = new DefaultLogger(Engine.name);
@@ -54,8 +53,11 @@ export class Engine {
   }
 
   setParams(params: PP.ProcessorParams) {
-    const { bpm, ...streamParams } = params;
+    const { bpm, gate, note, ...streamParams } = params;
+
     this.instance.exports.set_bpm(this.engine, bpm[0]);
+    this.instance.exports.set_gate(this.engine, gate[0]);
+    this.instance.exports.set_note(this.engine, note[0]);
 
     for (const [streamParam, [val]] of Object.entries(streamParams)) {
       const result = PP.unpackStreamParam(streamParam as PP.StreamParam);
@@ -65,9 +67,6 @@ export class Engine {
       }
       const [streamId, param] = result;
       switch (param) {
-        case "gate":
-          this.instance.exports.set_stream_gate(this.engine, streamId, val);
-          break;
         case "subdivision":
           this.instance.exports.set_stream_subdivision(
             this.engine,
@@ -162,25 +161,6 @@ export class Engine {
     ];
     Buffer.copyStereo(sample, buf);
     this.instance.exports.reset_after_update_sample(this.engine);
-  }
-
-  addStream(stream: StreamParams.T): number | undefined {
-    const id = this.instance.exports.add_stream(
-      this.engine,
-      stream.subdivision,
-      stream.grainStart,
-      stream.grainSizeMs,
-      stream.gain,
-      stream.tune,
-      stream.pan,
-      stream.env,
-    );
-
-    return id >= 0 ? id : undefined;
-  }
-
-  deleteStream(streamId: number) {
-    this.instance.exports.delete_stream(this.engine, streamId);
   }
 
   private createBufferViews() {

@@ -39,6 +39,19 @@ export const mono: NoteEventMapper<SynthParamsInstruction> = (event) => {
       [SynthParam.packStreamParam(stream, "gate"), 1],
       // TODO - we want this to be relative to the current tune value
       //
+      // The issue is that right now the way I gate a note is to imperatively
+      // tell the engine to gate on all notes, and for each one tune to the note
+      // that's played. For this reason, the idea of a relative "tune" param
+      // gets overridden.
+      //
+      // To fix this, I believe what I want is a higher-level API to the engine.
+      // I want to tell it: GATE_ON / GATE_OFF <voice> and SET <note>. Then,
+      // inside of the synth, knowing that we're in mono mode, we choose to gate
+      // on all streams and tune them according to the math on <note> and the
+      // <tune> param.
+      //
+      // (below are thoughts from last summer)
+      //
       // This requires a few things we don't have currently:
       // 1) some way to query the synth's state. either inject a reference to
       //    the synth or less glamorously import the global synth instance.

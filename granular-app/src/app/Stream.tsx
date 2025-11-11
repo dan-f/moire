@@ -87,9 +87,6 @@ function useEnabled(
   );
 
   function toggleEnabled() {
-    if (enabled) {
-      synth.setParam(SynthParam.packStreamParam(stream, "gate"), 0);
-    }
     synth.toggleStreamEnabled(stream);
   }
 

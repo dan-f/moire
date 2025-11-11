@@ -1,9 +1,12 @@
 import * as StreamParams from "./StreamParams";
 
 /**
- * Param key type of all {@linkcode AudioParam} parameters of the `GranularProcessor`
+ * Param key type of all {@linkcode AudioParam} parameters of the
+ * `GranularProcessor`
+ *
+ * TODO(poly): unify this with `ParamDescriptor` type so that we don't get drift
  */
-export type T = "bpm" | StreamParam;
+export type T = "bpm" | "gate" | "note" | StreamParam;
 
 /**
  * Param key type of all per-stream {@linkcode AudioParam} parameters of the
