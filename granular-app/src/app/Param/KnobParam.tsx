@@ -6,7 +6,7 @@ import * as ParamProps from "./ParamProps";
 
 export function KnobParam(props: ParamProps.T) {
   const { enabled, range } = ParamProps.withDefaultRange(props);
-  const { val, set } = useParamVal(props);
+  const [val, set] = useParamVal(props);
 
   const render = (events$: Observable<DragEvent.T>) => {
     return (

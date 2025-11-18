@@ -2,10 +2,7 @@ import { useState } from "react";
 import { useSynth } from "../AppContext";
 import * as ParamProps from "./ParamProps";
 
-export function useParamVal(props: ParamProps.T): {
-  val: number;
-  set: (val: number) => void;
-} {
+export function useParamVal(props: ParamProps.T): [ParamVal, SetParamVal] {
   const {
     param,
     range: [min],
@@ -17,10 +14,15 @@ export function useParamVal(props: ParamProps.T): {
     return synth.getParamVal(param) ?? min;
   }
 
-  function set(val: number) {
-    setVal(val);
-    synth.setParam(param, val);
-  }
+  const set: SetParamVal = (valOrCb) => {
+    const newVal = typeof valOrCb === "number" ? valOrCb : valOrCb(get());
+    synth.setParam(param, newVal);
+    setVal(newVal);
+  };
 
-  return { val, set };
+  return [val, set];
 }
+
+type ParamVal = number;
+
+type SetParamVal = (valOrCb: ParamVal | ((val: ParamVal) => ParamVal)) => void;

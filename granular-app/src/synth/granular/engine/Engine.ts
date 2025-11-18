@@ -29,7 +29,6 @@ export class Engine {
       sampleRate: number;
       outputBufCapacity: number;
       outputBufLen: number;
-      numStreams: number;
     },
   ) {
     this.instance = new Instance(module, {
@@ -44,7 +43,6 @@ export class Engine {
       sampleRate,
       this.audioBufLen,
       this.audioBufCapacity,
-      options.numStreams,
     );
 
     this.log = new DefaultLogger(Engine.name);
@@ -67,6 +65,9 @@ export class Engine {
       }
       const [streamId, param] = result;
       switch (param) {
+        case "enabled":
+          this.instance.exports.set_stream_enabled(this.engine, streamId, val);
+          break;
         case "subdivision":
           this.instance.exports.set_stream_subdivision(
             this.engine,
@@ -114,8 +115,8 @@ export class Engine {
     // convenient for us, since we wouldn't have to allocate anything at
     // runtime, at least from within code we control.
     //
-    // Instead, we're stuck allocating and potentiall growing buffers within the
-    // WASM instance's memory, i.e. if we get called back with a `x >
+    // Instead, we're stuck allocating and potentially growing buffers within
+    // the WASM instance's memory, i.e. if we get called back with a `x >
     // 128`-length buffer to fill (which is unlikely to happen, but Web Audio
     // claims they will build this out eventually).
     //
@@ -147,7 +148,7 @@ export class Engine {
   }
 
   updateSample(sample: Buffer.T) {
-    this.log.debug("allocating sample buffer");
+    this.log.info("allocating sample buffer");
     const bufLen = Buffer.length(sample);
     this.instance.exports.alloc_sample_buf(this.engine, bufLen);
     // If our allocation causes the WASM memory to grow, we will have to re-draw
@@ -164,7 +165,7 @@ export class Engine {
   }
 
   private createBufferViews() {
-    this.log.debug("(re)creating buffer views");
+    this.log.info("(re)creating buffer views");
 
     this.audioBuffer[0] = this.channelView(
       this.instance.exports.output_buf_l(this.engine),

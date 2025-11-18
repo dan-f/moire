@@ -26,12 +26,11 @@ class GranularProcessor extends AudioWorkletProcessor {
       sampleRate,
       outputBufCapacity: 2048,
       outputBufLen: 128,
-      numStreams: Config.NumStreams,
     });
 
     serve(this.port, this.handleRequest.bind(this));
 
-    this.log.debug("initialized processor", { sampleRate });
+    this.log.info("initialized processor", { sampleRate });
   }
 
   static get parameterDescriptors(): ParamDescriptor[] {
@@ -114,6 +113,13 @@ class GranularProcessor extends AudioWorkletProcessor {
   ): ParamDescriptor[] {
     const name = (key: StreamParams.Key) => PP.packStreamParam(streamId, key);
     return [
+      {
+        name: name("enabled"),
+        automationRate: "k-rate",
+        defaultValue: 0,
+        minValue: 0,
+        maxValue: 1,
+      },
       {
         name: name("subdivision"),
         automationRate: "k-rate",

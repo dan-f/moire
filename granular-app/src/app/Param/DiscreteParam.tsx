@@ -8,7 +8,7 @@ export function DiscreteParam(props: ParamProps.T) {
     enabled,
     range: [min, max],
   } = ParamProps.withDefaultRange(props);
-  const { val, set } = useParamVal(props);
+  const [val, set] = useParamVal(props);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const parsed = parseInt(e.target.value);

@@ -2,8 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{buffer::StereoBuffer, env::Env, grain::Grain, timing::Clock, tuning::tune_equal};
 
+/// Grain producer
 #[derive(Clone)]
 pub struct Stream {
+    enabled: bool,
     gate: bool,
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
@@ -26,6 +28,7 @@ impl Stream {
         env: Env,
     ) -> Self {
         Self {
+            enabled: false,
             gate: false,
             clock: Clock::add_child(&parent_clock, subdivision as i64),
             grain_start,
@@ -37,12 +40,21 @@ impl Stream {
         }
     }
 
-    pub fn try_create_grain(&self, stream_idx: usize, sample: &StereoBuffer) -> Option<Grain> {
-        if self.clock.borrow().is_beat() {
+    pub fn default_from_clock(parent_clock: Rc<RefCell<Clock>>) -> Self {
+        Self::new(parent_clock, 1, 0., 250, 1., 0, 0.5, Env::Tri)
+    }
+
+    pub fn spawn_new_grains(
+        &self,
+        stream_idx: usize,
+        note: u32,
+        sample: &StereoBuffer,
+    ) -> Option<Grain> {
+        if self.enabled && self.clock.borrow().is_beat() {
             let i = sample.len as f32 * self.grain_start;
             let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
-            let incr = tune_equal(1., self.tune);
+            let incr = tune_equal(1., (note as i32) + self.tune - 60);
             Some(Grain::new(
                 self.gate, stream_idx, i, end, incr, self.gain, self.pan, self.env,
             ))
@@ -53,6 +65,10 @@ impl Stream {
 
     pub fn set_gate(&mut self, gate: bool) {
         self.gate = gate;
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
     }
 
     pub fn set_subdivision(&mut self, subdivision: u32) {

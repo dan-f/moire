@@ -1,183 +1,183 @@
-import { range } from "../lib/iter";
-import { type NoteEventMapper } from "../note";
-import { SynthParam } from "../synth";
-import { Config } from "../synth/granular";
+// import { range } from "../lib/iter";
+// import { type NoteEventMapper } from "../note";
+// import { SynthParam } from "../synth";
+// import { Config } from "../synth/granular";
 
-type SynthParamsInstruction = [SynthParam.T, number][];
+// type SynthParamsInstruction = [SynthParam.T, number][];
 
-export const poly: NoteEventMapper<SynthParamsInstruction> = (event) => {
-  const { note } = event;
-  const stream = MidiNoteToStream[note];
-  if (typeof stream !== "number") {
-    return;
-  }
-  switch (event.type) {
-    case "noteon":
-      return [
-        [SynthParam.packStreamParam(stream, "gate"), 1],
-        [SynthParam.packStreamParam(stream, "tune"), tune(note)],
-      ];
-    case "noteoff":
-      return [[SynthParam.packStreamParam(stream, "gate"), 0]];
-    default:
-      return;
-  }
-};
+// // export const poly: NoteEventMapper<SynthParamsInstruction> = (event) => {
+// //   const { note } = event;
+// //   const stream = MidiNoteToStream[note];
+// //   if (typeof stream !== "number") {
+// //     return;
+// //   }
+// //   switch (event.type) {
+// //     case "noteon":
+// //       return [
+// //         [SynthParam.packStreamParam(stream, "gate"), 1],
+// //         [SynthParam.packStreamParam(stream, "tune"), tune(note)],
+// //       ];
+// //     case "noteoff":
+// //       return [[SynthParam.packStreamParam(stream, "gate"), 0]];
+// //     default:
+// //       return;
+// //   }
+// // };
 
-const AllStreams = [...range(Config.NumStreams)];
+// const AllStreams = [...range(Config.NumStreams)];
 
-const MidiNoteToStream: Record<number, number> = AllStreams.reduce(
-  (acc, cur) => ({ ...acc, [cur + 60]: cur }),
-  {},
-);
+// const MidiNoteToStream: Record<number, number> = AllStreams.reduce(
+//   (acc, cur) => ({ ...acc, [cur + 60]: cur }),
+//   {},
+// );
 
-export const mono: NoteEventMapper<SynthParamsInstruction> = (event) => {
-  const { note } = event;
-  if (event.type === "noteon") {
-    MonoNoteQueue.add(note);
-    return AllStreams.flatMap((stream) => [
-      [SynthParam.packStreamParam(stream, "gate"), 1],
-      // TODO - we want this to be relative to the current tune value
-      //
-      // The issue is that right now the way I gate a note is to imperatively
-      // tell the engine to gate on all notes, and for each one tune to the note
-      // that's played. For this reason, the idea of a relative "tune" param
-      // gets overridden.
-      //
-      // To fix this, I believe what I want is a higher-level API to the engine.
-      // I want to tell it: GATE_ON / GATE_OFF <voice> and SET <note>. Then,
-      // inside of the synth, knowing that we're in mono mode, we choose to gate
-      // on all streams and tune them according to the math on <note> and the
-      // <tune> param.
-      //
-      // (below are thoughts from last summer)
-      //
-      // This requires a few things we don't have currently:
-      // 1) some way to query the synth's state. either inject a reference to
-      //    the synth or less glamorously import the global synth instance.
-      // 2) a modulate-able `tune` param. similar pattern to what we'd need for
-      //    LFOs; basically an "add" node so that we can have a baseline tune
-      //    setting (the one the UI controls) and then a tune *delta* which can
-      //    go from, say, +2, back to 0.
-      // 3) a way to show this in the UI; both the baseline value plus the
-      //    current value
-      //
-      // Currently, this is tuning them all to the same value
-      [
-        SynthParam.packStreamParam(stream, "tune"),
-        tune(MonoNoteQueue.mruItem()!),
-      ],
-    ]);
-  } else if (event.type === "noteoff") {
-    MonoNoteQueue.remove(note);
-    const activeNote = MonoNoteQueue.mruItem();
-    if (typeof activeNote !== "undefined") {
-      return AllStreams.flatMap((stream) => [
-        [SynthParam.packStreamParam(stream, "tune"), tune(activeNote)],
-      ]);
-    }
-    return AllStreams.flatMap((stream) => [
-      [SynthParam.packStreamParam(stream, "gate"), 0],
-    ]);
-  }
-};
+// export const mono: NoteEventMapper<SynthParamsInstruction> = (event) => {
+//   const { note } = event;
+//   if (event.type === "noteon") {
+//     MonoNoteQueue.add(note);
+//     return AllStreams.flatMap((stream) => [
+//       [SynthParam.packStreamParam(stream, "gate"), 1],
+//       // TODO - we want this to be relative to the current tune value
+//       //
+//       // The issue is that right now the way I gate a note is to imperatively
+//       // tell the engine to gate on all notes, and for each one tune to the note
+//       // that's played. For this reason, the idea of a relative "tune" param
+//       // gets overridden.
+//       //
+//       // To fix this, I believe what I want is a higher-level API to the engine.
+//       // I want to tell it: GATE_ON / GATE_OFF <voice> and SET <note>. Then,
+//       // inside of the synth, knowing that we're in mono mode, we choose to gate
+//       // on all streams and tune them according to the math on <note> and the
+//       // <tune> param.
+//       //
+//       // (below are thoughts from last summer)
+//       //
+//       // This requires a few things we don't have currently:
+//       // 1) some way to query the synth's state. either inject a reference to
+//       //    the synth or less glamorously import the global synth instance.
+//       // 2) a modulate-able `tune` param. similar pattern to what we'd need for
+//       //    LFOs; basically an "add" node so that we can have a baseline tune
+//       //    setting (the one the UI controls) and then a tune *delta* which can
+//       //    go from, say, +2, back to 0.
+//       // 3) a way to show this in the UI; both the baseline value plus the
+//       //    current value
+//       //
+//       // Currently, this is tuning them all to the same value
+//       [
+//         SynthParam.packStreamParam(stream, "tune"),
+//         tune(MonoNoteQueue.mruItem()!),
+//       ],
+//     ]);
+//   } else if (event.type === "noteoff") {
+//     MonoNoteQueue.remove(note);
+//     const activeNote = MonoNoteQueue.mruItem();
+//     if (typeof activeNote !== "undefined") {
+//       return AllStreams.flatMap((stream) => [
+//         [SynthParam.packStreamParam(stream, "tune"), tune(activeNote)],
+//       ]);
+//     }
+//     return AllStreams.flatMap((stream) => [
+//       [SynthParam.packStreamParam(stream, "gate"), 0],
+//     ]);
+//   }
+// };
 
-function tune(note: number) {
-  return note - 60;
-}
+// function tune(note: number) {
+//   return note - 60;
+// }
 
-// TODO port this into the engine itself. -> tell the engine if we're in mono or
-// poly mode then just set params like voice_1_gate -> on / off, and let the
-// engine deal with the signal production
-//
-// also note re. poly mode, what pigments does is just steal the LRU voice and
-// give it to the new note. however, when you let go of the new note you don't
-// get that mono behavior of hearing the old note come back in (how would we do
-// that anyway?). so it's not going to be like "mono mode is just a subset of
-// poly mode" afaict.
-class UsageQueue<T extends PropertyKey> {
-  private lru?: ListNode<T>;
-  private mru?: ListNode<T>;
-  size = 0;
-  private sizeLimit: number;
-  private table = new Map<T, ListNode<T>>();
+// // TODO port this into the engine itself. -> tell the engine if we're in mono or
+// // poly mode then just set params like voice_1_gate -> on / off, and let the
+// // engine deal with the signal production
+// //
+// // also note re. poly mode, what pigments does is just steal the LRU voice and
+// // give it to the new note. however, when you let go of the new note you don't
+// // get that mono behavior of hearing the old note come back in (how would we do
+// // that anyway?). so it's not going to be like "mono mode is just a subset of
+// // poly mode" afaict.
+// class UsageQueue<T extends PropertyKey> {
+//   private lru?: ListNode<T>;
+//   private mru?: ListNode<T>;
+//   size = 0;
+//   private sizeLimit: number;
+//   private table = new Map<T, ListNode<T>>();
 
-  constructor(sizeLimit: number) {
-    this.sizeLimit = sizeLimit;
-  }
+//   constructor(sizeLimit: number) {
+//     this.sizeLimit = sizeLimit;
+//   }
 
-  lruItem(): T | undefined {
-    return this.lru?.val;
-  }
+//   lruItem(): T | undefined {
+//     return this.lru?.val;
+//   }
 
-  mruItem(): T | undefined {
-    return this.mru?.val;
-  }
+//   mruItem(): T | undefined {
+//     return this.mru?.val;
+//   }
 
-  add(item: T) {
-    if (this.table.has(item)) {
-      const node = this.table.get(item)!;
-      if (node === this.mru) {
-        return;
-      }
+//   add(item: T) {
+//     if (this.table.has(item)) {
+//       const node = this.table.get(item)!;
+//       if (node === this.mru) {
+//         return;
+//       }
 
-      this.splice(node);
-      this.mru!.nxt = node;
-      node.prv = this.mru;
-      this.mru = node;
-    } else if (this.size < this.sizeLimit) {
-      const node: ListNode<T> = { val: item };
+//       this.splice(node);
+//       this.mru!.nxt = node;
+//       node.prv = this.mru;
+//       this.mru = node;
+//     } else if (this.size < this.sizeLimit) {
+//       const node: ListNode<T> = { val: item };
 
-      if (this.size === 0) {
-        this.mru = this.lru = node;
-      } else {
-        this.mru!.nxt = node;
-        node.prv = this.mru;
-        this.mru = node;
-      }
+//       if (this.size === 0) {
+//         this.mru = this.lru = node;
+//       } else {
+//         this.mru!.nxt = node;
+//         node.prv = this.mru;
+//         this.mru = node;
+//       }
 
-      this.table.set(item, node);
-      this.size += 1;
-    }
-  }
+//       this.table.set(item, node);
+//       this.size += 1;
+//     }
+//   }
 
-  remove(item: T) {
-    const node = this.table.get(item);
-    if (!node) {
-      return;
-    }
+//   remove(item: T) {
+//     const node = this.table.get(item);
+//     if (!node) {
+//       return;
+//     }
 
-    this.splice(node);
-    this.table.delete(item);
-    this.size -= 1;
-  }
+//     this.splice(node);
+//     this.table.delete(item);
+//     this.size -= 1;
+//   }
 
-  private splice(node: ListNode<T>) {
-    const { prv, nxt } = node;
+//   private splice(node: ListNode<T>) {
+//     const { prv, nxt } = node;
 
-    delete node.prv;
-    delete node.nxt;
+//     delete node.prv;
+//     delete node.nxt;
 
-    if (prv) {
-      prv.nxt = nxt;
-    }
-    if (nxt) {
-      nxt.prv = prv;
-    }
+//     if (prv) {
+//       prv.nxt = nxt;
+//     }
+//     if (nxt) {
+//       nxt.prv = prv;
+//     }
 
-    if (node === this.lru) {
-      this.lru = nxt;
-    }
-    if (node === this.mru) {
-      this.mru = prv;
-    }
-  }
-}
+//     if (node === this.lru) {
+//       this.lru = nxt;
+//     }
+//     if (node === this.mru) {
+//       this.mru = prv;
+//     }
+//   }
+// }
 
-const MonoNoteQueue = new UsageQueue<number>(6);
+// const MonoNoteQueue = new UsageQueue<number>(6);
 
-interface ListNode<T> {
-  val: T;
-  prv?: ListNode<T>;
-  nxt?: ListNode<T>;
-}
+// interface ListNode<T> {
+//   val: T;
+//   prv?: ListNode<T>;
+//   nxt?: ListNode<T>;
+// }

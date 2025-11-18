@@ -2,54 +2,50 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     buffer::{MonoBuffer, StereoBuffer},
-    env::Env,
-    grain_pool::{self, GrainPool},
-    pool::Pool,
-    stream::Stream,
     timing::{self, Clock},
+    voice::Voice,
 };
 
-pub struct Engine {
+pub struct Engine<const S: usize = 12> {
     sample_rate: usize,
     clock: Rc<RefCell<Clock>>,
-    grains: GrainPool,
     sample_buf: Option<StereoBuffer>,
     output_buf: StereoBuffer,
     playhead_bufs: Vec<MonoBuffer>,
     params: EngineParams,
-    streams: Pool<Stream>,
+    pub voice: Voice<S>,
 }
 
-impl Engine {
-    pub fn new(
-        sample_rate: usize,
-        output_buf_len: usize,
-        output_buf_capacity: usize,
-        max_streams: usize,
-    ) -> Self {
+impl<const S: usize> Engine<S> {
+    pub fn new(cfg: EngineConfig) -> Self {
         let params: EngineParams = Default::default();
         let clock = Rc::new(RefCell::new(Clock::new(
-            sample_rate,
+            cfg.sample_rate,
             timing::bpm_to_freq(params.bpm),
         )));
         Self {
-            sample_rate,
+            sample_rate: cfg.sample_rate,
             clock: Rc::clone(&clock),
-            grains: GrainPool::new(1024),
             sample_buf: None,
             output_buf: StereoBuffer::new_with_capacity(
-                sample_rate,
-                output_buf_len,
-                output_buf_capacity,
+                cfg.sample_rate,
+                cfg.output_buf_len,
+                cfg.output_buf_capacity,
             ),
-            playhead_bufs: (0..max_streams)
+            // TODO(poly) account for the fact that we need another addressing
+            // dimension (voice x streams)
+            playhead_bufs: (0..S)
                 .into_iter()
                 .map(|_| {
-                    MonoBuffer::new_with_capacity(sample_rate, output_buf_len, output_buf_capacity)
+                    MonoBuffer::new_with_capacity(
+                        cfg.sample_rate,
+                        cfg.output_buf_len,
+                        cfg.output_buf_capacity,
+                    )
                 })
                 .collect(),
             params,
-            streams: Pool::new(max_streams),
+            voice: Voice::new(Rc::clone(&clock)),
         }
     }
 
@@ -58,8 +54,9 @@ impl Engine {
             .replace(StereoBuffer::new(self.sample_rate, buf_len));
     }
 
+    // TODO(poly) reset all voices grain pools
     pub fn reset_after_update_sample(&mut self) {
-        self.grains.reset();
+        self.voice.reset_grains();
     }
 
     pub fn sample_buf(&self, channel: usize) -> Option<&[f32]> {
@@ -89,116 +86,40 @@ impl Engine {
         self.clock.borrow_mut().set_freq(timing::bpm_to_freq(bpm));
     }
 
-    pub fn add_stream(
-        &mut self,
-        subdivision: u32,
-        grain_start: f32,
-        grain_size_ms: usize,
-        gain: f32,
-        tune: i32,
-        pan: f32,
-        env: Env,
-    ) -> Option<usize> {
-        let stream = Stream::new(
-            Rc::clone(&self.clock),
-            subdivision,
-            grain_start,
-            grain_size_ms,
-            gain,
-            tune,
-            pan,
-            env,
-        );
-        self.streams.add(stream)
+    pub fn set_gate(&mut self, gate: bool) {
+        self.voice.set_gate(gate);
     }
 
-    pub fn set_stream_gate(&mut self, stream_id: usize, gate: u32) {
-        let gate = match gate {
-            0 => false,
-            _ => true,
-        };
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_gate(gate);
-        }
-    }
-
-    pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_subdivision(subdivision);
-        }
-    }
-
-    pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_grain_start(grain_start);
-        }
-    }
-
-    pub fn set_stream_grain_size_ms(&mut self, stream_id: usize, grain_size_ms: usize) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_grain_size_ms(grain_size_ms);
-        }
-    }
-
-    pub fn set_stream_gain(&mut self, stream_id: usize, gain: f32) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_gain(gain);
-        }
-    }
-
-    pub fn set_stream_tune(&mut self, stream_id: usize, tune: i32) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_tune(tune);
-        }
-    }
-
-    pub fn set_stream_pan(&mut self, stream_id: usize, pan: f32) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_pan(pan);
-        }
-    }
-
-    pub fn set_stream_env(&mut self, stream_id: usize, env: Env) {
-        if let Some(mut stream) = self.streams.get_entry(stream_id) {
-            stream.set_env(env);
-        }
-    }
-
-    pub fn delete_stream(&mut self, stream_id: usize) {
-        if let Some(entry) = self.streams.get_entry(stream_id) {
-            entry.free();
-        }
+    pub fn set_note(&mut self, note: u32) {
+        self.voice.set_note(note);
     }
 
     pub fn process(&mut self) {
         if let Some(sample_buf) = &self.sample_buf {
             for i in 0..self.output_buf.len {
-                for stream in self.streams.entries() {
-                    if let Some(grain) = stream.try_create_grain(stream.idx(), &sample_buf) {
-                        self.grains.add(grain);
-                    }
-                }
+                let mut frame = [0., 0.];
 
-                self.output_buf.write_frame(i, &[0., 0.]);
-                for buf in self.playhead_bufs.iter_mut() {
-                    buf.write_frame(i, &[-1.]);
-                }
+                let mut playhead_positions = [-1.; S];
+                self.voice.spawn_new_grains(&sample_buf);
+                self.voice
+                    .render_frame(sample_buf, &mut frame, &mut playhead_positions);
+                self.voice.tick();
 
-                for grain in self.grains.entries() {
-                    let frame = grain.render_frame(sample_buf);
-                    self.output_buf.sum_frame(i, &frame);
-
-                    let stream_idx = grain.stream_idx();
-                    let position = grain.normalized_pos(sample_buf);
-                    self.playhead_bufs[stream_idx].write_frame(i, &[position]);
-
-                    grain_pool::tick(grain);
+                self.output_buf.write_frame(i, &frame);
+                for s in 0..S {
+                    self.playhead_bufs[s].write_frame(i, &[playhead_positions[s]]);
                 }
 
                 self.clock.borrow_mut().tick();
             }
         }
     }
+}
+
+pub struct EngineConfig {
+    pub sample_rate: usize,
+    pub output_buf_len: usize,
+    pub output_buf_capacity: usize,
 }
 
 pub struct EngineParams {

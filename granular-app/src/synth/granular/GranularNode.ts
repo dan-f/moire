@@ -13,10 +13,10 @@ import * as StreamParams from "./StreamParams";
  * - Inputs: None
  * - Outputs:
  *  - 0: stereo audio out
- *  - 1-{@linkcode Config.NumStreams}: per-stream mono signal of playhead
- *    position. A sample value < 0 indicates the stream is not playing, while a
- *    value > 0 indicates the normalized position (0 = start, 1 = end) of the
- *    playhead over the sample buffer.
+ *  - [1, 2, ...{@linkcode Config.NumStreams}]: per-stream mono signal of
+ *    playhead position. A sample value < 0 indicates the stream is not playing,
+ *    while a value > 0 indicates the normalized position (0 = start, 1 = end)
+ *    of the playhead over the sample buffer.
  */
 export class GranularNode extends AudioWorkletNode {
   private readonly client = new Client(this.port);

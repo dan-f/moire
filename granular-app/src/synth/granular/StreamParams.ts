@@ -1,6 +1,7 @@
 import { Env } from "./Env";
 
 export interface T {
+  enabled: boolean;
   subdivision: number;
   grainStart: number;
   grainSizeMs: number;
@@ -11,13 +12,3 @@ export interface T {
 }
 
 export type Key = keyof T;
-
-export const initial: T = {
-  subdivision: 1,
-  grainStart: 0,
-  grainSizeMs: 150,
-  gain: 1,
-  tune: 0,
-  pan: 0.5,
-  env: Env.Tri,
-};

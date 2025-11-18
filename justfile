@@ -13,6 +13,9 @@ engine-build:
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/synth/granular/engine/
 
+engine-check:
+  cd {{engine_dir}} && cargo check
+
 engine-test:
   cd {{engine_dir}} && cargo test
 

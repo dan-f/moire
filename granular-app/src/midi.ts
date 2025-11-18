@@ -47,7 +47,7 @@ async function init(): Promise<typeof WebMidi> {
     await WebMidi.enable();
     return WebMidi;
   } catch (error) {
-    log.info("could not enable MIDI", error as Error);
+    log.warn("could not enable MIDI", error as Error);
     return WebMidi;
   }
 }

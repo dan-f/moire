@@ -3,7 +3,6 @@ import { range } from "../lib/iter";
 import * as Buffer from "./Buffer";
 import { Config, GranularNode, Message as Msg } from "./granular";
 import * as SynthParam from "./SynthParam";
-import * as SynthState from "./SynthState";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -14,7 +13,6 @@ export class Synth {
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new DefaultLogger(Synth.name);
-  readonly state$ = SynthState.newSubject();
 
   private constructor(ctx: AudioContext, granularNode: GranularNode) {
     this.ctx = ctx;
@@ -42,23 +40,16 @@ export class Synth {
         await this.updateSample(result.buffer);
         break;
       case "CHANNEL_ERROR":
-        this.log.info(
+        this.log.warn(
           `Samples must be mono or stereo. Cannot handle ${result.numChannels}-channel sample`,
         );
         break;
       case "READ_ERROR":
-        this.log.info("Error reading sample", result.event);
+        this.log.warn("Error reading sample", result.event);
         break;
     }
 
     return result;
-  }
-
-  toggleStreamEnabled(stream: number) {
-    SynthState.updateSubject(
-      this.state$,
-      SynthState.toggleStreamEnabled(stream),
-    );
   }
 
   getParamVal(key: SynthParam.T): number | undefined {
@@ -69,16 +60,6 @@ export class Synth {
     const param = this.findParam(key);
     if (!param) {
       return;
-    }
-    const isStreamParam = SynthParam.unpackStreamParam(key);
-    if (isStreamParam) {
-      const [stream] = isStreamParam;
-      const streamEnabled = SynthState.streamEnabled(stream)(
-        this.state$.getValue(),
-      );
-      if (!streamEnabled) {
-        return;
-      }
     }
     this.setParamNow(param, val);
   }
@@ -110,7 +91,7 @@ export class Synth {
   private findParam(key: SynthParam.T): AudioParam | undefined {
     const param = this.granularNode.parameters.get(key);
     if (!param) {
-      this.log.info("unknown parameter key", { key });
+      this.log.warn("unknown parameter key", { key });
     }
     return param;
   }

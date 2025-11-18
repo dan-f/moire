@@ -32,6 +32,7 @@ impl<T> Pool<T> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_entry(&mut self, idx: usize) -> Option<PoolEntry<'_, T>> {
         let item = self.items.get_mut(idx)?;
         if item.is_some() {
@@ -69,10 +70,6 @@ pub struct PoolEntry<'a, T> {
 }
 
 impl<'a, T> PoolEntry<'a, T> {
-    pub fn idx(&self) -> usize {
-        self.idx
-    }
-
     pub fn free(self) {
         self.item.take();
         self.free_list.borrow_mut().push(self.idx);
