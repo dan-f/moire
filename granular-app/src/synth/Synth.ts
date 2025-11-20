@@ -77,7 +77,13 @@ export class Synth {
 
   static async new(ctx: AudioContext): Promise<Synth> {
     const granularNode = await GranularNode.new(ctx);
-    granularNode.connect(ctx.destination);
+    const limiter = ctx.createDynamicsCompressor();
+    granularNode.connect(limiter);
+    limiter.threshold.value = -0.5;
+    limiter.ratio.value = limiter.ratio.maxValue;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.05;
+    limiter.connect(ctx.destination);
     return new Synth(ctx, granularNode);
   }
 

@@ -1,7 +1,7 @@
 use engine::Engine;
 use env::Env;
 
-use crate::engine::EngineConfig;
+use crate::engine::{EngineConfig, EngineParams};
 
 mod adsr;
 mod buffer;
@@ -23,11 +23,14 @@ pub extern "C" fn new_engine(
     output_buf_len: usize,
     output_buf_capacity: usize,
 ) -> *const Engine {
-    let boxed: Box<Engine> = Engine::new(EngineConfig {
-        sample_rate,
-        output_buf_len,
-        output_buf_capacity,
-    })
+    let boxed: Box<Engine> = Engine::new(
+        EngineConfig {
+            sample_rate,
+            output_buf_len,
+            output_buf_capacity,
+        },
+        EngineParams::default(),
+    )
     .into();
     Box::into_raw(boxed)
 }
@@ -104,6 +107,21 @@ pub unsafe extern "C" fn set_gate(engine: *mut Engine, gate: f32) {
 #[no_mangle]
 pub unsafe extern "C" fn set_note(engine: *mut Engine, note: u32) {
     engine.as_mut().unwrap().set_note(note);
+}
+
+// TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
+#[no_mangle]
+pub unsafe extern "C" fn set_adsr(
+    engine: *mut Engine,
+    attack_ms: u32,
+    decay_ms: u32,
+    sustain: f32,
+    release_ms: u32,
+) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_adsr(attack_ms, decay_ms, sustain, release_ms);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)

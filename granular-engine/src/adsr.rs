@@ -17,6 +17,30 @@ impl Adsr {
         }
     }
 
+    pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
+        match self.phase {
+            AdsrPhase::Attack { ref mut i } => {
+                *i = ((*i as f32 / self.attack as f32) * attack as f32).round() as usize;
+            }
+            AdsrPhase::Decay { ref mut i } => {
+                *i = ((*i as f32 / self.decay as f32) * decay as f32).round() as usize;
+            }
+            AdsrPhase::Release {
+                ref mut start_gain,
+                ref mut i,
+            } => {
+                *start_gain = sustain;
+                *i = ((*i as f32 / self.release as f32) * release as f32).round() as usize;
+            }
+            _ => {}
+        };
+
+        self.attack = attack;
+        self.decay = decay;
+        self.sustain = sustain;
+        self.release = release;
+    }
+
     pub fn set_gate(&mut self, gate: bool) {
         // To avoid clicks when jumping from one phase to another (e.g. gate
         // closed during attack or gate opened during release), set the index of
@@ -26,6 +50,13 @@ impl Adsr {
             self.phase = AdsrPhase::Attack { i };
         } else {
             if !self.is_open() {
+                return;
+            }
+            if let AdsrPhase::Release {
+                start_gain: _,
+                i: _,
+            } = self.phase
+            {
                 return;
             }
 

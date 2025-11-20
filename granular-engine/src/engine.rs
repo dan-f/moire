@@ -17,12 +17,18 @@ pub struct Engine<const S: usize = 12> {
 }
 
 impl<const S: usize> Engine<S> {
-    pub fn new(cfg: EngineConfig) -> Self {
-        let params: EngineParams = Default::default();
+    pub fn new(cfg: EngineConfig, params: EngineParams) -> Self {
         let clock = Rc::new(RefCell::new(Clock::new(
             cfg.sample_rate,
             timing::bpm_to_freq(params.bpm),
         )));
+        let EngineParams {
+            bpm: _,
+            attack_ms,
+            decay_ms,
+            sustain,
+            release_ms,
+        } = params;
         Self {
             sample_rate: cfg.sample_rate,
             clock: Rc::clone(&clock),
@@ -45,7 +51,13 @@ impl<const S: usize> Engine<S> {
                 })
                 .collect(),
             params,
-            voice: Voice::new(Rc::clone(&clock)),
+            voice: Voice::new(
+                Rc::clone(&clock),
+                timing::ms_to_samples(cfg.sample_rate, attack_ms),
+                timing::ms_to_samples(cfg.sample_rate, decay_ms),
+                sustain,
+                timing::ms_to_samples(cfg.sample_rate, release_ms),
+            ),
         }
     }
 
@@ -86,6 +98,19 @@ impl<const S: usize> Engine<S> {
         self.clock.borrow_mut().set_freq(timing::bpm_to_freq(bpm));
     }
 
+    pub fn set_adsr(&mut self, attack_ms: u32, decay_ms: u32, sustain: f32, release_ms: u32) {
+        self.params.attack_ms = attack_ms;
+        self.params.decay_ms = decay_ms;
+        self.params.sustain = sustain;
+        self.params.release_ms = release_ms;
+        self.voice.set_adsr(
+            timing::ms_to_samples(self.sample_rate, attack_ms),
+            timing::ms_to_samples(self.sample_rate, decay_ms),
+            sustain,
+            timing::ms_to_samples(self.sample_rate, release_ms),
+        );
+    }
+
     pub fn set_gate(&mut self, gate: bool) {
         self.voice.set_gate(gate);
     }
@@ -124,10 +149,20 @@ pub struct EngineConfig {
 
 pub struct EngineParams {
     pub bpm: u32,
+    pub attack_ms: u32,
+    pub decay_ms: u32,
+    pub sustain: f32,
+    pub release_ms: u32,
 }
 
 impl Default for EngineParams {
     fn default() -> Self {
-        Self { bpm: 60 }
+        Self {
+            bpm: 60,
+            attack_ms: 100,
+            decay_ms: 50,
+            sustain: 0.5,
+            release_ms: 250,
+        }
     }
 }
