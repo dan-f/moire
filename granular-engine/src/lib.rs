@@ -3,6 +3,7 @@ use env::Env;
 
 use crate::engine::EngineConfig;
 
+mod adsr;
 mod buffer;
 mod dsp;
 mod engine;

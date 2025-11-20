@@ -104,7 +104,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_mgmt() {
+    fn entry_mgmt() {
         let mut pool: Pool<Item> = Pool::new(2);
         assert!(pool.items.iter().all(|i| i.is_none()));
         assert!(pool.free_list.borrow().eq(&vec![0, 1]));

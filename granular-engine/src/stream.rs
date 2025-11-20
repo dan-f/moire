@@ -6,7 +6,6 @@ use crate::{buffer::StereoBuffer, env::Env, grain::Grain, timing::Clock, tuning:
 #[derive(Clone)]
 pub struct Stream {
     enabled: bool,
-    gate: bool,
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
     grain_size_ms: usize,
@@ -29,7 +28,6 @@ impl Stream {
     ) -> Self {
         Self {
             enabled: false,
-            gate: false,
             clock: Clock::add_child(&parent_clock, subdivision as i64),
             grain_start,
             grain_size_ms,
@@ -56,15 +54,11 @@ impl Stream {
             let end = f32::min(sample.len as f32, i + len);
             let incr = tune_equal(1., (note as i32) + self.tune - 60);
             Some(Grain::new(
-                self.gate, stream_idx, i, end, incr, self.gain, self.pan, self.env,
+                stream_idx, i, end, incr, self.gain, self.pan, self.env,
             ))
         } else {
             None
         }
-    }
-
-    pub fn set_gate(&mut self, gate: bool) {
-        self.gate = gate;
     }
 
     pub fn set_enabled(&mut self, enabled: bool) {

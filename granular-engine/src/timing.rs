@@ -171,7 +171,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_phasor() {
+    fn phasor() {
         let mut p = RealPhasor::new(10, 3);
         let expected_crossings = [0, 3, 6, 10, 13, 16, 20];
         for i in 0..=20 {
@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_clock() {
+    fn single_clock() {
         let mut c = Clock::new(10, 3);
         let expected_beats = [0, 3, 6, 10, 13, 16, 20];
         for i in 0..=20 {
@@ -203,7 +203,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parent_child_clocks() {
+    fn parent_child_clocks() {
         let c1 = Rc::new(RefCell::new(Clock::new(10, 1)));
         let c2 = Clock::add_child(&c1, 2);
         let c3 = Clock::add_child(&c1, 3);
@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_parent_freq() {
+    fn set_parent_freq() {
         let mut c = Clock::new(10, 1);
         assert!(c.is_beat());
 
@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_child_freq() {
+    fn set_child_freq() {
         let parent = Rc::new(RefCell::new(Clock::new(10, 1)));
         parent.borrow_mut().tick();
 
@@ -253,7 +253,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_parent_subdivision() {
+    fn set_parent_subdivision() {
         let root = Rc::new(RefCell::new(Clock::new(10, 1)));
         let parent = Clock::add_child(&root, 1);
         let child = Clock::add_child(&parent, 2);

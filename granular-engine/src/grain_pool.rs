@@ -22,10 +22,10 @@ mod tests {
     use crate::{env::Env, grain_pool::GrainPool};
 
     #[test]
-    fn test_ticking_through_entry() {
+    fn ticking_through_entry() {
         let mut pool = GrainPool::new(1);
         let idx = pool
-            .add(Grain::new(true, 0, 0., 1., 1., 1., 0.5, Env::None))
+            .add(Grain::new(0, 0., 1., 1., 1., 0.5, Env::None))
             .unwrap();
 
         let entry = pool.get_entry(idx).unwrap();

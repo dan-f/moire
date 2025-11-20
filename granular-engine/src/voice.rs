@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
+    adsr::Adsr,
     buffer::StereoBuffer,
     env::Env,
     grain_pool::{self, GrainPool},
@@ -11,6 +12,7 @@ use crate::{
 /// Synth voice managing a collection of playback [Stream]s
 pub struct Voice<const S: usize> {
     gate: bool,
+    env: Adsr,
     /// MIDI note
     note: u32,
     streams: Vec<Stream>,
@@ -21,6 +23,8 @@ impl<const S: usize> Voice<S> {
     pub fn new(clock: Rc<RefCell<Clock>>) -> Self {
         Voice {
             gate: false,
+            // TODO don't hard-code
+            env: Adsr::new(11025, 5513, 0.75, 22050),
             note: 60,
             streams: vec![Stream::default_from_clock(clock); S],
             grains: GrainPool::new(512),
@@ -32,6 +36,9 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn spawn_new_grains(&mut self, sample: &StereoBuffer) {
+        if !self.env.is_open() {
+            return;
+        }
         for (i, stream) in self.streams.iter().enumerate() {
             if let Some(grain) = stream.spawn_new_grains(i, self.note, sample) {
                 self.grains.add(grain);
@@ -45,28 +52,33 @@ impl<const S: usize> Voice<S> {
         frame: &mut [f32; 2],
         playhead_positions: &mut [f32],
     ) {
+        if !self.env.is_open() {
+            return;
+        }
+        let env_gain = self.env.gain();
         for grain in self.grains.entries() {
             let f = grain.render_frame(sample);
             frame[0] += f[0];
             frame[1] += f[1];
             playhead_positions[grain.stream_idx()] = grain.normalized_pos(sample);
         }
+        frame[0] *= env_gain;
+        frame[1] *= env_gain;
     }
 
     pub fn tick(&mut self) {
         for grain in self.grains.entries() {
             grain_pool::tick(grain);
         }
+        self.env.tick();
     }
 
     pub fn set_gate(&mut self, gate: bool) {
-        self.gate = gate;
-        // TODO clean up / reconcile ownership of "gate" concept - is it needed
-        // on individual streams, or can we pass it down / inject it as a param
-        // when needed?
-        for stream in self.streams.iter_mut() {
-            stream.set_gate(gate);
+        if gate == self.gate {
+            return;
         }
+        self.gate = gate;
+        self.env.set_gate(gate);
     }
 
     pub fn set_note(&mut self, note: u32) {
