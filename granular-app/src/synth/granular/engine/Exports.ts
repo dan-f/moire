@@ -36,6 +36,13 @@ export interface Exports extends WebAssembly.Exports {
   // voice parameters
   set_gate(engine: Pointer, gate: number): void;
   set_note(engine: Pointer, note: number): void;
+  set_adsr(
+    engine: Pointer,
+    attack_ms: number,
+    decay_ms: number,
+    sustain: number,
+    release_ms: number,
+  ): void;
 
   // stream parameters
   set_stream_enabled(engine: Pointer, stream_id: number, enabled: number): void;

@@ -6,7 +6,15 @@ import * as StreamParams from "./StreamParams";
  *
  * TODO(poly): unify this with `ParamDescriptor` type so that we don't get drift
  */
-export type T = "bpm" | "gate" | "note" | StreamParam;
+export type T =
+  | "bpm"
+  | "attack"
+  | "decay"
+  | "sustain"
+  | "release"
+  | "gate"
+  | "note"
+  | StreamParam;
 
 /**
  * Param key type of all per-stream {@linkcode AudioParam} parameters of the

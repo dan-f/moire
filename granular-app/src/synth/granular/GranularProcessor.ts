@@ -38,9 +38,37 @@ class GranularProcessor extends AudioWorkletProcessor {
       {
         name: "bpm",
         automationRate: "k-rate",
-        defaultValue: 120,
+        defaultValue: 300,
         minValue: 40,
         maxValue: 300,
+      },
+      {
+        name: "attack",
+        automationRate: "k-rate",
+        defaultValue: 10,
+        minValue: 0,
+        maxValue: 5000,
+      },
+      {
+        name: "decay",
+        automationRate: "k-rate",
+        defaultValue: 50,
+        minValue: 0,
+        maxValue: 5000,
+      },
+      {
+        name: "sustain",
+        automationRate: "k-rate",
+        defaultValue: 0.8,
+        minValue: 0,
+        maxValue: 1,
+      },
+      {
+        name: "release",
+        automationRate: "k-rate",
+        defaultValue: 250,
+        minValue: 0,
+        maxValue: 10000,
       },
       // TODO(poly): refactor these/rework `allStreamParamDescriptors` to
       // generate per-voice param descriptors (and a level down per-stream

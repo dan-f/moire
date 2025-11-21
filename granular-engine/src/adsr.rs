@@ -18,6 +18,14 @@ impl Adsr {
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
+        if attack == self.attack
+            && decay == self.decay
+            && sustain == self.sustain
+            && release == self.release
+        {
+            return;
+        }
+
         match self.phase {
             AdsrPhase::Attack { ref mut i } => {
                 *i = ((*i as f32 / self.attack as f32) * attack as f32).round() as usize;
@@ -80,13 +88,13 @@ impl Adsr {
         match self.phase {
             AdsrPhase::Attack { ref mut i } => {
                 *i += 1;
-                if *i == self.attack {
-                    self.phase = AdsrPhase::Decay { i: 0 }
+                if *i >= self.attack {
+                    self.phase = AdsrPhase::Decay { i: *i % self.decay }
                 }
             }
             AdsrPhase::Decay { ref mut i } => {
                 *i += 1;
-                if *i == self.decay {
+                if *i >= self.decay {
                     self.phase = AdsrPhase::Sustain;
                 }
             }
@@ -95,7 +103,7 @@ impl Adsr {
                 start_gain: _,
             } => {
                 *i += 1;
-                if *i == self.release {
+                if *i >= self.release {
                     self.phase = AdsrPhase::Off;
                 }
             }

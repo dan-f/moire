@@ -10,6 +10,7 @@ import { Config } from "../synth/granular";
 import { useSynth } from "./AppContext";
 import { FileUpload } from "./FileUpload";
 import { useSubscription } from "./hooks/observable";
+import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
 import style from "./Synth.module.css";
@@ -40,6 +41,13 @@ export function Synth() {
       <div className={style.sample}>
         <FileUpload onUpload={handleUpload} />
         <Sample uploadResult={sampleResult} />
+      </div>
+      <div>
+        {/* TODO actual ADSR UI */}
+        <Param.Knob param="attack" enabled range={[0, 5000]} />
+        <Param.Knob param="decay" enabled range={[0, 5000]} />
+        <Param.Knob param="sustain" enabled range={[0, 1]} />
+        <Param.Knob param="release" enabled range={[0, 10000]} />
       </div>
       {[...range(Config.NumStreams)].map((stream) => (
         <div key={stream} className={style.stream}>

@@ -79,6 +79,10 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
+        // prevents bug where 0-length ramp phases create total silence
+        let attack = if attack == 0 { 1 } else { attack };
+        let decay = if decay == 0 { 1 } else { decay };
+        let release = if release == 0 { 1 } else { release };
         self.adsr_env.set_adsr(attack, decay, sustain, release);
     }
 

@@ -51,11 +51,27 @@ export class Engine {
   }
 
   setParams(params: PP.ProcessorParams) {
-    const { bpm, gate, note, ...streamParams } = params;
+    const {
+      bpm,
+      gate,
+      note,
+      attack,
+      decay,
+      sustain,
+      release,
+      ...streamParams
+    } = params;
 
     this.instance.exports.set_bpm(this.engine, bpm[0]);
     this.instance.exports.set_gate(this.engine, gate[0]);
     this.instance.exports.set_note(this.engine, note[0]);
+    this.instance.exports.set_adsr(
+      this.engine,
+      attack[0],
+      decay[0],
+      sustain[0],
+      release[0],
+    );
 
     for (const [streamParam, [val]] of Object.entries(streamParams)) {
       const result = PP.unpackStreamParam(streamParam as PP.StreamParam);
