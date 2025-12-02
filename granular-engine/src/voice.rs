@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use crate::{
     adsr::Adsr,
@@ -14,7 +14,7 @@ pub struct Voice<const S: usize> {
     gate: bool,
     adsr_env: Adsr,
     /// MIDI note
-    note: u32,
+    notes: MruNotes,
     streams: Vec<Stream>,
     grains: GrainPool,
 }
@@ -30,7 +30,7 @@ impl<const S: usize> Voice<S> {
         Voice {
             gate: false,
             adsr_env: Adsr::new(attack, decay, sustain, release),
-            note: 60,
+            notes: MruNotes::with_capacity(6),
             streams: vec![Stream::default_from_clock(clock); S],
             grains: GrainPool::new(512),
         }
@@ -44,8 +44,14 @@ impl<const S: usize> Voice<S> {
         if !self.adsr_env.is_open() {
             return;
         }
+        let note = if let Some(note) = self.notes.current() {
+            note
+        } else {
+            // this would indicate a bug
+            return;
+        };
         for (i, stream) in self.streams.iter().enumerate() {
-            if let Some(grain) = stream.spawn_new_grains(i, self.note, sample) {
+            if let Some(grain) = stream.spawn_new_grains(i, note, sample) {
                 self.grains.add(grain);
             }
         }
@@ -76,6 +82,9 @@ impl<const S: usize> Voice<S> {
             grain_pool::tick(grain);
         }
         self.adsr_env.tick();
+        if !self.adsr_env.is_open() && self.notes.len() > 0 {
+            self.notes.clear();
+        }
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
@@ -87,19 +96,29 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn note_on(&mut self, note: u32) {
-        self.note = note;
         if !self.gate {
+            // we may be in the release phase, in which case we want to remove
+            // the sustaining note
+            self.notes.clear();
             self.gate = true;
             self.adsr_env.set_gate(self.gate);
         }
+        self.notes.add(note);
     }
 
-    pub fn note_off(&mut self, _note: u32) {
+    pub fn note_off(&mut self, note: u32) {
         if !self.gate {
             return;
         }
-        self.gate = false;
-        self.adsr_env.set_gate(self.gate);
+        if self.notes.len() == 1 {
+            // we have to keep the final note around to spawn grains as the
+            // envelope winds down. it will be removed from the stack when the
+            // ADSR closes completely.
+            self.gate = false;
+            self.adsr_env.set_gate(self.gate);
+        } else {
+            self.notes.remove(note);
+        }
     }
 
     pub fn set_enabled(&mut self, stream_id: usize, enabled: bool) {
@@ -154,5 +173,59 @@ impl<const S: usize> Voice<S> {
         if let Some(stream) = self.streams.get_mut(stream_id) {
             f(stream);
         }
+    }
+}
+
+/// Most-recently-used stack of notes for a monophonic voice. Works fine for
+/// small stack sizes, but note that removals are O(N) where N is the stack
+/// size.
+struct MruNotes {
+    capacity: usize,
+    stack: VecDeque<u32>,
+}
+
+impl MruNotes {
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            capacity,
+            stack: VecDeque::with_capacity(capacity),
+        }
+    }
+
+    pub fn current(&self) -> Option<u32> {
+        self.stack.front().copied()
+    }
+
+    pub fn len(&self) -> usize {
+        self.stack.len()
+    }
+
+    pub fn add(&mut self, note: u32) {
+        if self.stack.len() >= self.capacity {
+            return;
+        }
+
+        if let Some(top_note) = self.stack.front() {
+            if note == *top_note {
+                return;
+            }
+        }
+
+        self.stack.push_front(note);
+    }
+
+    pub fn remove(&mut self, note: u32) {
+        if let Some(index) =
+            self.stack
+                .iter()
+                .enumerate()
+                .find_map(|(i, n)| if note == *n { Some(i) } else { None })
+        {
+            self.stack.remove(index);
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.stack.clear();
     }
 }
