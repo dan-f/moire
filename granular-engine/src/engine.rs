@@ -13,6 +13,7 @@ pub struct Engine<const S: usize = 12> {
     output_buf: StereoBuffer,
     playhead_bufs: Vec<MonoBuffer>,
     params: EngineParams,
+    last_note_event: i32,
     pub voice: Voice<S>,
 }
 
@@ -51,6 +52,7 @@ impl<const S: usize> Engine<S> {
                 })
                 .collect(),
             params,
+            last_note_event: -1,
             voice: Voice::new(
                 Rc::clone(&clock),
                 timing::ms_to_samples(cfg.sample_rate, attack_ms),
@@ -111,12 +113,30 @@ impl<const S: usize> Engine<S> {
         );
     }
 
-    pub fn set_gate(&mut self, gate: bool) {
-        self.voice.set_gate(gate);
-    }
+    // Note one potential flaw with this approach: since we have a single stream
+    // of linearized note events at k-rate, it's theoretically possible that the
+    // user could have a collision of two note events in the same buffer window,
+    // i.e. hitting two keys at exactly the same time. I'm not yet sure if this
+    // will be an issue in practice, but it seems it certainly could be, as a
+    // 512 buffer size at 48kHz gives a 10.67ms window for collisions. A cheap
+    // (but not perfect) mitigation would be to make it a-rate, reducing the
+    // collision window to hundredths of a millisecond.
+    //
+    // Alternatively invert the management of polyphony and give the caller `V`
+    // parallel note event streams per-voice. It would then be the caller's
+    // responsibility to map note events to voices
+    pub fn set_note_event(&mut self, note_event: i32) {
+        if note_event == self.last_note_event {
+            return;
+        }
+        self.last_note_event = note_event;
 
-    pub fn set_note(&mut self, note: u32) {
-        self.voice.set_note(note);
+        let note = note_event.abs() as u32;
+        if note_event >= 0 {
+            self.voice.note_on(note);
+        } else {
+            self.voice.note_off(note);
+        }
     }
 
     pub fn process(&mut self) {

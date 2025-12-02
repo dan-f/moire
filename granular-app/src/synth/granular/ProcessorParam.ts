@@ -12,8 +12,7 @@ export type T =
   | "decay"
   | "sustain"
   | "release"
-  | "gate"
-  | "note"
+  | "note_event"
   | StreamParam;
 
 /**

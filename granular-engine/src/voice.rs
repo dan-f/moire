@@ -86,16 +86,20 @@ impl<const S: usize> Voice<S> {
         self.adsr_env.set_adsr(attack, decay, sustain, release);
     }
 
-    pub fn set_gate(&mut self, gate: bool) {
-        if gate == self.gate {
-            return;
+    pub fn note_on(&mut self, note: u32) {
+        self.note = note;
+        if !self.gate {
+            self.gate = true;
+            self.adsr_env.set_gate(self.gate);
         }
-        self.gate = gate;
-        self.adsr_env.set_gate(gate);
     }
 
-    pub fn set_note(&mut self, note: u32) {
-        self.note = note;
+    pub fn note_off(&mut self, _note: u32) {
+        if !self.gate {
+            return;
+        }
+        self.gate = false;
+        self.adsr_env.set_gate(self.gate);
     }
 
     pub fn set_enabled(&mut self, stream_id: usize, enabled: bool) {

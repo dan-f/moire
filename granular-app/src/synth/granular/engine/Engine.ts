@@ -53,8 +53,7 @@ export class Engine {
   setParams(params: PP.ProcessorParams) {
     const {
       bpm,
-      gate,
-      note,
+      note_event,
       attack,
       decay,
       sustain,
@@ -63,8 +62,7 @@ export class Engine {
     } = params;
 
     this.instance.exports.set_bpm(this.engine, bpm[0]);
-    this.instance.exports.set_gate(this.engine, gate[0]);
-    this.instance.exports.set_note(this.engine, note[0]);
+    this.instance.exports.set_note_event(this.engine, note_event[0]);
     this.instance.exports.set_adsr(
       this.engine,
       attack[0],

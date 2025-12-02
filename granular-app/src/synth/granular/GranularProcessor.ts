@@ -70,23 +70,16 @@ class GranularProcessor extends AudioWorkletProcessor {
         minValue: 0,
         maxValue: 10000,
       },
+      {
+        name: "note_event",
+        automationRate: "k-rate",
+        defaultValue: -1,
+        minValue: -127,
+        maxValue: 127,
+      },
       // TODO(poly): refactor these/rework `allStreamParamDescriptors` to
       // generate per-voice param descriptors (and a level down per-stream
       // descriptors)
-      {
-        name: "gate",
-        automationRate: "k-rate",
-        defaultValue: 0,
-        minValue: 0,
-        maxValue: 1,
-      },
-      {
-        name: "note",
-        automationRate: "k-rate",
-        defaultValue: 0,
-        minValue: 0,
-        maxValue: 127,
-      },
       ...GranularProcessor.allStreamParamDescriptors(),
     ];
   }

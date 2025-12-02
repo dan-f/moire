@@ -99,14 +99,8 @@ pub unsafe extern "C" fn set_bpm(engine: *mut Engine, bpm: u32) {
 
 // TODO(poly) add voice param
 #[no_mangle]
-pub unsafe extern "C" fn set_gate(engine: *mut Engine, gate: f32) {
-    engine.as_mut().unwrap().set_gate(gate >= 0.5);
-}
-
-// TODO(poly) add voice param
-#[no_mangle]
-pub unsafe extern "C" fn set_note(engine: *mut Engine, note: u32) {
-    engine.as_mut().unwrap().set_note(note);
+pub unsafe extern "C" fn set_note_event(engine: *mut Engine, note_event: i32) {
+    engine.as_mut().unwrap().set_note_event(note_event);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)

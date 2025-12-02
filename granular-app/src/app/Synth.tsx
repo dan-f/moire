@@ -22,12 +22,9 @@ export function Synth() {
 
   useSubscription(AllNoteEvents$, (noteEvent) => {
     if (noteEvent.type === "noteon") {
-      synth.setParams([
-        ["gate", 1],
-        ["note", noteEvent.note],
-      ]);
+      synth.setParam("note_event", noteEvent.note);
     } else {
-      synth.setParam("gate", 0);
+      synth.setParam("note_event", -noteEvent.note);
     }
   });
 

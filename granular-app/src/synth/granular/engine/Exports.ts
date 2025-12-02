@@ -34,8 +34,7 @@ export interface Exports extends WebAssembly.Exports {
   set_bpm(engine: Pointer, bpm: number): void;
 
   // voice parameters
-  set_gate(engine: Pointer, gate: number): void;
-  set_note(engine: Pointer, note: number): void;
+  set_note_event(engine: Pointer, note_event: number): void;
   set_adsr(
     engine: Pointer,
     attack_ms: number,
