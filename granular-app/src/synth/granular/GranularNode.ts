@@ -1,4 +1,3 @@
-import { repeat } from "../../lib/iter";
 import { Client } from "../../lib/messaging";
 import { Config } from "./Config";
 import { EngineWasmUrl } from "./engine";
@@ -12,11 +11,12 @@ import * as StreamParams from "./StreamParams";
  *
  * - Inputs: None
  * - Outputs:
- *  - 0: stereo audio out
- *  - [1, 2, ...{@linkcode Config.NumStreams}]: per-stream mono signal of
- *    playhead position. A sample value < 0 indicates the stream is not playing,
- *    while a value > 0 indicates the normalized position (0 = start, 1 = end)
- *    of the playhead over the sample buffer.
+ *   0. stereo audio out
+ *   1. {@linkcode Config.NumStreams}-channel signal of per-stream playhead
+ *      positions, where each channel contains playhead positions for an
+ *      individual stream. A sample value < 0 indicates the stream is not
+ *      playing, while a value > 0 indicates the normalized position (0 = start,
+ *      1 = end) of the playhead over the sample buffer.
  */
 export class GranularNode extends AudioWorkletNode {
   private readonly client = new Client(this.port);
@@ -24,11 +24,8 @@ export class GranularNode extends AudioWorkletNode {
   private constructor(ctx: AudioContext, engineModule: WebAssembly.Module) {
     super(ctx, "GranularProcessor", {
       numberOfInputs: 0,
-      numberOfOutputs: 1 + Config.NumStreams,
-      outputChannelCount: [
-        2,
-        ...Array.from(repeat(Config.NumStreams, () => 1)),
-      ],
+      numberOfOutputs: 2,
+      outputChannelCount: [2, Config.NumStreams],
       processorOptions: { granularModule: engineModule },
     });
   }

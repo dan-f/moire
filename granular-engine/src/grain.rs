@@ -1,4 +1,8 @@
-use crate::{buffer::StereoBuffer, dsp, env::Env};
+use crate::{
+    buffer::{self, Buffer},
+    dsp,
+    env::Env,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Grain {
@@ -46,7 +50,7 @@ impl Grain {
         self.stream_idx
     }
 
-    pub fn normalized_pos(&self, buf: &StereoBuffer) -> f32 {
+    pub fn normalized_pos(&self, buf: &Buffer) -> f32 {
         if let Some(idx) = self.idx() {
             idx / (buf.len as f32)
         } else {
@@ -54,12 +58,14 @@ impl Grain {
         }
     }
 
-    pub fn render_frame(&self, sample: &StereoBuffer) -> [f32; 2] {
-        let mut frame = if let Some(idx) = self.idx() {
-            sample.sub_frame(idx)
+    pub fn render_frame(&self, sample: &Buffer) -> [f32; 2] {
+        let mut frame = [0., 0.];
+        if let Some(idx) = self.idx() {
+            frame[0] = buffer::sub_sample(&sample[0], idx);
+            frame[1] = buffer::sub_sample(&sample[1], idx);
         } else {
-            return [0., 0.];
-        };
+            return frame;
+        }
         let gain = self.gain * self.env.at(self.pos());
         dsp::pan_stereo_frame(&mut frame, self.pan);
         dsp::gain_frame(&mut frame, gain);
@@ -99,24 +105,20 @@ impl Grain {
 mod tests {
     use std::vec;
 
-    use crate::buffer::StereoBuffer;
+    use crate::buffer::Buffer;
 
     use super::*;
 
-    impl StereoBuffer {
-        fn new_from(len: usize, data: [Vec<f32>; 2]) -> Self {
-            Self {
-                sample_rate: 48000,
-                len,
-                data,
-            }
+    impl Buffer {
+        fn new_from(len: usize, data: Vec<Vec<f32>>) -> Self {
+            Self { len, data }
         }
     }
 
     #[test]
     fn playback() {
-        let data = [vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
-        let buf = StereoBuffer::new_from(data[0].len(), data);
+        let data = vec![vec![0.1, 0.2, 0.3], vec![0.1, 0.2, 0.3]];
+        let buf = Buffer::new_from(data[0].len(), data);
         let mut grain = Grain::new(0, 1., 2., 1., 1., 0.5, Env::None);
 
         assert!(grain.alive());

@@ -12,29 +12,26 @@ export interface Exports extends WebAssembly.Exports {
     output_buf_len: number,
     output_buf_capacity: number,
   ): Pointer;
-  alloc_sample_buf(engine: Pointer, buf_len: number): void;
   reset_after_update_sample(engine: Pointer): void;
-  alloc_output_bufs(
-    engine: Pointer,
-    new_capacity: number,
-    new_len: number,
-  ): void;
 
-  // buffer addressing
-  sample_buf_l(engine: Pointer): Pointer;
-  sample_buf_r(engine: Pointer): Pointer;
-  output_buf_l(engine: Pointer): Pointer;
-  output_buf_r(engine: Pointer): Pointer;
-  playhead_buf(engine: Pointer, idx: number): Pointer;
+  // buffers
+  new_buffer(channels: number, len: number, capacity: number): Pointer;
+  resize_buffer(buffer: Pointer, new_capacity: number, new_len: number): void;
+  buffer_channel(buffer: Pointer, channel: number): Pointer;
 
   // audio callback
-  process(engine: Pointer): void;
+  process(
+    engine: Pointer,
+    sample_buf: Pointer,
+    note_event_buf: Pointer,
+    output_buf: Pointer,
+    playheads_buf: Pointer,
+  ): void;
 
   // engine parameters
   set_bpm(engine: Pointer, bpm: number): void;
 
   // voice parameters
-  set_note_event(engine: Pointer, note_event: number): void;
   set_adsr(
     engine: Pointer,
     attack_ms: number,

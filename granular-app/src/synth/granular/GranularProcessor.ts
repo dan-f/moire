@@ -72,7 +72,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       },
       {
         name: "note_event",
-        automationRate: "k-rate",
+        automationRate: "a-rate",
         defaultValue: -1,
         minValue: -127,
         maxValue: 127,
@@ -91,16 +91,13 @@ class GranularProcessor extends AudioWorkletProcessor {
   ): boolean {
     this.engine.setParams(params);
 
-    const [dstAudio, ...dstPlayheads] = outputs;
-    const [srcAudio, ...srcPlayheads] = this.engine.process(
+    const [dstAudio, dstPlayheads] = outputs;
+    const [srcAudio, srcPlayheads] = this.engine.process(
       Buffer.length(dstAudio),
     );
 
     Buffer.copy(srcAudio, dstAudio);
-
-    for (let i = 0; i < Config.NumStreams; i++) {
-      Buffer.copy(srcPlayheads[i], dstPlayheads[i]);
-    }
+    Buffer.copy(srcPlayheads, dstPlayheads);
 
     return true;
   }

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{buffer::StereoBuffer, env::Env, grain::Grain, timing::Clock, tuning::tune_equal};
+use crate::{buffer::Buffer, env::Env, grain::Grain, timing::Clock, tuning::tune_equal};
 
 /// Grain producer
 #[derive(Clone)]
@@ -46,11 +46,12 @@ impl Stream {
         &self,
         stream_idx: usize,
         note: u32,
-        sample: &StereoBuffer,
+        sample: &Buffer,
+        sample_rate: usize,
     ) -> Option<Grain> {
         if self.enabled && self.clock.borrow().is_beat() {
             let i = sample.len as f32 * self.grain_start;
-            let len = (sample.sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
+            let len = (sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
             let incr = tune_equal(1., (note as i32) + self.tune - 60);
             Some(Grain::new(

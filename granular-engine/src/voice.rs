@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use crate::{
     adsr::Adsr,
-    buffer::StereoBuffer,
+    buffer::Buffer,
     env::Env,
     grain_pool::{self, GrainPool},
     stream::Stream,
@@ -40,7 +40,7 @@ impl<const S: usize> Voice<S> {
         self.grains.reset();
     }
 
-    pub fn spawn_new_grains(&mut self, sample: &StereoBuffer) {
+    pub fn spawn_new_grains(&mut self, sample: &Buffer, sample_rate: usize) {
         if !self.adsr_env.is_open() {
             return;
         }
@@ -51,7 +51,7 @@ impl<const S: usize> Voice<S> {
             return;
         };
         for (i, stream) in self.streams.iter().enumerate() {
-            if let Some(grain) = stream.spawn_new_grains(i, note, sample) {
+            if let Some(grain) = stream.spawn_new_grains(i, note, sample, sample_rate) {
                 self.grains.add(grain);
             }
         }
@@ -59,7 +59,7 @@ impl<const S: usize> Voice<S> {
 
     pub fn render_frame(
         &mut self,
-        sample: &StereoBuffer,
+        sample: &Buffer,
         frame: &mut [f32; 2],
         playhead_positions: &mut [f32],
     ) {

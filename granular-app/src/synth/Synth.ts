@@ -18,9 +18,11 @@ export class Synth {
     this.ctx = ctx;
     this.granularNode = granularNode;
     this.analysers = Array(Config.NumStreams);
+    const splitter = ctx.createChannelSplitter(Config.NumStreams);
+    this.granularNode.connect(splitter, 1);
     for (const s of range(Config.NumStreams)) {
       const analyser = ctx.createAnalyser();
-      this.granularNode.connect(analyser, s + 1, 0);
+      splitter.connect(analyser, s);
       this.analysers[s] = analyser;
     }
   }

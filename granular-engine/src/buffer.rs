@@ -1,60 +1,21 @@
-use std::array;
+use std::ops::{Index, IndexMut};
 
-pub struct Buffer<const C: usize> {
-    pub sample_rate: usize,
+pub struct Buffer {
     pub len: usize,
-    pub data: [Vec<f32>; C],
+    pub data: Vec<Vec<f32>>,
 }
 
-impl<const C: usize> Buffer<C> {
-    pub fn new(sample_rate: usize, len: usize) -> Self {
-        Self::new_with_capacity(sample_rate, len, len)
+impl Buffer {
+    pub fn new(channels: usize, len: usize) -> Self {
+        Self::new_with_capacity(channels, len, len)
     }
 
-    pub fn new_with_capacity(sample_rate: usize, len: usize, capacity: usize) -> Self {
-        assert!(C > 0);
+    pub fn new_with_capacity(channels: usize, len: usize, capacity: usize) -> Self {
+        assert!(channels > 0);
         assert!(capacity >= len);
         Self {
-            sample_rate,
             len,
-            data: array::from_fn(|_| vec![0.; capacity]),
-        }
-    }
-
-    pub fn channel(&self, chan_idx: usize) -> &[f32] {
-        &self.data[chan_idx]
-    }
-
-    pub fn sub_frame(&self, i: f32) -> [f32; C] {
-        let mut frame = [0.; C];
-
-        if i > (self.len - 1) as f32 {
-            return frame;
-        }
-
-        let left_i = (i.floor() as usize).max(0);
-        let right_i = (i.ceil() as usize).min(self.len - 1);
-
-        for channel in 0..C {
-            frame[channel] = lerp(
-                self.data[channel][left_i],
-                self.data[channel][right_i],
-                i.fract(),
-            );
-        }
-
-        frame
-    }
-
-    pub fn write_frame(&mut self, i: usize, frame: &[f32; C]) {
-        for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
-            dst_channel[i] = *src_sample;
-        }
-    }
-
-    pub fn sum_frame(&mut self, i: usize, frame: &[f32; C]) {
-        for (dst_channel, src_sample) in self.data.iter_mut().zip(frame.iter()) {
-            dst_channel[i] += *src_sample;
+            data: vec![vec![0.; capacity]; channels],
         }
     }
 
@@ -73,9 +34,33 @@ impl<const C: usize> Buffer<C> {
     }
 }
 
-pub type MonoBuffer = Buffer<1>;
+impl Index<usize> for Buffer {
+    type Output = [f32];
 
-pub type StereoBuffer = Buffer<2>;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl IndexMut<usize> for Buffer {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
+    }
+}
+
+/// Linear interpolated values for sub-sample indexing
+pub fn sub_sample(channel: &[f32], i: f32) -> f32 {
+    let len = channel.len();
+
+    if i > (len - 1) as f32 {
+        return 0.;
+    }
+
+    let left_i = (i.floor() as usize).max(0);
+    let right_i = (i.ceil() as usize).min(len - 1);
+
+    lerp(channel[left_i], channel[right_i], i.fract())
+}
 
 fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (1. - t) * a + t * b

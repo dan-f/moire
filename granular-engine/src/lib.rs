@@ -1,7 +1,10 @@
 use engine::Engine;
 use env::Env;
 
-use crate::engine::{EngineConfig, EngineParams};
+use crate::{
+    buffer::Buffer,
+    engine::{EngineConfig, EngineParams},
+};
 
 mod adsr;
 mod buffer;
@@ -17,96 +20,56 @@ mod timing;
 mod tuning;
 mod voice;
 
+const NUM_STREAMS: usize = 12;
+
 #[no_mangle]
 pub extern "C" fn new_engine(
     sample_rate: usize,
     output_buf_len: usize,
     output_buf_capacity: usize,
-) -> *const Engine {
-    let boxed: Box<Engine> = Engine::new(
-        EngineConfig {
-            sample_rate,
-            output_buf_len,
-            output_buf_capacity,
-        },
-        EngineParams::default(),
+) -> *const Engine<NUM_STREAMS> {
+    Box::into_raw(
+        Engine::new(
+            EngineConfig {
+                sample_rate,
+                output_buf_len,
+                output_buf_capacity,
+            },
+            EngineParams::default(),
+        )
+        .into(),
     )
-    .into();
-    Box::into_raw(boxed)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn alloc_sample_buf(engine: *mut Engine, buf_len: usize) {
-    engine.as_mut().unwrap().alloc_sample_buf(buf_len);
+pub unsafe extern "C" fn new_buffer(channels: usize, len: usize, capacity: usize) -> *const Buffer {
+    Box::into_raw(Buffer::new_with_capacity(channels, len, capacity).into())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn reset_after_update_sample(engine: *mut Engine) {
+pub unsafe extern "C" fn resize_buffer(buffer: *mut Buffer, new_capacity: usize, new_len: usize) {
+    buffer.as_mut().unwrap().resize(new_capacity, new_len);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn buffer_channel(buffer: *const Buffer, channel: usize) -> *const f32 {
+    buffer.as_ref().unwrap()[channel].as_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn reset_after_update_sample(engine: *mut Engine<NUM_STREAMS>) {
     engine.as_mut().unwrap().reset_after_update_sample();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn alloc_output_bufs(
-    engine: *mut Engine,
-    new_capacity: usize,
-    new_len: usize,
-) {
-    engine
-        .as_mut()
-        .unwrap()
-        .alloc_output_bufs(new_capacity, new_len);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn sample_buf_l(engine: *const Engine) -> *const f32 {
-    engine
-        .as_ref()
-        .unwrap()
-        .sample_buf(0)
-        .expect("Sample buffer has not been initialized")
-        .as_ptr()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn sample_buf_r(engine: *const Engine) -> *const f32 {
-    engine
-        .as_ref()
-        .unwrap()
-        .sample_buf(1)
-        .expect("Sample buffer has not been initialized")
-        .as_ptr()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn output_buf_l(engine: *const Engine) -> *const f32 {
-    engine.as_ref().unwrap().output_buf(0).as_ptr()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn output_buf_r(engine: *const Engine) -> *const f32 {
-    engine.as_ref().unwrap().output_buf(1).as_ptr()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn playhead_buf(engine: *const Engine, idx: usize) -> *const f32 {
-    engine.as_ref().unwrap().playhead_buf(idx).as_ptr()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn set_bpm(engine: *mut Engine, bpm: u32) {
+pub unsafe extern "C" fn set_bpm(engine: *mut Engine<NUM_STREAMS>, bpm: u32) {
     engine.as_mut().unwrap().set_bpm(bpm);
-}
-
-// TODO(poly) add voice param
-#[no_mangle]
-pub unsafe extern "C" fn set_note_event(engine: *mut Engine, note_event: i32) {
-    engine.as_mut().unwrap().set_note_event(note_event);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_adsr(
-    engine: *mut Engine,
+    engine: *mut Engine<NUM_STREAMS>,
     attack_ms: u32,
     decay_ms: u32,
     sustain: f32,
@@ -120,7 +83,11 @@ pub unsafe extern "C" fn set_adsr(
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
-pub unsafe extern "C" fn set_stream_enabled(engine: *mut Engine, stream_id: usize, enabled: f32) {
+pub unsafe extern "C" fn set_stream_enabled(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    enabled: f32,
+) {
     engine
         .as_mut()
         .unwrap()
@@ -131,7 +98,7 @@ pub unsafe extern "C" fn set_stream_enabled(engine: *mut Engine, stream_id: usiz
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_stream_subdivision(
-    engine: *mut Engine,
+    engine: *mut Engine<NUM_STREAMS>,
     stream_id: usize,
     subdivision: u32,
 ) {
@@ -145,7 +112,7 @@ pub unsafe extern "C" fn set_stream_subdivision(
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_stream_grain_start(
-    engine: *mut Engine,
+    engine: *mut Engine<NUM_STREAMS>,
     stream_id: usize,
     grain_start: f32,
 ) {
@@ -159,7 +126,7 @@ pub unsafe extern "C" fn set_stream_grain_start(
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_stream_grain_size_ms(
-    engine: *mut Engine,
+    engine: *mut Engine<NUM_STREAMS>,
     stream_id: usize,
     grain_size_ms: usize,
 ) {
@@ -172,25 +139,41 @@ pub unsafe extern "C" fn set_stream_grain_size_ms(
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
-pub unsafe extern "C" fn set_stream_gain(engine: *mut Engine, stream_id: usize, gain: f32) {
+pub unsafe extern "C" fn set_stream_gain(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    gain: f32,
+) {
     engine.as_mut().unwrap().voice.set_gain(stream_id, gain);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
-pub unsafe extern "C" fn set_stream_tune(engine: *mut Engine, stream_id: usize, tune: i32) {
+pub unsafe extern "C" fn set_stream_tune(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    tune: i32,
+) {
     engine.as_mut().unwrap().voice.set_tune(stream_id, tune);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
-pub unsafe extern "C" fn set_stream_pan(engine: *mut Engine, stream_id: usize, pan: f32) {
+pub unsafe extern "C" fn set_stream_pan(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    pan: f32,
+) {
     engine.as_mut().unwrap().voice.set_pan(stream_id, pan);
 }
 
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
-pub unsafe extern "C" fn set_stream_env(engine: *mut Engine, stream_id: usize, env: u32) {
+pub unsafe extern "C" fn set_stream_env(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    env: u32,
+) {
     engine
         .as_mut()
         .unwrap()
@@ -199,6 +182,19 @@ pub unsafe extern "C" fn set_stream_env(engine: *mut Engine, stream_id: usize, e
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn process(engine: *mut Engine) {
-    engine.as_mut().unwrap().process();
+pub unsafe extern "C" fn process(
+    engine: *mut Engine<NUM_STREAMS>,
+    sample_buf: *const Buffer,
+    // TODO generalize to params: *const Buffer, where each channel is a
+    // different a-rate param
+    note_event_buf: *const Buffer,
+    output_buf: *mut Buffer,
+    playheads_buf: *mut Buffer,
+) {
+    engine.as_mut().unwrap().process(
+        sample_buf.as_ref().unwrap(),
+        note_event_buf.as_ref().unwrap(),
+        output_buf.as_mut().unwrap(),
+        playheads_buf.as_mut().unwrap(),
+    );
 }

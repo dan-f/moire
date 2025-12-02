@@ -1,5 +1,4 @@
 import { DefaultLogger } from "../../../lib/DefaultLogger";
-import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
@@ -14,14 +13,17 @@ import { Instance } from "./Instance";
 export class Engine {
   private readonly instance: Instance;
   private readonly engine: Pointer;
+  private readonly outputBuf: Pointer;
+  private outputBufView: Buffer.T = Buffer.create(2);
+  private readonly playheadsBuf: Pointer;
+  private playheadsBufView: Buffer.T = Buffer.create(Config.NumStreams);
+  private sampleBuf?: Pointer;
+  private readonly noteEventBuf: Pointer;
+  private noteEventBufView: Buffer.T = Buffer.create(1);
   private readonly log: Logger;
 
   private audioBufLen: number;
   private audioBufCapacity: number;
-  private audioBuffer: Buffer.T = Buffer.create(2);
-  private playheadBuffers: Buffer.T[] = Array.from(
-    repeat(Config.NumStreams, () => Buffer.create(1)),
-  );
 
   constructor(
     module: WebAssembly.Module,
@@ -39,8 +41,24 @@ export class Engine {
 
     this.audioBufCapacity = options.outputBufCapacity;
     this.audioBufLen = options.outputBufLen;
+
     this.engine = this.instance.exports.new_engine(
       sampleRate,
+      this.audioBufLen,
+      this.audioBufCapacity,
+    );
+    this.outputBuf = this.instance.exports.new_buffer(
+      2,
+      this.audioBufLen,
+      this.audioBufCapacity,
+    );
+    this.playheadsBuf = this.instance.exports.new_buffer(
+      Config.NumStreams,
+      this.audioBufLen,
+      this.audioBufCapacity,
+    );
+    this.noteEventBuf = this.instance.exports.new_buffer(
+      1,
       this.audioBufLen,
       this.audioBufCapacity,
     );
@@ -61,8 +79,11 @@ export class Engine {
       ...streamParams
     } = params;
 
+    // a-rate params
+    this.noteEventBufView[0].set(note_event);
+
+    // k-rate params
     this.instance.exports.set_bpm(this.engine, bpm[0]);
-    this.instance.exports.set_note_event(this.engine, note_event[0]);
     this.instance.exports.set_adsr(
       this.engine,
       attack[0],
@@ -122,7 +143,7 @@ export class Engine {
     }
   }
 
-  process(samples: number): Buffer.T[] {
+  process(bufLen: number): Buffer.T[] {
     // Based on the way the WASM memory model works, we cannot simply pass a
     // pointer to the WebAudio-provided `outputs` buffers from the
     // `AudioWorkletProcessor.process()` callback, which would have been
@@ -145,54 +166,92 @@ export class Engine {
     //
     // When we do resize a buffer, we allocate a capacity that's roughly 2x the
     // buffer size we see, KiB-aligned, in the event that we resize again.
-    if (samples > this.audioBufCapacity) {
-      this.audioBufLen = samples;
-      this.audioBufCapacity = Math.ceil(this.audioBufLen / 1024) * 1024;
-      this.instance.exports.alloc_output_bufs(
-        this.engine,
-        this.audioBufCapacity,
-        this.audioBufLen,
-      );
-      this.createBufferViews();
+
+    if (bufLen > this.audioBufCapacity) {
+      this.resizeProcessingBuffers(bufLen);
     }
 
-    this.instance.exports.process(this.engine);
+    if (typeof this.sampleBuf !== "undefined") {
+      this.instance.exports.process(
+        this.engine,
+        this.sampleBuf,
+        this.noteEventBuf,
+        this.outputBuf,
+        this.playheadsBuf,
+      );
+    }
 
-    return [this.audioBuffer, ...this.playheadBuffers];
+    return [this.outputBufView, this.playheadsBufView];
   }
 
   updateSample(sample: Buffer.T) {
     this.log.info("allocating sample buffer");
     const bufLen = Buffer.length(sample);
-    this.instance.exports.alloc_sample_buf(this.engine, bufLen);
+    if (typeof this.sampleBuf === "undefined") {
+      this.sampleBuf = this.instance.exports.new_buffer(2, bufLen, bufLen);
+    } else {
+      this.instance.exports.resize_buffer(this.sampleBuf, bufLen, bufLen);
+    }
+
     // If our allocation causes the WASM memory to grow, we will have to re-draw
     // our views over its memory buffer. The WASM memory model guarantees that
     // our pointers are still accurate relative to the buffer, but the buffer
     // may itself have moved.
     this.createBufferViews();
-    const buf = [
-      this.channelView(this.instance.exports.sample_buf_l(this.engine), bufLen),
-      this.channelView(this.instance.exports.sample_buf_r(this.engine), bufLen),
+    const destBufView = [
+      this.channelView(
+        this.instance.exports.buffer_channel(this.sampleBuf, 0),
+        bufLen,
+      ),
+      this.channelView(
+        this.instance.exports.buffer_channel(this.sampleBuf, 1),
+        bufLen,
+      ),
     ];
-    Buffer.copyStereo(sample, buf);
+    Buffer.copyStereo(sample, destBufView);
     this.instance.exports.reset_after_update_sample(this.engine);
+  }
+
+  private resizeProcessingBuffers(bufLen: number) {
+    this.audioBufLen = bufLen;
+    this.audioBufCapacity = Math.ceil(this.audioBufLen / 1024) * 1024;
+    this.instance.exports.resize_buffer(
+      this.outputBuf,
+      this.audioBufCapacity,
+      this.audioBufLen,
+    );
+    this.instance.exports.resize_buffer(
+      this.playheadsBuf,
+      this.audioBufCapacity,
+      this.audioBufLen,
+    );
+    this.instance.exports.resize_buffer(
+      this.noteEventBuf,
+      this.audioBufCapacity,
+      this.audioBufLen,
+    );
+    this.createBufferViews();
   }
 
   private createBufferViews() {
     this.log.info("(re)creating buffer views");
 
-    this.audioBuffer[0] = this.channelView(
-      this.instance.exports.output_buf_l(this.engine),
+    this.outputBufView[0] = this.channelView(
+      this.instance.exports.buffer_channel(this.outputBuf, 0),
       this.audioBufLen,
     );
-    this.audioBuffer[1] = this.channelView(
-      this.instance.exports.output_buf_r(this.engine),
+    this.outputBufView[1] = this.channelView(
+      this.instance.exports.buffer_channel(this.outputBuf, 1),
+      this.audioBufLen,
+    );
+    this.noteEventBufView[0] = this.channelView(
+      this.instance.exports.buffer_channel(this.noteEventBuf, 0),
       this.audioBufLen,
     );
 
     for (let i = 0; i < Config.NumStreams; i++) {
-      this.playheadBuffers[i][0] = this.channelView(
-        this.instance.exports.playhead_buf(this.engine, i),
+      this.playheadsBufView[i] = this.channelView(
+        this.instance.exports.buffer_channel(this.playheadsBuf, i),
         this.audioBufLen,
       );
     }
