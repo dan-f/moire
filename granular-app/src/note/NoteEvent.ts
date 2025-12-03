@@ -18,6 +18,10 @@ export interface T {
   note: number;
 }
 
+export interface TimedNoteEvent extends T {
+  time: number;
+}
+
 export function noteon(note: number): T {
   return { type: "noteon", note };
 }

@@ -31,7 +31,7 @@ impl<const S: usize> Engine<S> {
             sample_rate: cfg.sample_rate,
             clock: Rc::clone(&clock),
             params,
-            last_note_event: -1,
+            last_note_event: 0,
             voice: Voice::new(
                 Rc::clone(&clock),
                 timing::ms_to_samples(cfg.sample_rate, attack_ms),
@@ -68,30 +68,18 @@ impl<const S: usize> Engine<S> {
         );
     }
 
-    // [UPDATE] - a-rate is working now (yay), but the bug still does occur. I'm
-    // wondering if the next step is to separate-out note-on and note-off event
-    // streams to further reduce the likelihood of clashes.
-    //
-    // Note one potential flaw with this approach: since we have a single stream
-    // of linearized note events at k-rate, it's theoretically possible that the
-    // user could have a collision of two note events in the same buffer window,
-    // i.e. hitting two keys at exactly the same time. I'm not yet sure if this
-    // will be an issue in practice, but it seems it certainly could be, as a
-    // 512 buffer size at 48kHz gives a 10.67ms window for collisions. A cheap
-    // (but not perfect) mitigation would be to make it a-rate, reducing the
-    // collision window to hundredths of a millisecond.
-    //
-    // Alternatively invert the management of polyphony and give the caller `V`
-    // parallel note event streams per-voice. It would then be the caller's
-    // responsibility to map note events to voices
-    fn set_note_event(&mut self, note_event: i32) {
-        if note_event == self.last_note_event {
+    /// Positive-valued `note_event`s indicate a note-on event for the MIDI note
+    /// with the value `note_event - 1`. Negative-valued events indicate
+    /// note-off events for abs(note_event) - 1.
+    fn apply_note_event(&mut self, note_event: i32) {
+        if note_event == 0 || note_event == self.last_note_event {
             return;
         }
+
         self.last_note_event = note_event;
 
-        let note = note_event.abs() as u32;
-        if note_event >= 0 {
+        let note = note_event.abs() as u32 - 1;
+        if note_event > 0 {
             self.voice.note_on(note);
         } else {
             self.voice.note_off(note);
@@ -106,7 +94,7 @@ impl<const S: usize> Engine<S> {
         playheads_buf: &mut Buffer,
     ) {
         for i in 0..output_buf.len {
-            self.set_note_event(note_event_buf[0][i].round() as i32);
+            self.apply_note_event(note_event_buf[0][i].round() as i32);
             let mut frame = [0., 0.];
 
             let mut playhead_positions = [-1.; S];

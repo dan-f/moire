@@ -73,9 +73,9 @@ class GranularProcessor extends AudioWorkletProcessor {
       {
         name: "note_event",
         automationRate: "a-rate",
-        defaultValue: -1,
-        minValue: -127,
-        maxValue: 127,
+        defaultValue: 0,
+        minValue: -128,
+        maxValue: 128,
       },
       // TODO(poly): refactor these/rework `allStreamParamDescriptors` to
       // generate per-voice param descriptors (and a level down per-stream
@@ -89,12 +89,10 @@ class GranularProcessor extends AudioWorkletProcessor {
     outputs: Buffer.T[],
     params: PP.ProcessorParams,
   ): boolean {
-    this.engine.setParams(params);
-
     const [dstAudio, dstPlayheads] = outputs;
-    const [srcAudio, srcPlayheads] = this.engine.process(
-      Buffer.length(dstAudio),
-    );
+    this.engine.checkResizeProcessingBuffers(Buffer.length(dstAudio));
+    this.engine.setParams(params);
+    const [srcAudio, srcPlayheads] = this.engine.process();
 
     Buffer.copy(srcAudio, dstAudio);
     Buffer.copy(srcPlayheads, dstPlayheads);

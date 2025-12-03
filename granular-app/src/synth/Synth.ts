@@ -1,5 +1,6 @@
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
+import { NoteEvent } from "../note";
 import * as Buffer from "./Buffer";
 import { Config, GranularNode, Message as Msg } from "./granular";
 import * as SynthParam from "./SynthParam";
@@ -54,16 +55,25 @@ export class Synth {
     return result;
   }
 
+  sendNoteEvent(event: NoteEvent.TimedNoteEvent) {
+    const noteVal = event.note + 1;
+    this.setParam(
+      "note_event",
+      event.type === "noteon" ? noteVal : -noteVal,
+      event.time,
+    );
+  }
+
   getParamVal(key: SynthParam.T): number | undefined {
     return this.findParam(key)?.value;
   }
 
-  setParam(key: SynthParam.T, val: number) {
+  setParam(key: SynthParam.T, val: number, time?: number) {
     const param = this.findParam(key);
     if (!param) {
       return;
     }
-    this.setParamNow(param, val);
+    this.setParamAtTime(param, val, time);
   }
 
   setParams(params: [SynthParam.T, number][]) {
@@ -104,8 +114,8 @@ export class Synth {
     return param;
   }
 
-  private setParamNow(param: AudioParam, value: number) {
-    param.cancelScheduledValues(this.ctx.currentTime);
-    param.setValueAtTime(value, this.ctx.currentTime);
+  private setParamAtTime(param: AudioParam, value: number, time?: number) {
+    const timeAt = time ?? this.ctx.currentTime;
+    param.setValueAtTime(value, timeAt);
   }
 }

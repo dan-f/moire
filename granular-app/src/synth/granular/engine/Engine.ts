@@ -33,6 +33,8 @@ export class Engine {
       outputBufLen: number;
     },
   ) {
+    this.log = new DefaultLogger(Engine.name);
+
     this.instance = new Instance(module, {
       Math: {
         random: Math.random,
@@ -62,8 +64,6 @@ export class Engine {
       this.audioBufLen,
       this.audioBufCapacity,
     );
-
-    this.log = new DefaultLogger(Engine.name);
 
     this.createBufferViews();
   }
@@ -143,34 +143,7 @@ export class Engine {
     }
   }
 
-  process(bufLen: number): Buffer.T[] {
-    // Based on the way the WASM memory model works, we cannot simply pass a
-    // pointer to the WebAudio-provided `outputs` buffers from the
-    // `AudioWorkletProcessor.process()` callback, which would have been
-    // convenient for us, since we wouldn't have to allocate anything at
-    // runtime, at least from within code we control.
-    //
-    // Instead, we're stuck allocating and potentially growing buffers within
-    // the WASM instance's memory, i.e. if we get called back with a `x >
-    // 128`-length buffer to fill (which is unlikely to happen, but Web Audio
-    // claims they will build this out eventually).
-    //
-    // We have a couple mitigations. First, WASM instances are created with a
-    // pre-allocated block of growable linear memory, meaning that in the event
-    // of a small-enough buffer allocation, the WASM runtime won't be
-    // `malloc`ing anything, but rather just moving pointers around. When the
-    // WASM runtime needs to actually grow its linear memory, allocations are
-    // done in 64 KiB pages. I've never seen an audio buffer size larger than
-    // 8192 f32s, so it's unlikely we'll ever require a real heap allocation
-    // more than once.
-    //
-    // When we do resize a buffer, we allocate a capacity that's roughly 2x the
-    // buffer size we see, KiB-aligned, in the event that we resize again.
-
-    if (bufLen > this.audioBufCapacity) {
-      this.resizeProcessingBuffers(bufLen);
-    }
-
+  process(): Buffer.T[] {
     if (typeof this.sampleBuf !== "undefined") {
       this.instance.exports.process(
         this.engine,
@@ -212,7 +185,33 @@ export class Engine {
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 
-  private resizeProcessingBuffers(bufLen: number) {
+  // Based on the way the WASM memory model works, we cannot simply pass a
+  // pointer to the WebAudio-provided `outputs` buffers from the
+  // `AudioWorkletProcessor.process()` callback, which would have been
+  // convenient for us, since we wouldn't have to allocate anything at
+  // runtime, at least from within code we control.
+  //
+  // Instead, we're stuck allocating and potentially growing buffers within
+  // the WASM instance's memory, i.e. if we get called back with a `x >
+  // 128`-length buffer to fill (which is unlikely to happen, but Web Audio
+  // claims they will build this out eventually).
+  //
+  // We have a couple mitigations. First, WASM instances are created with a
+  // pre-allocated block of growable linear memory, meaning that in the event
+  // of a small-enough buffer allocation, the WASM runtime won't be
+  // `malloc`ing anything, but rather just moving pointers around. When the
+  // WASM runtime needs to actually grow its linear memory, allocations are
+  // done in 64 KiB pages. I've never seen an audio buffer size larger than
+  // 8192 f32s, so it's unlikely we'll ever require a real heap allocation
+  // more than once.
+  //
+  // When we do resize a buffer, we allocate a capacity that's roughly 2x the
+  // buffer size we see, KiB-aligned, in the event that we resize again.
+  checkResizeProcessingBuffers(bufLen: number) {
+    if (bufLen <= this.audioBufCapacity) {
+      return;
+    }
+
     this.audioBufLen = bufLen;
     this.audioBufCapacity = Math.ceil(this.audioBufLen / 1024) * 1024;
     this.instance.exports.resize_buffer(
@@ -230,6 +229,7 @@ export class Engine {
       this.audioBufCapacity,
       this.audioBufLen,
     );
+
     this.createBufferViews();
   }
 
