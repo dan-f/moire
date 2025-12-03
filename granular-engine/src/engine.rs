@@ -71,7 +71,7 @@ impl<const S: usize> Engine<S> {
     /// Positive-valued `note_event`s indicate a note-on event for the MIDI note
     /// with the value `note_event - 1`. Negative-valued events indicate
     /// note-off events for abs(note_event) - 1.
-    fn apply_note_event(&mut self, note_event: i32) {
+    pub fn apply_note_event(&mut self, note_event: i32) {
         if note_event == 0 || note_event == self.last_note_event {
             return;
         }
@@ -89,12 +89,10 @@ impl<const S: usize> Engine<S> {
     pub fn process(
         &mut self,
         sample_buf: &Buffer,
-        note_event_buf: &Buffer,
         output_buf: &mut Buffer,
         playheads_buf: &mut Buffer,
     ) {
         for i in 0..output_buf.len {
-            self.apply_note_event(note_event_buf[0][i].round() as i32);
             let mut frame = [0., 0.];
 
             let mut playhead_positions = [-1.; S];

@@ -18,8 +18,6 @@ export class Engine {
   private readonly playheadsBuf: Pointer;
   private playheadsBufView: Buffer.T = Buffer.create(Config.NumStreams);
   private sampleBuf?: Pointer;
-  private readonly noteEventBuf: Pointer;
-  private noteEventBufView: Buffer.T = Buffer.create(1);
   private readonly log: Logger;
 
   private audioBufLen: number;
@@ -59,11 +57,6 @@ export class Engine {
       this.audioBufLen,
       this.audioBufCapacity,
     );
-    this.noteEventBuf = this.instance.exports.new_buffer(
-      1,
-      this.audioBufLen,
-      this.audioBufCapacity,
-    );
 
     this.createBufferViews();
   }
@@ -78,12 +71,8 @@ export class Engine {
       release,
       ...streamParams
     } = params;
-
-    // a-rate params
-    this.noteEventBufView[0].set(note_event);
-
-    // k-rate params
     this.instance.exports.set_bpm(this.engine, bpm[0]);
+    this.instance.exports.apply_note_event(this.engine, note_event[0]);
     this.instance.exports.set_adsr(
       this.engine,
       attack[0],
@@ -148,7 +137,6 @@ export class Engine {
       this.instance.exports.process(
         this.engine,
         this.sampleBuf,
-        this.noteEventBuf,
         this.outputBuf,
         this.playheadsBuf,
       );
@@ -224,11 +212,6 @@ export class Engine {
       this.audioBufCapacity,
       this.audioBufLen,
     );
-    this.instance.exports.resize_buffer(
-      this.noteEventBuf,
-      this.audioBufCapacity,
-      this.audioBufLen,
-    );
 
     this.createBufferViews();
   }
@@ -242,10 +225,6 @@ export class Engine {
     );
     this.outputBufView[1] = this.channelView(
       this.instance.exports.buffer_channel(this.outputBuf, 1),
-      this.audioBufLen,
-    );
-    this.noteEventBufView[0] = this.channelView(
-      this.instance.exports.buffer_channel(this.noteEventBuf, 0),
       this.audioBufLen,
     );
 

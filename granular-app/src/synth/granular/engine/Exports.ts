@@ -23,7 +23,6 @@ export interface Exports extends WebAssembly.Exports {
   process(
     engine: Pointer,
     sample_buf: Pointer,
-    note_event_buf: Pointer,
     output_buf: Pointer,
     playheads_buf: Pointer,
   ): void;
@@ -32,6 +31,7 @@ export interface Exports extends WebAssembly.Exports {
   set_bpm(engine: Pointer, bpm: number): void;
 
   // voice parameters
+  apply_note_event(engine: Pointer, note_event: number): void;
   set_adsr(
     engine: Pointer,
     attack_ms: number,

@@ -66,6 +66,11 @@ pub unsafe extern "C" fn set_bpm(engine: *mut Engine<NUM_STREAMS>, bpm: u32) {
     engine.as_mut().unwrap().set_bpm(bpm);
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn apply_note_event(engine: *mut Engine<NUM_STREAMS>, note_event: i32) {
+    engine.as_mut().unwrap().apply_note_event(note_event);
+}
+
 // TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_adsr(
@@ -185,15 +190,11 @@ pub unsafe extern "C" fn set_stream_env(
 pub unsafe extern "C" fn process(
     engine: *mut Engine<NUM_STREAMS>,
     sample_buf: *const Buffer,
-    // TODO generalize to params: *const Buffer, where each channel is a
-    // different a-rate param
-    note_event_buf: *const Buffer,
     output_buf: *mut Buffer,
     playheads_buf: *mut Buffer,
 ) {
     engine.as_mut().unwrap().process(
         sample_buf.as_ref().unwrap(),
-        note_event_buf.as_ref().unwrap(),
         output_buf.as_mut().unwrap(),
         playheads_buf.as_mut().unwrap(),
     );

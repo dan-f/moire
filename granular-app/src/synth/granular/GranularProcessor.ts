@@ -72,7 +72,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       },
       {
         name: "note_event",
-        automationRate: "a-rate",
+        automationRate: "k-rate",
         defaultValue: 0,
         minValue: -128,
         maxValue: 128,
