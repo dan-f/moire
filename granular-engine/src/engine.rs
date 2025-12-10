@@ -2,16 +2,18 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     buffer::Buffer,
+    env::Env,
     timing::{self, Clock},
-    voice::Voice,
+    voice_manager::{VoiceManager, VoiceMode},
 };
 
 pub struct Engine<const S: usize> {
     sample_rate: usize,
     clock: Rc<RefCell<Clock>>,
     params: EngineParams,
+    last_tick: u64,
     last_note_event: i32,
-    pub voice: Voice<S>,
+    voices: VoiceManager<8, S>,
 }
 
 impl<const S: usize> Engine<S> {
@@ -31,9 +33,11 @@ impl<const S: usize> Engine<S> {
             sample_rate: cfg.sample_rate,
             clock: Rc::clone(&clock),
             params,
+            last_tick: 0,
             last_note_event: 0,
-            voice: Voice::new(
-                Rc::clone(&clock),
+            voices: VoiceManager::new(
+                VoiceMode::Mono,
+                &clock,
                 timing::ms_to_samples(cfg.sample_rate, attack_ms),
                 timing::ms_to_samples(cfg.sample_rate, decay_ms),
                 sustain,
@@ -42,9 +46,8 @@ impl<const S: usize> Engine<S> {
         }
     }
 
-    // TODO(poly) reset all voices grain pools
     pub fn reset_after_update_sample(&mut self) {
-        self.voice.reset_grains();
+        self.voices.reset_grains();
     }
 
     pub fn set_bpm(&mut self, bpm: u32) {
@@ -60,12 +63,45 @@ impl<const S: usize> Engine<S> {
         self.params.decay_ms = decay_ms;
         self.params.sustain = sustain;
         self.params.release_ms = release_ms;
-        self.voice.set_adsr(
+        self.voices.set_adsr(
             timing::ms_to_samples(self.sample_rate, attack_ms),
             timing::ms_to_samples(self.sample_rate, decay_ms),
             sustain,
             timing::ms_to_samples(self.sample_rate, release_ms),
         );
+    }
+
+    pub fn set_stream_enabled(&mut self, stream_id: usize, enabled: bool) {
+        self.voices.set_stream_enabled(stream_id, enabled);
+    }
+
+    pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
+        self.voices.set_stream_subdivision(stream_id, subdivision);
+    }
+
+    pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {
+        self.voices.set_stream_grain_start(stream_id, grain_start);
+    }
+
+    pub fn set_stream_grain_size_ms(&mut self, stream_id: usize, grain_size_ms: usize) {
+        self.voices
+            .set_stream_grain_size_ms(stream_id, grain_size_ms);
+    }
+
+    pub fn set_stream_gain(&mut self, stream_id: usize, gain: f32) {
+        self.voices.set_stream_gain(stream_id, gain);
+    }
+
+    pub fn set_stream_tune(&mut self, stream_id: usize, tune: i32) {
+        self.voices.set_stream_tune(stream_id, tune);
+    }
+
+    pub fn set_stream_pan(&mut self, stream_id: usize, pan: f32) {
+        self.voices.set_stream_pan(stream_id, pan);
+    }
+
+    pub fn set_stream_env(&mut self, stream_id: usize, env: Env) {
+        self.voices.set_stream_env(stream_id, env);
     }
 
     /// Positive-valued `note_event`s indicate a note-on event for the MIDI note
@@ -80,9 +116,9 @@ impl<const S: usize> Engine<S> {
 
         let note = note_event.abs() as u32 - 1;
         if note_event > 0 {
-            self.voice.note_on(note);
+            self.voices.note_on(note, self.last_tick);
         } else {
-            self.voice.note_off(note);
+            self.voices.note_off(note);
         }
     }
 
@@ -95,11 +131,12 @@ impl<const S: usize> Engine<S> {
         for i in 0..output_buf.len {
             let mut frame = [0., 0.];
 
+            // TODO - polyphonic playhead positions
             let mut playhead_positions = [-1.; S];
-            self.voice.spawn_new_grains(&sample_buf, self.sample_rate);
-            self.voice
+            self.voices.spawn_new_grains(&sample_buf, self.sample_rate);
+            self.voices
                 .render_frame(sample_buf, &mut frame, &mut playhead_positions);
-            self.voice.tick();
+            self.voices.tick();
 
             output_buf[0][i] = frame[0];
             output_buf[1][i] = frame[1];
@@ -108,6 +145,7 @@ impl<const S: usize> Engine<S> {
             }
 
             self.clock.borrow_mut().tick();
+            self.last_tick += 1;
         }
     }
 }

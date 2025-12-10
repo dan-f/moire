@@ -13,8 +13,7 @@ use crate::{
 pub struct Voice<const S: usize> {
     gate: bool,
     adsr_env: Adsr,
-    /// MIDI note
-    notes: MruNotes,
+    note: u32,
     streams: Vec<Stream>,
     grains: GrainPool,
 }
@@ -30,7 +29,7 @@ impl<const S: usize> Voice<S> {
         Voice {
             gate: false,
             adsr_env: Adsr::new(attack, decay, sustain, release),
-            notes: MruNotes::with_capacity(6),
+            note: 60,
             streams: vec![Stream::default_from_clock(clock); S],
             grains: GrainPool::new(512),
         }
@@ -44,14 +43,8 @@ impl<const S: usize> Voice<S> {
         if !self.adsr_env.is_open() {
             return;
         }
-        let note = if let Some(note) = self.notes.current() {
-            note
-        } else {
-            // this would indicate a bug
-            return;
-        };
         for (i, stream) in self.streams.iter().enumerate() {
-            if let Some(grain) = stream.spawn_new_grains(i, note, sample, sample_rate) {
+            if let Some(grain) = stream.spawn_new_grains(i, self.note, sample, sample_rate) {
                 self.grains.add(grain);
             }
         }
@@ -82,9 +75,6 @@ impl<const S: usize> Voice<S> {
             grain_pool::tick(grain);
         }
         self.adsr_env.tick();
-        if !self.adsr_env.is_open() && self.notes.len() > 0 {
-            self.notes.clear();
-        }
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
@@ -95,30 +85,12 @@ impl<const S: usize> Voice<S> {
         self.adsr_env.set_adsr(attack, decay, sustain, release);
     }
 
-    pub fn note_on(&mut self, note: u32) {
-        if !self.gate {
-            // we may be in the release phase, in which case we want to remove
-            // the sustaining note
-            self.notes.clear();
-            self.gate = true;
-            self.adsr_env.set_gate(self.gate);
-        }
-        self.notes.add(note);
+    pub fn set_note(&mut self, note: u32) {
+        self.note = note;
     }
 
-    pub fn note_off(&mut self, note: u32) {
-        if !self.gate {
-            return;
-        }
-        if self.notes.len() == 1 {
-            // we have to keep the final note around to spawn grains as the
-            // envelope winds down. it will be removed from the stack when the
-            // ADSR closes completely.
-            self.gate = false;
-            self.adsr_env.set_gate(self.gate);
-        } else {
-            self.notes.remove(note);
-        }
+    pub fn set_gate(&mut self, gate: bool) {
+        self.adsr_env.set_gate(gate);
     }
 
     pub fn set_enabled(&mut self, stream_id: usize, enabled: bool) {
