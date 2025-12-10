@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     adsr::Adsr,
@@ -11,7 +11,6 @@ use crate::{
 
 /// Synth voice managing a collection of playback [Stream]s
 pub struct Voice<const S: usize> {
-    gate: bool,
     adsr_env: Adsr,
     note: u32,
     streams: Vec<Stream>,
@@ -27,7 +26,6 @@ impl<const S: usize> Voice<S> {
         release: usize,
     ) -> Self {
         Voice {
-            gate: false,
             adsr_env: Adsr::new(attack, decay, sustain, release),
             note: 60,
             streams: vec![Stream::default_from_clock(clock); S],
@@ -62,12 +60,10 @@ impl<const S: usize> Voice<S> {
         let gain = self.adsr_env.gain();
         for grain in self.grains.entries() {
             let f = grain.render_frame(sample);
-            frame[0] += f[0];
-            frame[1] += f[1];
+            frame[0] += f[0] * gain;
+            frame[1] += f[1] * gain;
             playhead_positions[grain.stream_idx()] = grain.normalized_pos(sample);
         }
-        frame[0] *= gain;
-        frame[1] *= gain;
     }
 
     pub fn tick(&mut self) {
@@ -75,6 +71,10 @@ impl<const S: usize> Voice<S> {
             grain_pool::tick(grain);
         }
         self.adsr_env.tick();
+    }
+
+    pub fn is_playing(&self) -> bool {
+        self.adsr_env.is_open()
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
@@ -145,59 +145,5 @@ impl<const S: usize> Voice<S> {
         if let Some(stream) = self.streams.get_mut(stream_id) {
             f(stream);
         }
-    }
-}
-
-/// Most-recently-used stack of notes for a monophonic voice. Works fine for
-/// small stack sizes, but note that removals are O(N) where N is the stack
-/// size.
-struct MruNotes {
-    capacity: usize,
-    stack: VecDeque<u32>,
-}
-
-impl MruNotes {
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            capacity,
-            stack: VecDeque::with_capacity(capacity),
-        }
-    }
-
-    pub fn current(&self) -> Option<u32> {
-        self.stack.front().copied()
-    }
-
-    pub fn len(&self) -> usize {
-        self.stack.len()
-    }
-
-    pub fn add(&mut self, note: u32) {
-        if self.stack.len() >= self.capacity {
-            return;
-        }
-
-        if let Some(top_note) = self.stack.front() {
-            if note == *top_note {
-                return;
-            }
-        }
-
-        self.stack.push_front(note);
-    }
-
-    pub fn remove(&mut self, note: u32) {
-        if let Some(index) =
-            self.stack
-                .iter()
-                .enumerate()
-                .find_map(|(i, n)| if note == *n { Some(i) } else { None })
-        {
-            self.stack.remove(index);
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.stack.clear();
     }
 }

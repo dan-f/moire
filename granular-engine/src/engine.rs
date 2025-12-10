@@ -36,7 +36,7 @@ impl<const S: usize> Engine<S> {
             last_tick: 0,
             last_note_event: 0,
             voices: VoiceManager::new(
-                VoiceMode::Mono,
+                VoiceMode::Poly,
                 &clock,
                 timing::ms_to_samples(cfg.sample_rate, attack_ms),
                 timing::ms_to_samples(cfg.sample_rate, decay_ms),

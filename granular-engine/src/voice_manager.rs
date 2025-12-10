@@ -1,6 +1,6 @@
 use std::{array, cell::RefCell, rc::Rc};
 
-use crate::{buffer::Buffer, env::Env, grain, timing::Clock, voice::Voice};
+use crate::{buffer::Buffer, env::Env, timing::Clock, voice::Voice};
 
 pub struct VoiceManager<const V: usize, const S: usize> {
     mode: VoiceMode,
@@ -35,6 +35,10 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
     }
 
     pub fn set_mode(&mut self, mode: VoiceMode) {
+        for voice in self.voices.iter_mut() {
+            voice.set_gate(false);
+        }
+        self.assignments.fill(None);
         self.mode = mode;
     }
 
@@ -121,7 +125,29 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                 self.voices[0].set_gate(true);
             }
         } else {
-            // find either a free voice, or a voice to steal
+            // find either a free voice, or steal the oldest assigned voice
+            let mut voice_idx = None;
+            let mut min_age = u64::MAX;
+            for (i, a) in self.assignments.iter().enumerate() {
+                if let Some(Assignment { on_at, .. }) = a {
+                    if *on_at <= min_age {
+                        min_age = *on_at;
+                        voice_idx.replace(i);
+                    }
+                } else {
+                    voice_idx.replace(i);
+                    break;
+                }
+            }
+            let voice_idx = if let Some(i) = voice_idx {
+                i
+            } else {
+                // bug
+                return;
+            };
+            self.assignments[voice_idx].replace(Assignment { note, on_at });
+            self.voices[voice_idx].set_note(note);
+            self.voices[voice_idx].set_gate(true);
         }
     }
 
@@ -140,30 +166,48 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                 return;
             };
 
-            if i == 0 {
-                self.assignments[i].take();
-                self.voices[0].set_gate(false);
-            } else {
-                // compress / shift-back notes
-                for cur in i..(V - 1) {
-                    if self.assignments[cur].is_none() {
+            for cur in i..V {
+                match self.assignments.get_mut(cur + 1) {
+                    None | Some(None) => {
+                        self.assignments[cur].take();
                         break;
                     }
-                    self.assignments[cur] = self.assignments[cur + 1].take();
-                }
-                // find and play top note
-                let mut cur_note = None;
-                for a in self.assignments.iter() {
-                    if let Some(Assignment { note, .. }) = a {
-                        cur_note.replace(*note);
+                    Some(a @ Some(_)) => {
+                        let assignment = a.take().unwrap();
+                        self.assignments[cur].replace(assignment);
                     }
                 }
-                if let Some(note) = cur_note {
-                    self.voices[0].set_note(note);
+            }
+            // find and play top note, otherwise gate off if none
+            let mut cur_note = None;
+            for a in self.assignments.iter() {
+                if let Some(Assignment { note, .. }) = a {
+                    cur_note.replace(*note);
                 }
             }
+            if let Some(note) = cur_note {
+                self.voices[0].set_note(note);
+            } else {
+                self.voices[0].set_gate(false);
+            }
         } else {
-            // TODO(poly)
+            let i = self.assignments.iter().enumerate().find_map(|(i, a)| {
+                if a.as_ref().is_some_and(|a| a.note == note) {
+                    Some(i)
+                } else {
+                    None
+                }
+            });
+            let i = if let Some(index) = i {
+                index
+            } else {
+                return;
+            };
+
+            // Since gating a voice off leads into the release phase, the actual
+            // freeing of the assignment takes place in `tick()` when we detect
+            // the end of a release phase.
+            self.voices[i].set_gate(false);
         }
     }
 
@@ -171,7 +215,9 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         if self.mode == VoiceMode::Mono {
             self.voices[0].spawn_new_grains(sample, sample_rate);
         } else {
-            // TODO(poly)
+            for voice in self.voices.iter_mut() {
+                voice.spawn_new_grains(sample, sample_rate);
+            }
         }
     }
 
@@ -184,14 +230,25 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         if self.mode == VoiceMode::Mono {
             self.voices[0].render_frame(sample, frame, playhead_positions)
         } else {
-            // TODO(poly)
-            todo!()
+            // TODO(poly) - implement proper support for additional playheads.
+            // Right now, playhead positions will be last-write-wins... is that
+            // actually OK?
+            //
+            // Also, do we want to adjust gain in poly mode or globally to
+            // account for clipping potential?
+            for voice in self.voices.iter_mut() {
+                voice.render_frame(sample, frame, playhead_positions);
+            }
         }
     }
 
     pub fn tick(&mut self) {
-        for voice in self.voices.iter_mut() {
+        for (i, voice) in self.voices.iter_mut().enumerate() {
+            let was_playing = voice.is_playing();
             voice.tick();
+            if self.mode == VoiceMode::Poly && was_playing && !voice.is_playing() {
+                self.assignments[i].take();
+            }
         }
     }
 }
@@ -202,6 +259,7 @@ pub enum VoiceMode {
     Poly,
 }
 
+#[derive(Clone)]
 struct Assignment {
     note: u32,
     on_at: u64,
