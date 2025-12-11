@@ -34,4 +34,9 @@ const KeyToMidiNote: Record<string, number | undefined> = {
   h: 69,
   u: 70,
   j: 71,
+  k: 72,
+  o: 73,
+  l: 74,
+  p: 75,
+  ";": 76,
 };

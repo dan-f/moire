@@ -13,7 +13,7 @@ pub struct Engine<const S: usize> {
     params: EngineParams,
     last_tick: u64,
     last_note_event: i32,
-    voices: VoiceManager<8, S>,
+    voices: VoiceManager<6, S>,
 }
 
 impl<const S: usize> Engine<S> {
