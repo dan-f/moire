@@ -105,7 +105,7 @@ export function copy(src: T, dst: T) {
   }
 }
 
-export function subFrame(buffer: T, subSample: number) {
+export function subFrame(buffer: T, subSample: number): number[] {
   const bufLen = length(buffer);
   const chans = channels(buffer);
   const leftSample = Math.max(Math.floor(subSample), 0);

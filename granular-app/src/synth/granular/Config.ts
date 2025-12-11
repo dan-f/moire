@@ -1,3 +1,3 @@
 export const Config = {
-  NumStreams: 12,
+  NumStreams: 6,
 };

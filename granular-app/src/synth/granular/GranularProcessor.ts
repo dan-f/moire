@@ -89,13 +89,17 @@ class GranularProcessor extends AudioWorkletProcessor {
     outputs: Buffer.T[],
     params: PP.ProcessorParams,
   ): boolean {
-    const [dstAudio, dstPlayheads] = outputs;
+    const [dstAudio, dstPlayheads, ...dstBigBufViews] = outputs;
     this.engine.checkResizeProcessingBuffers(Buffer.length(dstAudio));
     this.engine.setParams(params);
-    const [srcAudio, srcPlayheads] = this.engine.process();
+    const [srcAudio, srcPlayheads, srcBigBufViews] = this.engine.process();
 
     Buffer.copy(srcAudio, dstAudio);
     Buffer.copy(srcPlayheads, dstPlayheads);
+
+    for (let i = 0; i < 8; i++) {
+      Buffer.copy(srcBigBufViews[i], dstBigBufViews[i]);
+    }
 
     return true;
   }

@@ -36,11 +36,21 @@ export function Synth() {
         <Sample uploadResult={sampleResult} />
       </div>
       <div>
-        {/* TODO actual ADSR UI */}
+        {/* TODO UI redesign - just for testing */}
         <Param.Knob param="attack" enabled range={[0, 5000]} />
         <Param.Knob param="decay" enabled range={[0, 5000]} />
         <Param.Knob param="sustain" enabled range={[0, 1]} />
         <Param.Knob param="release" enabled range={[0, 10000]} />
+        {/* <fieldset>
+          <legend>Voice Mode</legend>
+          <label>
+            Mono <input type="radio" name="voice" value="mono" checked></input>
+          </label>
+          <label>
+            Poly <input type="radio" name="voice" value="poly"></input>
+          </label>
+        </fieldset> */}
+        {/* end TODO */}
       </div>
       {[...range(Config.NumStreams)].map((stream) => (
         <div key={stream} className={style.stream}>

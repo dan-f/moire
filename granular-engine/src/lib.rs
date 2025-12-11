@@ -21,7 +21,7 @@ mod tuning;
 mod voice;
 mod voice_manager;
 
-const NUM_STREAMS: usize = 12;
+const NUM_STREAMS: usize = 6;
 
 #[no_mangle]
 pub extern "C" fn new_engine(

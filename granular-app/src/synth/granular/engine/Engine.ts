@@ -1,4 +1,5 @@
 import { DefaultLogger } from "../../../lib/DefaultLogger";
+import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
@@ -17,6 +18,12 @@ export class Engine {
   private outputBufView: Buffer.T = Buffer.create(2);
   private readonly playheadsBuf: Pointer;
   private playheadsBufView: Buffer.T = Buffer.create(Config.NumStreams);
+  // BEGIN TEST
+  private readonly bigBuf: Pointer; // 256-channel buffer
+  private bigBufViews: Buffer.T[] = Array.from(
+    repeat(8, () => Buffer.create(32)),
+  ); // 8 32-channel buffers
+  // END TEST
   private sampleBuf?: Pointer;
   private readonly log: Logger;
 
@@ -57,6 +64,13 @@ export class Engine {
       this.audioBufLen,
       this.audioBufCapacity,
     );
+    // BEGIN TEST
+    this.bigBuf = this.instance.exports.new_buffer(
+      256,
+      this.audioBufLen,
+      this.audioBufCapacity,
+    );
+    // END TEST
 
     this.createBufferViews();
   }
@@ -132,7 +146,7 @@ export class Engine {
     }
   }
 
-  process(): Buffer.T[] {
+  process(): [Buffer.T, Buffer.T, Buffer.T[]] {
     if (typeof this.sampleBuf !== "undefined") {
       this.instance.exports.process(
         this.engine,
@@ -142,7 +156,7 @@ export class Engine {
       );
     }
 
-    return [this.outputBufView, this.playheadsBufView];
+    return [this.outputBufView, this.playheadsBufView, this.bigBufViews];
   }
 
   updateSample(sample: Buffer.T) {
@@ -234,6 +248,17 @@ export class Engine {
         this.audioBufLen,
       );
     }
+
+    // BEGIN TEST
+    for (let v = 0; v < 8; v++) {
+      for (let c = 0; c < 32; c++) {
+        this.bigBufViews[v][c] = this.channelView(
+          this.instance.exports.buffer_channel(this.bigBuf, v * 32 + c),
+          this.audioBufLen,
+        );
+      }
+    }
+    // END TEST
   }
 
   private channelView(ptr: Pointer, len: number): Float32Array {

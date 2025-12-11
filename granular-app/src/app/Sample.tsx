@@ -94,14 +94,27 @@ class SampleAnimation {
     const verticalOffset = this.height / 2;
     const centerPosition = this.height / 2;
 
-    ctx.strokeStyle = this.theme.colors.foregroundSecondary;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = this.theme.colors.foreground;
+    ctx.lineWidth = 1;
     ctx.beginPath();
 
     for (let x = 0; x < this.width; x++) {
       const subSample = (x / this.width) * Buffer.length(buffer);
       const frame = Buffer.subFrame(buffer, subSample);
       ctx.lineTo(x, centerPosition + frame[0] * verticalOffset);
+    }
+
+    ctx.stroke();
+
+    // right channel
+    ctx.strokeStyle = this.theme.colors.foregroundSecondary;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+
+    for (let x = 0; x < this.width; x++) {
+      const subSample = (x / this.width) * Buffer.length(buffer);
+      const frame = Buffer.subFrame(buffer, subSample);
+      ctx.lineTo(x, centerPosition + frame[1] * verticalOffset);
     }
 
     ctx.stroke();
@@ -112,7 +125,7 @@ class SampleAnimation {
       const x = this.synth.playheadPosition(s) * this.width;
       if (x > 0) {
         ctx.strokeStyle = this.theme.colors.stream[s];
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, this.height);
