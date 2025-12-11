@@ -104,56 +104,40 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
 
     pub fn note_on(&mut self, note: u32, on_at: u64) {
         if self.mode == VoiceMode::Mono {
-            // claim the free pseudo-voice, if available
-            let i = self.assignments.iter().enumerate().find_map(|(i, a)| {
-                if a.is_none() {
-                    Some(i)
-                } else {
-                    None
+            let entry = self.mono_assignments().find(|(_, a)| a.is_none());
+            if let Some((i, assignment)) = entry {
+                assignment.replace(Assignment { note, on_at });
+                self.voices[0].set_note(note);
+                if i == 0 {
+                    self.voices[0].set_gate(true);
                 }
-            });
-            let i = if let Some(index) = i {
-                index
-            } else {
-                return;
-            };
-            self.assignments[i] = Some(Assignment { note, on_at });
-
-            // deal with voice
-            self.voices[0].set_note(note);
-            if i == 0 {
-                self.voices[0].set_gate(true);
             }
         } else {
-            // find either a free voice, or steal the oldest assigned voice
-            let mut voice_idx = None;
             let mut min_age = u64::MAX;
-            for (i, a) in self.assignments.iter().enumerate() {
-                if let Some(Assignment { on_at, .. }) = a {
+            let mut entry = None;
+            for (voice, assignment) in self.poly_voice_assignments() {
+                if let Some(Assignment { on_at, .. }) = assignment {
                     if *on_at <= min_age {
                         min_age = *on_at;
-                        voice_idx.replace(i);
+                        entry.replace((voice, assignment));
                     }
                 } else {
-                    voice_idx.replace(i);
+                    entry.replace((voice, assignment));
                     break;
                 }
             }
-            let voice_idx = if let Some(i) = voice_idx {
-                i
-            } else {
-                // bug
-                return;
-            };
-            self.assignments[voice_idx].replace(Assignment { note, on_at });
-            self.voices[voice_idx].set_note(note);
-            self.voices[voice_idx].set_gate(true);
+            if let Some((voice, assignment)) = entry {
+                assignment.replace(Assignment { note, on_at });
+                voice.set_note(note);
+                voice.set_gate(true);
+            }
         }
     }
 
     pub fn note_off(&mut self, note: u32) {
         if self.mode == VoiceMode::Mono {
-            let i = self.assignments.iter().enumerate().find_map(|(i, a)| {
+            // find matching pseudo-voice to de-assign
+            let i = self.mono_assignments().find_map(|(i, a)| {
                 if a.as_ref().is_some_and(|a| a.note == note) {
                     Some(i)
                 } else {
@@ -166,6 +150,8 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                 return;
             };
 
+            // pull the assignment from the stack, finding the top pseudo-voice
+            let mut top = (i as isize) - 1;
             for cur in i..V {
                 match self.assignments.get_mut(cur + 1) {
                     None | Some(None) => {
@@ -175,39 +161,37 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                     Some(a @ Some(_)) => {
                         let assignment = a.take().unwrap();
                         self.assignments[cur].replace(assignment);
+                        top += 1;
                     }
                 }
             }
-            // find and play top note, otherwise gate off if none
-            let mut cur_note = None;
-            for a in self.assignments.iter() {
-                if let Some(Assignment { note, .. }) = a {
-                    cur_note.replace(*note);
-                }
-            }
-            if let Some(note) = cur_note {
-                self.voices[0].set_note(note);
+
+            // play the top pseudo-voice, if any
+            if let Some(Some(Assignment { note: top_note, .. })) =
+                self.assignments.get(top as usize)
+            {
+                self.voices[0].set_note(*top_note);
             } else {
                 self.voices[0].set_gate(false);
             }
         } else {
-            let i = self.assignments.iter().enumerate().find_map(|(i, a)| {
-                if a.as_ref().is_some_and(|a| a.note == note) {
-                    Some(i)
-                } else {
-                    None
-                }
-            });
-            let i = if let Some(index) = i {
-                index
-            } else {
-                return;
-            };
-
-            // Since gating a voice off leads into the release phase, the actual
-            // freeing of the assignment takes place in `tick()` when we detect
-            // the end of a release phase.
-            self.voices[i].set_gate(false);
+            let voice = self
+                .poly_voice_assignments()
+                .find_map(|(voice, assignment)| {
+                    if assignment.as_mut().is_some_and(|a| a.note == note)
+                        && !voice.adsr.is_release()
+                    {
+                        Some(voice)
+                    } else {
+                        None
+                    }
+                });
+            if let Some(voice) = voice {
+                // Since gating a voice off leads into the release phase, the actual
+                // freeing of the assignment takes place in `tick()` when we detect
+                // the end of a release phase.
+                voice.set_gate(false);
+            }
         }
     }
 
@@ -244,12 +228,22 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
 
     pub fn tick(&mut self) {
         for (i, voice) in self.voices.iter_mut().enumerate() {
-            let was_playing = voice.is_playing();
+            let was_playing = voice.adsr.is_open();
             voice.tick();
-            if self.mode == VoiceMode::Poly && was_playing && !voice.is_playing() {
+            if self.mode == VoiceMode::Poly && was_playing && !voice.adsr.is_open() {
                 self.assignments[i].take();
             }
         }
+    }
+
+    fn mono_assignments(&mut self) -> impl Iterator<Item = (usize, &mut Option<Assignment>)> {
+        self.assignments.iter_mut().enumerate()
+    }
+
+    fn poly_voice_assignments(
+        &mut self,
+    ) -> impl Iterator<Item = (&mut Voice<S>, &mut Option<Assignment>)> {
+        self.voices.iter_mut().zip(self.assignments.iter_mut())
     }
 }
 

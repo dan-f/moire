@@ -11,7 +11,7 @@ use crate::{
 
 /// Synth voice managing a collection of playback [Stream]s
 pub struct Voice<const S: usize> {
-    adsr_env: Adsr,
+    pub adsr: Adsr,
     note: u32,
     streams: Vec<Stream>,
     grains: GrainPool,
@@ -26,7 +26,7 @@ impl<const S: usize> Voice<S> {
         release: usize,
     ) -> Self {
         Voice {
-            adsr_env: Adsr::new(attack, decay, sustain, release),
+            adsr: Adsr::new(attack, decay, sustain, release),
             note: 60,
             streams: vec![Stream::default_from_clock(clock); S],
             grains: GrainPool::new(512),
@@ -38,7 +38,7 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn spawn_new_grains(&mut self, sample: &Buffer, sample_rate: usize) {
-        if !self.adsr_env.is_open() {
+        if !self.adsr.is_open() {
             return;
         }
         for (i, stream) in self.streams.iter().enumerate() {
@@ -54,10 +54,10 @@ impl<const S: usize> Voice<S> {
         frame: &mut [f32; 2],
         playhead_positions: &mut [f32],
     ) {
-        if !self.adsr_env.is_open() {
+        if !self.adsr.is_open() {
             return;
         }
-        let gain = self.adsr_env.gain();
+        let gain = self.adsr.gain();
         for grain in self.grains.entries() {
             let f = grain.render_frame(sample);
             frame[0] += f[0] * gain;
@@ -70,11 +70,7 @@ impl<const S: usize> Voice<S> {
         for grain in self.grains.entries() {
             grain_pool::tick(grain);
         }
-        self.adsr_env.tick();
-    }
-
-    pub fn is_playing(&self) -> bool {
-        self.adsr_env.is_open()
+        self.adsr.tick();
     }
 
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
@@ -82,7 +78,7 @@ impl<const S: usize> Voice<S> {
         let attack = if attack == 0 { 1 } else { attack };
         let decay = if decay == 0 { 1 } else { decay };
         let release = if release == 0 { 1 } else { release };
-        self.adsr_env.set_adsr(attack, decay, sustain, release);
+        self.adsr.set_adsr(attack, decay, sustain, release);
     }
 
     pub fn set_note(&mut self, note: u32) {
@@ -90,7 +86,7 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn set_gate(&mut self, gate: bool) {
-        self.adsr_env.set_gate(gate);
+        self.adsr.set_gate(gate);
     }
 
     pub fn set_enabled(&mut self, stream_id: usize, enabled: bool) {

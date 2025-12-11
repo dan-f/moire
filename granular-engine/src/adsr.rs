@@ -126,6 +126,10 @@ impl Adsr {
     pub fn is_open(&self) -> bool {
         return self.phase != AdsrPhase::Off;
     }
+
+    pub fn is_release(&self) -> bool {
+        return matches!(self.phase, AdsrPhase::Release { .. });
+    }
 }
 
 #[derive(Debug, PartialEq)]
