@@ -1,12 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{buffer::Buffer, env::Env, grain::Grain, timing::Clock, tuning::tune_equal};
+use crate::{buffer::Buffer, env::Env, grain::Grain, timing_v2::Phasor, tuning::tune_equal};
 
 /// Grain producer
 #[derive(Clone)]
 pub struct Stream {
     enabled: bool,
-    clock: Rc<RefCell<Clock>>,
+    phasor: Phasor,
     grain_start: f32,
     grain_size_ms: usize,
     gain: f32,
@@ -17,8 +15,7 @@ pub struct Stream {
 
 impl Stream {
     pub fn new(
-        parent_clock: Rc<RefCell<Clock>>,
-        subdivision: u32,
+        parent_phasor: &Phasor,
         grain_start: f32,
         grain_size_ms: usize,
         gain: f32,
@@ -28,7 +25,7 @@ impl Stream {
     ) -> Self {
         Self {
             enabled: false,
-            clock: Clock::add_child(&parent_clock, subdivision as i64),
+            phasor: *parent_phasor,
             grain_start,
             grain_size_ms,
             gain,
@@ -38,8 +35,8 @@ impl Stream {
         }
     }
 
-    pub fn default_from_clock(parent_clock: Rc<RefCell<Clock>>) -> Self {
-        Self::new(parent_clock, 1, 0., 250, 1., 0, 0.5, Env::Tri)
+    pub fn default_from_phasor(parent_phasor: &Phasor) -> Self {
+        Self::new(parent_phasor, 0., 250, 1., 0, 0.5, Env::Tri)
     }
 
     pub fn spawn_new_grains(
@@ -49,7 +46,7 @@ impl Stream {
         sample: &Buffer,
         sample_rate: usize,
     ) -> Option<Grain> {
-        if self.enabled && self.clock.borrow().is_beat() {
+        if self.enabled && self.phasor.is_cross() {
             let i = sample.len as f32 * self.grain_start;
             let len = (sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
@@ -62,12 +59,20 @@ impl Stream {
         }
     }
 
+    pub fn tick(&mut self) {
+        self.phasor.tick();
+    }
+
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
 
-    pub fn set_subdivision(&mut self, subdivision: u32) {
-        self.clock.borrow_mut().set_subdivision(subdivision as i64);
+    pub fn set_freq(&mut self, freq: f64) {
+        self.phasor.set_freq(freq);
+    }
+
+    pub fn scale_freq(&mut self, factor: f64) {
+        self.phasor.scale_freq(factor);
     }
 
     pub fn set_grain_start(&mut self, grain_start: f32) {

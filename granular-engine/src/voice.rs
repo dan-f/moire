@@ -1,12 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     adsr::Adsr,
     buffer::Buffer,
     env::Env,
     grain_pool::{self, GrainPool},
     stream::Stream,
-    timing::Clock,
+    timing_v2::Phasor,
 };
 
 /// Synth voice managing a collection of playback [Stream]s
@@ -19,7 +17,7 @@ pub struct Voice<const S: usize> {
 
 impl<const S: usize> Voice<S> {
     pub fn new(
-        clock: Rc<RefCell<Clock>>,
+        parent_phasor: &Phasor,
         attack: usize,
         decay: usize,
         sustain: f32,
@@ -28,7 +26,7 @@ impl<const S: usize> Voice<S> {
         Voice {
             adsr: Adsr::new(attack, decay, sustain, release),
             note: 60,
-            streams: vec![Stream::default_from_clock(clock); S],
+            streams: vec![Stream::default_from_phasor(parent_phasor); S],
             grains: GrainPool::new(512),
         }
     }
@@ -70,6 +68,9 @@ impl<const S: usize> Voice<S> {
         for grain in self.grains.entries() {
             grain_pool::tick(grain);
         }
+        for stream in &mut self.streams {
+            stream.tick();
+        }
         self.adsr.tick();
     }
 
@@ -95,10 +96,16 @@ impl<const S: usize> Voice<S> {
         });
     }
 
-    pub fn set_subdivision(&mut self, stream_id: usize, subdivision: u32) {
+    pub fn set_freq(&mut self, stream_id: usize, freq: f64) {
         self.with_stream(stream_id, |stream| {
-            stream.set_subdivision(subdivision);
+            stream.set_freq(freq);
         });
+    }
+
+    pub fn scale_freqs(&mut self, factor: f64) {
+        for stream in &mut self.streams {
+            stream.scale_freq(factor);
+        }
     }
 
     pub fn set_grain_start(&mut self, stream_id: usize, grain_start: f32) {

@@ -1,6 +1,6 @@
-use std::{array, cell::RefCell, rc::Rc};
+use std::array;
 
-use crate::{buffer::Buffer, env::Env, timing::Clock, voice::Voice};
+use crate::{buffer::Buffer, env::Env, timing_v2::Phasor, voice::Voice};
 
 pub struct VoiceManager<const V: usize, const S: usize> {
     mode: VoiceMode,
@@ -18,7 +18,7 @@ pub struct VoiceManager<const V: usize, const S: usize> {
 impl<const V: usize, const S: usize> VoiceManager<V, S> {
     pub fn new(
         mode: VoiceMode,
-        clock: &Rc<RefCell<Clock>>,
+        parent_phasor: &Phasor,
         // TODO refactor these into an AdsrParams struct or something
         attack: usize,
         decay: usize,
@@ -27,9 +27,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
     ) -> Self {
         Self {
             mode,
-            voices: array::from_fn(|_| {
-                Voice::new(Rc::clone(clock), attack, decay, sustain, release)
-            }),
+            voices: array::from_fn(|_| Voice::new(parent_phasor, attack, decay, sustain, release)),
             assignments: [const { None }; V],
         }
     }
@@ -60,9 +58,15 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
-    pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
+    pub fn set_stream_freq(&mut self, stream_id: usize, freq: f64) {
         for voice in self.voices.iter_mut() {
-            voice.set_subdivision(stream_id, subdivision);
+            voice.set_freq(stream_id, freq);
+        }
+    }
+
+    pub fn scale_freqs(&mut self, factor: f64) {
+        for voice in self.voices.iter_mut() {
+            voice.scale_freqs(factor);
         }
     }
 

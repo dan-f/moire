@@ -1,15 +1,13 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     buffer::Buffer,
     env::Env,
-    timing::{self, Clock},
+    timing,
+    timing_v2::{self, Phasor},
     voice_manager::{VoiceManager, VoiceMode},
 };
 
 pub struct Engine<const S: usize> {
     sample_rate: usize,
-    clock: Rc<RefCell<Clock>>,
     params: EngineParams,
     last_tick: u64,
     last_note_event: i32,
@@ -18,10 +16,7 @@ pub struct Engine<const S: usize> {
 
 impl<const S: usize> Engine<S> {
     pub fn new(cfg: EngineConfig, params: EngineParams) -> Self {
-        let clock = Rc::new(RefCell::new(Clock::new(
-            cfg.sample_rate,
-            timing::bpm_to_freq(params.bpm),
-        )));
+        let phasor = Phasor::new(cfg.sample_rate, timing_v2::bpm_to_freq(params.bpm));
         let EngineParams {
             bpm: _,
             attack_ms,
@@ -31,13 +26,12 @@ impl<const S: usize> Engine<S> {
         } = params;
         Self {
             sample_rate: cfg.sample_rate,
-            clock: Rc::clone(&clock),
             params,
             last_tick: 0,
             last_note_event: 0,
             voices: VoiceManager::new(
                 VoiceMode::Poly,
-                &clock,
+                &phasor,
                 timing::ms_to_samples(cfg.sample_rate, attack_ms),
                 timing::ms_to_samples(cfg.sample_rate, decay_ms),
                 sustain,
@@ -54,8 +48,9 @@ impl<const S: usize> Engine<S> {
         if bpm == self.params.bpm {
             return;
         }
+        self.voices
+            .scale_freqs((bpm as f64) / (self.params.bpm as f64));
         self.params.bpm = bpm;
-        self.clock.borrow_mut().set_freq(timing::bpm_to_freq(bpm));
     }
 
     pub fn set_adsr(&mut self, attack_ms: u32, decay_ms: u32, sustain: f32, release_ms: u32) {
@@ -76,7 +71,9 @@ impl<const S: usize> Engine<S> {
     }
 
     pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
-        self.voices.set_stream_subdivision(stream_id, subdivision);
+        let cur_freq = timing_v2::bpm_to_freq(self.params.bpm);
+        self.voices
+            .set_stream_freq(stream_id, cur_freq * (subdivision as f64));
     }
 
     pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {
@@ -144,7 +141,6 @@ impl<const S: usize> Engine<S> {
                 playheads_buf[s][i] = *pos;
             }
 
-            self.clock.borrow_mut().tick();
             self.last_tick += 1;
         }
     }
