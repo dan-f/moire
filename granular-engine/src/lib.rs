@@ -17,6 +17,7 @@ mod pool;
 mod rand;
 mod stream;
 mod timing;
+mod timing_v2;
 mod tuning;
 mod voice;
 mod voice_manager;
