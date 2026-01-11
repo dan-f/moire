@@ -1,15 +1,18 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     adsr::Adsr,
     buffer::Buffer,
     env::Env,
     grain_pool::{self, GrainPool},
     stream::Stream,
-    timing_v2::Phasor,
+    time::clock::{self, Clock},
 };
 
 /// Synth voice managing a collection of playback [Stream]s
 pub struct Voice<const S: usize> {
     pub adsr: Adsr,
+    clock: Rc<RefCell<Clock>>,
     note: u32,
     streams: Vec<Stream>,
     grains: GrainPool,
@@ -17,16 +20,21 @@ pub struct Voice<const S: usize> {
 
 impl<const S: usize> Voice<S> {
     pub fn new(
-        parent_phasor: &Phasor,
+        clock: Rc<RefCell<Clock>>,
         attack: usize,
         decay: usize,
         sustain: f32,
         release: usize,
     ) -> Self {
+        let streams: Vec<_> = (0..S)
+            .map(|_| Stream::default_with_clock(clock::add_child(&clock)))
+            .collect();
+
         Voice {
             adsr: Adsr::new(attack, decay, sustain, release),
+            clock,
             note: 60,
-            streams: vec![Stream::default_from_phasor(parent_phasor); S],
+            streams,
             grains: GrainPool::new(512),
         }
     }
@@ -65,6 +73,7 @@ impl<const S: usize> Voice<S> {
     }
 
     pub fn tick(&mut self) {
+        self.clock.borrow_mut().tick();
         for grain in self.grains.entries() {
             grain_pool::tick(grain);
         }
@@ -96,16 +105,22 @@ impl<const S: usize> Voice<S> {
         });
     }
 
-    pub fn set_freq(&mut self, stream_id: usize, freq: f64) {
-        self.with_stream(stream_id, |stream| {
-            stream.set_freq(freq);
-        });
+    pub fn stop_lead_clock(&mut self) {
+        self.clock.borrow_mut().stop();
     }
 
-    pub fn scale_freqs(&mut self, factor: f64) {
-        for stream in &mut self.streams {
-            stream.scale_freq(factor);
-        }
+    pub fn resume_lead_clock(&mut self) {
+        self.clock.borrow_mut().resume();
+    }
+
+    pub fn set_lead_clock_freq(&mut self, freq: f64) {
+        self.clock.borrow_mut().set_freq(freq);
+    }
+
+    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: f64) {
+        self.with_stream(stream_id, |stream| {
+            stream.subdivide_clock(subdivision);
+        });
     }
 
     pub fn set_grain_start(&mut self, stream_id: usize, grain_start: f32) {

@@ -1,8 +1,9 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     buffer::Buffer,
     env::Env,
-    timing,
-    timing_v2::{self, Phasor},
+    time,
     voice_manager::{VoiceManager, VoiceMode},
 };
 
@@ -16,27 +17,28 @@ pub struct Engine<const S: usize> {
 
 impl<const S: usize> Engine<S> {
     pub fn new(cfg: EngineConfig, params: EngineParams) -> Self {
-        let phasor = Phasor::new(cfg.sample_rate, timing_v2::bpm_to_freq(params.bpm));
         let EngineParams {
-            bpm: _,
+            bpm,
             attack_ms,
             decay_ms,
             sustain,
             release_ms,
         } = params;
+        let voices = VoiceManager::new(
+            VoiceMode::Poly,
+            time::ms_to_samples(cfg.sample_rate, attack_ms),
+            time::ms_to_samples(cfg.sample_rate, decay_ms),
+            sustain,
+            time::ms_to_samples(cfg.sample_rate, release_ms),
+            time::bpm_to_freq(bpm),
+            cfg.sample_rate,
+        );
         Self {
             sample_rate: cfg.sample_rate,
             params,
             last_tick: 0,
             last_note_event: 0,
-            voices: VoiceManager::new(
-                VoiceMode::Poly,
-                &phasor,
-                timing::ms_to_samples(cfg.sample_rate, attack_ms),
-                timing::ms_to_samples(cfg.sample_rate, decay_ms),
-                sustain,
-                timing::ms_to_samples(cfg.sample_rate, release_ms),
-            ),
+            voices,
         }
     }
 
@@ -48,8 +50,7 @@ impl<const S: usize> Engine<S> {
         if bpm == self.params.bpm {
             return;
         }
-        self.voices
-            .scale_freqs((bpm as f64) / (self.params.bpm as f64));
+        self.voices.set_lead_clock_freqs(time::bpm_to_freq(bpm));
         self.params.bpm = bpm;
     }
 
@@ -59,10 +60,10 @@ impl<const S: usize> Engine<S> {
         self.params.sustain = sustain;
         self.params.release_ms = release_ms;
         self.voices.set_adsr(
-            timing::ms_to_samples(self.sample_rate, attack_ms),
-            timing::ms_to_samples(self.sample_rate, decay_ms),
+            time::ms_to_samples(self.sample_rate, attack_ms),
+            time::ms_to_samples(self.sample_rate, decay_ms),
             sustain,
-            timing::ms_to_samples(self.sample_rate, release_ms),
+            time::ms_to_samples(self.sample_rate, release_ms),
         );
     }
 
@@ -71,9 +72,8 @@ impl<const S: usize> Engine<S> {
     }
 
     pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
-        let cur_freq = timing_v2::bpm_to_freq(self.params.bpm);
         self.voices
-            .set_stream_freq(stream_id, cur_freq * (subdivision as f64));
+            .subdivide_stream_clock(stream_id, subdivision as f64);
     }
 
     pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {

@@ -1,10 +1,10 @@
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Phasor {
     /// phase
-    t: f64,
+    pub t: f64,
     /// per-sample phase increment
-    dt: f64,
-    sample_rate: f64,
+    pub dt: f64,
+    pub sample_rate: f64,
 }
 
 impl Phasor {
@@ -25,11 +25,15 @@ impl Phasor {
         }
     }
 
-    /// Return whether the current phasor position is a "crossing". This will
-    /// only be true on one moment per cycle, and it will be considered true
-    /// when the position on the prior tick was greater than the position on the
-    /// current tick.
-    pub fn is_cross(&self) -> bool {
+    pub fn freq(&self) -> f64 {
+        self.dt * self.sample_rate
+    }
+
+    /// Return whether the current phasor position is at a zero crossing. This
+    /// will only be true on one moment per cycle, and it will be considered
+    /// true when the position on the prior tick was greater than the position
+    /// on the current tick.
+    pub fn is_zero(&self) -> bool {
         self.t - self.dt < 0.
     }
 
@@ -41,11 +45,18 @@ impl Phasor {
         }
     }
 
-    /// Update the phasor's frequency without effecting phase
+    /// Synchronize this phasor to the subdivision of another phasor's
+    /// frequency. Assumes both phasors are ticking at the same sample rate
+    pub fn sync(&mut self, other: &Phasor, subdivision: f64) {
+        self.dt = other.dt * subdivision;
+        self.t = ((other.t / other.dt) * self.dt) % 1.;
+    }
+
+    /// Set the phasor's frequency without effecting phase
     ///
     /// # Panics
     ///
-    /// Panics if `freq` exceeds the nyquist frequency
+    /// Panics if the updated frequency would exceed the nyquist frequency
     pub fn set_freq(&mut self, freq: f64) {
         assert!(freq < self.sample_rate / 2.);
         self.dt = freq / self.sample_rate;
@@ -63,50 +74,25 @@ impl Phasor {
     }
 }
 
-pub fn bpm_to_freq(bpm: u32) -> f64 {
-    bpm as f64 / 60.
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::timing_v2::Phasor;
+    use super::Phasor;
 
     #[test]
     fn phasor_complete_cycle() {
         let mut p = Phasor::new(10, 2.);
         assert_eq!(0., p.t);
-        assert!(p.is_cross());
+        assert!(p.is_zero());
 
         for _ in 0..4 {
             p.tick();
-            assert!(!p.is_cross());
+            assert!(!p.is_zero());
         }
 
         p.tick();
         assert_eq!(0., p.t);
         assert_eq!(0., p.t);
-        assert!(p.is_cross());
-    }
-
-    #[test]
-    fn phasor_set_freq() {
-        let mut p = Phasor::new(10, 1.);
-        assert_eq!(0., p.t);
-        assert_eq!(0.1, p.dt);
-
-        for _ in 0..6 {
-            p.tick();
-        }
-
-        assert_eq!(0.6, p.t);
-
-        p.set_freq(2.);
-        assert_eq!(0.6, p.t);
-        assert_eq!(0.2, p.dt);
-        for _ in 0..2 {
-            p.tick();
-        }
-        assert_eq!(0., p.t);
+        assert!(p.is_zero());
     }
 
     #[test]

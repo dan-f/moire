@@ -1,6 +1,11 @@
 use std::array;
 
-use crate::{buffer::Buffer, env::Env, timing_v2::Phasor, voice::Voice};
+use crate::{
+    buffer::Buffer,
+    env::Env,
+    time::clock::{self},
+    voice::Voice,
+};
 
 pub struct VoiceManager<const V: usize, const S: usize> {
     mode: VoiceMode,
@@ -18,16 +23,26 @@ pub struct VoiceManager<const V: usize, const S: usize> {
 impl<const V: usize, const S: usize> VoiceManager<V, S> {
     pub fn new(
         mode: VoiceMode,
-        parent_phasor: &Phasor,
         // TODO refactor these into an AdsrParams struct or something
         attack: usize,
         decay: usize,
         sustain: f32,
         release: usize,
+        clock_freq: f64,
+        sample_rate: usize,
     ) -> Self {
+        let voices = array::from_fn(|_| {
+            Voice::new(
+                clock::new_clock(sample_rate, clock_freq),
+                attack,
+                decay,
+                sustain,
+                release,
+            )
+        });
         Self {
             mode,
-            voices: array::from_fn(|_| Voice::new(parent_phasor, attack, decay, sustain, release)),
+            voices,
             assignments: [const { None }; V],
         }
     }
@@ -46,6 +61,12 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
+    pub fn set_lead_clock_freqs(&mut self, freq: f64) {
+        for voice in &mut self.voices {
+            voice.set_lead_clock_freq(freq);
+        }
+    }
+
     pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
         for voice in self.voices.iter_mut() {
             voice.set_adsr(attack, decay, sustain, release);
@@ -58,15 +79,9 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
-    pub fn set_stream_freq(&mut self, stream_id: usize, freq: f64) {
+    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: f64) {
         for voice in self.voices.iter_mut() {
-            voice.set_freq(stream_id, freq);
-        }
-    }
-
-    pub fn scale_freqs(&mut self, factor: f64) {
-        for voice in self.voices.iter_mut() {
-            voice.scale_freqs(factor);
+            voice.subdivide_stream_clock(stream_id, subdivision);
         }
     }
 
@@ -114,6 +129,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                 self.voices[0].set_note(note);
                 if i == 0 {
                     self.voices[0].set_gate(true);
+                    self.voices[0].resume_lead_clock();
                 }
             }
         } else {
@@ -134,12 +150,16 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
                 assignment.replace(Assignment { note, on_at });
                 voice.set_note(note);
                 voice.set_gate(true);
+                voice.resume_lead_clock();
             }
         }
     }
 
     pub fn note_off(&mut self, note: u32) {
         if self.mode == VoiceMode::Mono {
+            // TODO I think this is buggy. `i` could be zero which would crash
+            // us out. Furthermore, why we we immediately de-assign the last
+
             // find matching pseudo-voice to de-assign
             let i = self.mono_assignments().find_map(|(i, a)| {
                 if a.as_ref().is_some_and(|a| a.note == note) {
@@ -176,6 +196,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
             {
                 self.voices[0].set_note(*top_note);
             } else {
+                // Enter the release phase.
                 self.voices[0].set_gate(false);
             }
         } else {
@@ -234,8 +255,12 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         for (i, voice) in self.voices.iter_mut().enumerate() {
             let was_playing = voice.adsr.is_open();
             voice.tick();
-            if self.mode == VoiceMode::Poly && was_playing && !voice.adsr.is_open() {
-                self.assignments[i].take();
+            if was_playing && !voice.adsr.is_open() {
+                voice.stop_lead_clock();
+                // TODO why only in poly mode?
+                if self.mode == VoiceMode::Poly {
+                    self.assignments[i].take();
+                }
             }
         }
     }
