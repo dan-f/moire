@@ -38,7 +38,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       {
         name: "bpm",
         automationRate: "k-rate",
-        defaultValue: 300,
+        defaultValue: 120,
         minValue: 40,
         maxValue: 300,
       },

@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use num_rational::Rational64;
+
 use crate::{buffer::Buffer, env::Env, grain::Grain, time::clock::Clock, tuning::tune_equal};
 
 /// Grain producer
@@ -60,15 +62,11 @@ impl Stream {
         }
     }
 
-    pub fn tick(&mut self) {
-        self.clock.borrow_mut().tick();
-    }
-
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
 
-    pub fn subdivide_clock(&mut self, subdivision: f64) {
+    pub fn subdivide_clock(&mut self, subdivision: Rational64) {
         self.clock.borrow_mut().subdivide(subdivision);
     }
 

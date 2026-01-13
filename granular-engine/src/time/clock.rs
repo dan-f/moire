@@ -3,6 +3,8 @@ use std::{
     rc::{Rc, Weak},
 };
 
+use num_rational::Rational64;
+
 use crate::time::phasor::Phasor;
 
 pub struct Clock {
@@ -24,7 +26,7 @@ impl Clock {
 
     pub fn stop(&mut self) {
         self.ticking = false;
-        self.phasor.t = 0.;
+        self.phasor.t = Rational64::ZERO;
         for child in &self.children {
             child.borrow_mut().stop();
         }
@@ -51,28 +53,33 @@ impl Clock {
         self.ticking && self.phasor.is_zero()
     }
 
-    pub fn set_freq(&mut self, freq: f64) {
+    pub fn set_freq(&mut self, freq: Rational64) {
         self.scale_freq(freq / self.phasor.freq());
     }
 
-    pub fn scale_freq(&mut self, factor: f64) {
+    pub fn scale_freq(&mut self, factor: Rational64) {
         self.phasor.scale_freq(factor);
         for child in &self.children {
             child.borrow_mut().scale_freq(factor);
         }
     }
 
-    pub fn subdivide(&mut self, subdivision: f64) {
+    pub fn subdivide(&mut self, subdivision: Rational64) {
         let parent = if let Some(p) = self.parent.upgrade() {
             p
         } else {
             return;
         };
+
+        if self.phasor.dt / parent.borrow().phasor.dt == subdivision {
+            return;
+        }
+
         let parent = parent.borrow();
         let ticks_since_parent_zero = parent.phasor.t / parent.phasor.dt;
         let prv_dt = self.phasor.dt;
         self.phasor.dt = parent.phasor.dt * subdivision;
-        self.phasor.t = (ticks_since_parent_zero * self.phasor.dt) % 1.;
+        self.phasor.t = (ticks_since_parent_zero * self.phasor.dt) % Rational64::ONE;
         for child in &self.children {
             let mut child = child.borrow_mut();
             let child_subdivision = child.phasor.dt / prv_dt;
@@ -81,7 +88,7 @@ impl Clock {
     }
 }
 
-pub fn new_clock(sample_rate: usize, freq: f64) -> Rc<RefCell<Clock>> {
+pub fn new_clock(sample_rate: usize, freq: Rational64) -> Rc<RefCell<Clock>> {
     Rc::new(RefCell::new(Clock::new(Phasor::new(sample_rate, freq))))
 }
 
@@ -96,6 +103,8 @@ pub fn add_child(parent: &Rc<RefCell<Clock>>) -> Rc<RefCell<Clock>> {
 
 #[cfg(test)]
 mod tests {
+    use num_rational::Rational64;
+
     use crate::time::{
         clock::{add_child, new_clock},
         phasor::Phasor,
@@ -105,7 +114,7 @@ mod tests {
 
     #[test]
     fn single_parent() {
-        let mut clock: Clock = Clock::new(Phasor::new(8, 1.));
+        let mut clock: Clock = Clock::new(Phasor::new(8, Rational64::ONE));
 
         assert!(!clock.is_zero()); // clock is not zero until we have resumed
         clock.tick();
@@ -125,9 +134,9 @@ mod tests {
 
     #[test]
     fn subdividing_child() {
-        let parent = new_clock(8, 1.);
+        let parent = new_clock(8, Rational64::ONE);
         let child = add_child(&parent);
-        child.borrow_mut().subdivide(2.);
+        child.borrow_mut().subdivide(Rational64::ONE * 2);
         parent.borrow_mut().resume();
 
         assert!(parent.borrow().is_zero());
@@ -152,7 +161,7 @@ mod tests {
 
     #[test]
     fn subdivide_mid_cycle() {
-        let parent = new_clock(8, 1.);
+        let parent = new_clock(8, Rational64::ONE);
         let child = add_child(&parent);
         parent.borrow_mut().resume();
 
@@ -165,7 +174,7 @@ mod tests {
         assert!(!parent.borrow().is_zero());
         assert!(!child.borrow().is_zero());
 
-        child.borrow_mut().subdivide(2.);
+        child.borrow_mut().subdivide(Rational64::ONE * 2);
         assert!(!parent.borrow().is_zero());
         assert!(child.borrow().is_zero());
 
@@ -178,9 +187,9 @@ mod tests {
 
     #[test]
     fn set_freq() {
-        let parent = new_clock(16, 1.);
+        let parent = new_clock(16, Rational64::ONE);
         let child = add_child(&parent);
-        child.borrow_mut().subdivide(2.);
+        child.borrow_mut().subdivide(Rational64::ONE * 2);
         parent.borrow_mut().resume();
 
         assert!(parent.borrow().is_zero());
@@ -192,7 +201,7 @@ mod tests {
         assert!(!parent.borrow().is_zero());
         assert!(!child.borrow().is_zero());
 
-        parent.borrow_mut().set_freq(2.);
+        parent.borrow_mut().set_freq(Rational64::ONE * 2);
         assert!(!parent.borrow().is_zero());
         assert!(!child.borrow().is_zero());
 
@@ -211,9 +220,9 @@ mod tests {
 
     #[test]
     fn stop_and_resume() {
-        let parent = new_clock(8, 1.);
+        let parent = new_clock(8, Rational64::ONE);
         let child = add_child(&parent);
-        child.borrow_mut().subdivide(2.);
+        child.borrow_mut().subdivide(Rational64::ONE * 2);
 
         // we are initially stopped
         assert!(!parent.borrow().is_zero());

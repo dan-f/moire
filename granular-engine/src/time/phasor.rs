@@ -1,10 +1,12 @@
+use num_rational::Rational64;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Phasor {
     /// phase
-    pub t: f64,
+    pub t: Rational64,
     /// per-sample phase increment
-    pub dt: f64,
-    pub sample_rate: f64,
+    pub dt: Rational64,
+    pub sample_rate: i64,
 }
 
 impl Phasor {
@@ -13,53 +15,31 @@ impl Phasor {
     /// # Panics
     ///
     /// Panics if `freq` exceeds the nyquist frequency
-    pub fn new(sample_rate: usize, freq: f64) -> Self {
-        let sample_rate = sample_rate as f64;
-
-        assert!(freq < sample_rate / 2.);
+    pub fn new(sample_rate: usize, freq: Rational64) -> Self {
+        let sample_rate = sample_rate as i64;
+        assert!(freq < Rational64::new(sample_rate, 2));
 
         Self {
             dt: freq / sample_rate,
-            t: 0.,
+            t: Rational64::ZERO,
             sample_rate,
         }
     }
 
-    pub fn freq(&self) -> f64 {
+    pub fn freq(&self) -> Rational64 {
         self.dt * self.sample_rate
     }
 
-    /// Return whether the current phasor position is at a zero crossing. This
-    /// will only be true on one moment per cycle, and it will be considered
-    /// true when the position on the prior tick was greater than the position
-    /// on the current tick.
+    /// Return whether the current phasor position is at a zero crossing. If we
+    /// have inter-sample crosses, consider the later sample to be the zero
+    /// crossing.
     pub fn is_zero(&self) -> bool {
-        self.t - self.dt < 0.
+        self.t < self.dt
     }
 
     /// Advance the phasor
     pub fn tick(&mut self) {
-        self.t += self.dt;
-        if self.t >= 1. {
-            self.t -= 1.;
-        }
-    }
-
-    /// Synchronize this phasor to the subdivision of another phasor's
-    /// frequency. Assumes both phasors are ticking at the same sample rate
-    pub fn sync(&mut self, other: &Phasor, subdivision: f64) {
-        self.dt = other.dt * subdivision;
-        self.t = ((other.t / other.dt) * self.dt) % 1.;
-    }
-
-    /// Set the phasor's frequency without effecting phase
-    ///
-    /// # Panics
-    ///
-    /// Panics if the updated frequency would exceed the nyquist frequency
-    pub fn set_freq(&mut self, freq: f64) {
-        assert!(freq < self.sample_rate / 2.);
-        self.dt = freq / self.sample_rate;
+        self.t = (self.t + self.dt) % Rational64::ONE;
     }
 
     /// Scale the phasor's frequency without effecting phase
@@ -67,21 +47,23 @@ impl Phasor {
     /// # Panics
     ///
     /// Panics if the updated frequency would exceed the nyquist frequency
-    pub fn scale_freq(&mut self, factor: f64) {
-        let cur_freq = self.dt / (1. / self.sample_rate);
-        assert!(cur_freq < self.sample_rate / 2.);
+    pub fn scale_freq(&mut self, factor: Rational64) {
+        let cur_freq = self.dt * self.sample_rate;
+        assert!(cur_freq < Rational64::new(self.sample_rate, 2));
         self.dt *= factor;
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use num_rational::Rational64;
+
     use super::Phasor;
 
     #[test]
     fn phasor_complete_cycle() {
-        let mut p = Phasor::new(10, 2.);
-        assert_eq!(0., p.t);
+        let mut p = Phasor::new(10, Rational64::ONE * 2);
+        assert_eq!(Rational64::ZERO, p.t);
         assert!(p.is_zero());
 
         for _ in 0..4 {
@@ -90,29 +72,50 @@ mod tests {
         }
 
         p.tick();
-        assert_eq!(0., p.t);
-        assert_eq!(0., p.t);
+        assert_eq!(Rational64::ZERO, p.t);
         assert!(p.is_zero());
     }
 
     #[test]
     fn phasor_scale_freq() {
-        let mut p = Phasor::new(8, 1.);
-        assert_eq!(0., p.t);
-        assert_eq!(0.125, p.dt);
+        let mut p = Phasor::new(8, Rational64::ONE);
+        assert_eq!(Rational64::ZERO, p.t);
+        assert_eq!(Rational64::new(1, 8), p.dt);
 
         for _ in 0..2 {
             p.tick();
         }
 
-        assert_eq!(0.25, p.t);
+        assert_eq!(Rational64::new(1, 4), p.t);
 
-        p.scale_freq(2.);
-        assert_eq!(0.25, p.t);
-        assert_eq!(0.25, p.dt);
+        p.scale_freq(Rational64::ONE * 2);
+        assert_eq!(Rational64::new(1, 4), p.t);
+        assert_eq!(Rational64::new(1, 4), p.dt);
         for _ in 0..3 {
             p.tick();
         }
-        assert_eq!(0., p.t);
+        assert_eq!(Rational64::ZERO, p.t);
+    }
+
+    #[test]
+    fn fractional_dt() {
+        let mut p = Phasor::new(48_000, Rational64::ONE * 7);
+        assert_eq!(Rational64::ZERO, p.t);
+        assert_eq!(Rational64::new(7, 48_000), p.dt);
+        assert!(p.is_zero());
+
+        for _ in 0..6858 {
+            p.tick();
+        }
+        assert!(p.is_zero());
+
+        for _ in 0..6 {
+            for _ in 0..6857 {
+                p.tick();
+            }
+            assert!(p.is_zero());
+        }
+
+        assert_eq!(Rational64::ZERO, p.t);
     }
 }

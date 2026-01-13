@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use num_rational::Rational64;
 
 use crate::{
     buffer::Buffer,
@@ -73,7 +73,7 @@ impl<const S: usize> Engine<S> {
 
     pub fn set_stream_subdivision(&mut self, stream_id: usize, subdivision: u32) {
         self.voices
-            .subdivide_stream_clock(stream_id, subdivision as f64);
+            .subdivide_stream_clock(stream_id, Rational64::ONE * subdivision as i64);
     }
 
     pub fn set_stream_grain_start(&mut self, stream_id: usize, grain_start: f32) {

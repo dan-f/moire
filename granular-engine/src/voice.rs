@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use num_rational::Rational64;
+
 use crate::{
     adsr::Adsr,
     buffer::Buffer,
@@ -77,9 +79,6 @@ impl<const S: usize> Voice<S> {
         for grain in self.grains.entries() {
             grain_pool::tick(grain);
         }
-        for stream in &mut self.streams {
-            stream.tick();
-        }
         self.adsr.tick();
     }
 
@@ -113,11 +112,11 @@ impl<const S: usize> Voice<S> {
         self.clock.borrow_mut().resume();
     }
 
-    pub fn set_lead_clock_freq(&mut self, freq: f64) {
+    pub fn set_lead_clock_freq(&mut self, freq: Rational64) {
         self.clock.borrow_mut().set_freq(freq);
     }
 
-    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: f64) {
+    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: Rational64) {
         self.with_stream(stream_id, |stream| {
             stream.subdivide_clock(subdivision);
         });

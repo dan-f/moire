@@ -1,5 +1,7 @@
 use std::array;
 
+use num_rational::Rational64;
+
 use crate::{
     buffer::Buffer,
     env::Env,
@@ -28,7 +30,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         decay: usize,
         sustain: f32,
         release: usize,
-        clock_freq: f64,
+        clock_freq: Rational64,
         sample_rate: usize,
     ) -> Self {
         let voices = array::from_fn(|_| {
@@ -61,7 +63,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
-    pub fn set_lead_clock_freqs(&mut self, freq: f64) {
+    pub fn set_lead_clock_freqs(&mut self, freq: Rational64) {
         for voice in &mut self.voices {
             voice.set_lead_clock_freq(freq);
         }
@@ -79,7 +81,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
-    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: f64) {
+    pub fn subdivide_stream_clock(&mut self, stream_id: usize, subdivision: Rational64) {
         for voice in self.voices.iter_mut() {
             voice.subdivide_stream_clock(stream_id, subdivision);
         }
