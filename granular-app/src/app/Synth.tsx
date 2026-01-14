@@ -36,7 +36,9 @@ export function Synth() {
         <Sample uploadResult={sampleResult} />
       </div>
       <div>
-        {/* TODO UI redesign - just for testing */}
+        {/* TODO actual bpm control */}
+        <Param.Knob param="bpm" enabled range={[40, 300]} />
+        {/* TODO actual ADSR UI */}
         <Param.Knob param="attack" enabled range={[0, 5000]} />
         <Param.Knob param="decay" enabled range={[0, 5000]} />
         <Param.Knob param="sustain" enabled range={[0, 1]} />
