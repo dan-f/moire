@@ -1,0 +1,11 @@
+dev:
+  npm run dev
+
+build: deps
+  npm run build
+
+preview: build
+  npm run preview
+
+deps:
+  npm i

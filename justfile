@@ -3,31 +3,21 @@ app_dir := "granular-app"
 
 default: dev
 
-dev: app-build (app 'dev')
+dev: (build-engine) (app 'dev')
 
-preview: app-build (app 'preview')
+build: (build-engine) (app 'build')
 
-engine-build:
-  cd {{engine_dir}} && cargo build --release --target wasm32-unknown-unknown
+preview: (build-engine) (app 'preview')
+
+test: (engine 'test')
+
+build-engine: (engine 'build')
   cp \
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/synth/granular/engine/
 
-engine-check:
-  cd {{engine_dir}} && cargo check
+app recipe:
+  just {{app_dir}}/{{recipe}}
 
-engine-test:
-  cd {{engine_dir}} && cargo test
-
-test: engine-test
-
-disassemble: engine-build
-  wasm2wat {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm -o granular_engine.wat
-
-app-build: engine-build app-deps (app 'build')
-
-app-deps:
-  cd {{app_dir}} && npm i
-
-app npm_script='dev':
-  cd {{app_dir}} && npm run {{npm_script}}
+engine recipe:
+  just {{engine_dir}}/{{recipe}}
