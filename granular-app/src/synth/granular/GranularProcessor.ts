@@ -136,7 +136,7 @@ class GranularProcessor extends AudioWorkletProcessor {
       {
         name: name("enabled"),
         automationRate: "k-rate",
-        defaultValue: 0,
+        defaultValue: streamId === 0 ? 1 : 0,
         minValue: 0,
         maxValue: 1,
       },

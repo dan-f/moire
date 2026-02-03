@@ -8,7 +8,6 @@ import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Buffer } from "../synth";
 import { Config } from "../synth/granular";
 import { useAudioCtx, useSynth } from "./AppContext";
-import { FileUpload } from "./FileUpload";
 import { useSubscription } from "./hooks/observable";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
@@ -32,8 +31,7 @@ export function Synth() {
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
       <div className={style.sample}>
-        <FileUpload onUpload={handleUpload} />
-        <Sample uploadResult={sampleResult} />
+        <Sample onUpload={handleUpload} uploadResult={sampleResult} />
       </div>
       <div>
         {/* TODO actual bpm control */}

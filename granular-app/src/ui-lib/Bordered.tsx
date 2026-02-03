@@ -1,9 +1,8 @@
 import style from "./Bordered.module.css";
 
-interface Props {
-  children: React.ReactNode;
-}
-
-export function Bordered(props: Props) {
-  return <div className={style.container}>{props.children}</div>;
+export function Bordered(props: React.ComponentProps<"div">) {
+  const className = props.className
+    ? `${props.className} ${style.container}`
+    : style.container;
+  return <div className={className}>{props.children}</div>;
 }

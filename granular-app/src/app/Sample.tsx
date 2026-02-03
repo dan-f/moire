@@ -9,22 +9,54 @@ import style from "./Sample.module.css";
 import { Theme, useTheme } from "./theme";
 
 interface SampleProps {
+  onUpload(upload: File): void;
   uploadResult?: AsyncResult.T<Buffer.UploadResult>;
 }
 
 export function Sample(props: SampleProps) {
-  const { uploadResult } = props;
+  const { onUpload, uploadResult } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   useAnimateSample(canvasRef, uploadResult);
 
+  function triggerFileInput(event: React.KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      inputRef.current?.click();
+    }
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    onUpload(file);
+  }
+
   return (
-    <Bordered>
+    <Bordered className={style.container}>
       <canvas
         className={style.canvas}
+        aria-label="waveform display"
         width={Width}
         height={Height}
         ref={canvasRef}
       ></canvas>
+
+      <label
+        onKeyUp={triggerFileInput}
+        className={style.upload}
+        role="button"
+        tabIndex={0}
+      >
+        <span>Upload a sample</span>
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={handleFileChange}
+          ref={inputRef}
+        ></input>
+      </label>
     </Bordered>
   );
 }
