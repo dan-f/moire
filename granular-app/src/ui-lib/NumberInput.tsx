@@ -4,27 +4,36 @@ import { Icon } from "./Icon";
 import { IconButton } from "./IconButton";
 import style from "./NumberInput.module.css";
 
-type Props = Omit<React.ComponentProps<"input">, "type" | "className">;
+interface Props
+  extends Omit<React.ComponentProps<"input">, "type" | "className"> {
+  id: string;
+  label: string;
+}
 
 export function NumberInput(props: Props) {
-  const { disabled } = props;
+  const { id, disabled, label } = props;
   const ref = useRef<HTMLInputElement>(null);
   const [decrement, increment] = useDecrIncr(ref);
 
   return (
     <div className={style.container}>
-      <IconButton
-        className={style.iconButton}
-        icon={<Icon name="arrowLeft" alt={i18n("Decrement")} />}
-        disabled={disabled}
-        onClick={decrement}
-      />
-      <input ref={ref} {...props} size={1} className={style.input} />
-      <IconButton
-        icon={<Icon name="arrowRight" alt={i18n("Increment")} />}
-        disabled={disabled}
-        onClick={increment}
-      />
+      <div className={style.controls}>
+        <IconButton
+          className={style.iconButton}
+          icon={<Icon name="arrowLeft" alt={i18n("Decrement")} />}
+          disabled={disabled}
+          onClick={decrement}
+        />
+        <input ref={ref} {...props} id={id} size={1} className={style.input} />
+        <IconButton
+          icon={<Icon name="arrowRight" alt={i18n("Increment")} />}
+          disabled={disabled}
+          onClick={increment}
+        />
+      </div>
+      <label htmlFor={id} className={style.label} id={id}>
+        {label}
+      </label>
     </div>
   );
 }

@@ -46,24 +46,40 @@ export function Stream(props: StreamProps) {
           />
           <Param.Discrete
             param={synthParam("subdivision")}
+            label="subdivision"
             enabled={isEnabled}
             range={[1, 100]}
           />
-          <Param.Knob param={synthParam("grainStart")} enabled={isEnabled} />
+          <Param.Knob
+            param={synthParam("grainStart")}
+            label="start"
+            enabled={isEnabled}
+          />
           <Param.Knob
             param={synthParam("grainSizeMs")}
+            label="size"
             enabled={isEnabled}
             range={[10, 500]}
           />
-          <Param.Knob param={synthParam("gain")} enabled={isEnabled} />
+          <Param.Knob
+            param={synthParam("gain")}
+            label="gain"
+            enabled={isEnabled}
+          />
           <Param.Discrete
             param={synthParam("tune")}
+            label="tune"
             enabled={isEnabled}
             range={[-24, 24]}
           />
-          <Param.Knob param={synthParam("pan")} enabled={isEnabled} />
+          <Param.Knob
+            param={synthParam("pan")}
+            label="pan"
+            enabled={isEnabled}
+          />
           <Param.Discrete
             param={synthParam("env")}
+            label="env"
             enabled={isEnabled}
             range={[Env.Min, Env.Max]}
           />

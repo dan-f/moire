@@ -7,9 +7,7 @@
 }
 
 .sample {
-  display: flex;
-  flex-direction: column;
-  grid-column: 1 / 7;
+  grid-column: 2 / 6;
 }
 
 .stream {

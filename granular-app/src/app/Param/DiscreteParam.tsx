@@ -5,9 +5,11 @@ import { useParamVal } from "./hooks";
 
 export function DiscreteParam(props: ParamProps.T) {
   const {
+    param,
     enabled,
-    range: [min, max],
-  } = ParamProps.withDefaultRange(props);
+    label,
+    range: [min, max] = ParamProps.defaultRange,
+  } = props;
   const [val, set] = useParamVal(props);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -18,8 +20,10 @@ export function DiscreteParam(props: ParamProps.T) {
 
   return (
     <NumberInput
+      id={param}
       disabled={!enabled}
       value={val}
+      label={label}
       min={min}
       max={max}
       onChange={handleChange}

@@ -13,12 +13,23 @@ interface KnobProps {
   val: number;
   range: [min: number, max: number];
   setVal(val: number): void;
+  id: string;
+  label: string;
   dragEvents$: Observable<DragEvent.T>;
   disabled?: boolean;
 }
 
 export function Knob(props: KnobProps) {
-  const { size, val, range, setVal, dragEvents$, disabled = false } = props;
+  const {
+    size,
+    val,
+    range,
+    setVal,
+    id,
+    label,
+    dragEvents$,
+    disabled = false,
+  } = props;
 
   const [wheel$, handleWheel] =
     useObservableCallback<React.WheelEvent<HTMLDivElement>>();
@@ -56,24 +67,30 @@ export function Knob(props: KnobProps) {
   usePreventWheelScrolling(notchRef, ringRef);
 
   return (
-    <div
-      ref={ringRef}
-      tabIndex={disabled ? -1 : 0}
-      role="slider"
-      aria-disabled={disabled}
-      aria-valuemin={range[0]}
-      aria-valuemax={range[1]}
-      aria-valuenow={val}
-      onKeyDown={handleKeyDown}
-      onWheel={handleWheel}
-      className={style.ring}
-      style={{
-        width: size,
-        height: size,
-        transform: `rotate(${valToTurn(val, range)}turn)`,
-      }}
-    >
-      <div ref={notchRef} className={style.notch} />
+    <div className={style.container}>
+      <div
+        ref={ringRef}
+        tabIndex={disabled ? -1 : 0}
+        role="slider"
+        aria-disabled={disabled}
+        aria-valuemin={range[0]}
+        aria-valuemax={range[1]}
+        aria-valuenow={val}
+        aria-labelledby={id}
+        onKeyDown={handleKeyDown}
+        onWheel={handleWheel}
+        className={style.ring}
+        style={{
+          width: size,
+          height: size,
+          transform: `rotate(${valToTurn(val, range)}turn)`,
+        }}
+      >
+        <div ref={notchRef} className={style.notch} />
+      </div>
+      <label className={style.label} id={id}>
+        {label}
+      </label>
     </div>
   );
 }

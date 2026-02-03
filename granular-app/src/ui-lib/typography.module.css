@@ -1,3 +1,6 @@
 @value fontFamily: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+@value fontSizeLg: 20px;
+@value fontSizeMd: 16px;
+@value fontSizeSm: 12px;
 @value lineHeight: 1.5;
 @value fontWeight: 400;

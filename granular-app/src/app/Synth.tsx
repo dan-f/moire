@@ -1,12 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { map, merge, Observable, tap } from "rxjs";
 import { type NoteMessageEvent } from "webmidi";
-import * as AsyncResult from "../lib/AsyncResult";
 import { range } from "../lib/iter";
 import { NoteMessageEvent$ } from "../midi";
 import { KeyboardNoteEvent$, NoteEvent } from "../note";
-import { Buffer } from "../synth";
 import { Config } from "../synth/granular";
+import { Adsr } from "./Adsr";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
 import { Param } from "./Param";
@@ -16,31 +15,19 @@ import style from "./Synth.module.css";
 
 export function Synth() {
   const synth = useSynth();
-  const [sampleResult, setSampleResult] =
-    useState<AsyncResult.T<Buffer.UploadResult>>();
 
   useSubscription(useTimedNoteEvents(), (noteEvent) => {
     synth.sendNoteEvent(noteEvent);
   });
 
-  async function handleUpload(file: File) {
-    setSampleResult(AsyncResult.loading());
-    setSampleResult(AsyncResult.done(await synth.uploadSample(file)));
-  }
-
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
+      <Adsr />
       <div className={style.sample}>
-        <Sample onUpload={handleUpload} uploadResult={sampleResult} />
+        <Sample />
       </div>
       <div>
-        {/* TODO actual bpm control */}
-        <Param.Knob param="bpm" enabled range={[40, 300]} />
-        {/* TODO actual ADSR UI */}
-        <Param.Knob param="attack" enabled range={[0, 5000]} />
-        <Param.Knob param="decay" enabled range={[0, 5000]} />
-        <Param.Knob param="sustain" enabled range={[0, 1]} />
-        <Param.Knob param="release" enabled range={[0, 10000]} />
+        <Param.Knob param="bpm" label="tempo" enabled range={[40, 300]} />
         {/* <fieldset>
           <legend>Voice Mode</legend>
           <label>

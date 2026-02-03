@@ -1,5 +1,16 @@
 @value black, lightgrey from "../ui-lib/color.module.css";
 @value xxs from "../ui-lib/sizing.module.css";
+@value fontSizeSm from "../ui-lib/typography.module.css";
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.label {
+  font-size: fontSizeSm;
+}
 
 .ring {
   border-radius: 100%;

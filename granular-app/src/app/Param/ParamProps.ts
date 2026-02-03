@@ -4,9 +4,7 @@ export interface T {
   param: SynthParam.T;
   enabled: boolean;
   range?: [min: number, max: number];
+  label: string;
 }
 
-export function withDefaultRange(props: T): Required<T> {
-  const { range = [0, 1], ...rest } = props;
-  return { range, ...rest };
-}
+export const defaultRange: [number, number] = [0, 1];

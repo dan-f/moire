@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useMemo, useRef } from "react";
+import { RefObject, useCallback, useMemo, useRef, useState } from "react";
 import * as AsyncResult from "../lib/AsyncResult";
 import { Buffer, Synth } from "../synth";
 import { Config } from "../synth/granular";
@@ -8,16 +8,13 @@ import { useAnimationFrame } from "./hooks/animation";
 import style from "./Sample.module.css";
 import { Theme, useTheme } from "./theme";
 
-interface SampleProps {
-  onUpload(upload: File): void;
-  uploadResult?: AsyncResult.T<Buffer.UploadResult>;
-}
-
-export function Sample(props: SampleProps) {
-  const { onUpload, uploadResult } = props;
+export function Sample() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  useAnimateSample(canvasRef, uploadResult);
+  const synth = useSynth();
+  const [sampleResult, setSampleResult] =
+    useState<AsyncResult.T<Buffer.UploadResult>>();
+  useAnimateSample(canvasRef, sampleResult);
 
   function triggerFileInput(event: React.KeyboardEvent) {
     if (event.key === "Enter" || event.key === " ") {
@@ -25,12 +22,13 @@ export function Sample(props: SampleProps) {
     }
   }
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
-    onUpload(file);
+    setSampleResult(AsyncResult.loading());
+    setSampleResult(AsyncResult.done(await synth.uploadSample(file)));
   }
 
   return (
