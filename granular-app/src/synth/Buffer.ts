@@ -1,9 +1,9 @@
 import { repeat } from "../lib/iter";
 
-export type T = Float32Array[];
+export type Buffer = Float32Array[];
 
 export type UploadResult =
-  | { type: UploadResultType.Success; buffer: T }
+  | { type: UploadResultType.Success; buffer: Buffer }
   | { type: UploadResultType.ReadError; event: ProgressEvent<FileReader> }
   | { type: UploadResultType.ChannelError; numChannels: number };
 
@@ -45,7 +45,7 @@ export function upload(
   });
 }
 
-export function create(channelCount: number, length?: number): T {
+export function create(channelCount: number, length?: number): Buffer {
   return Array.from(
     repeat(channelCount, () =>
       length ? new Float32Array(length) : new Float32Array(),
@@ -53,18 +53,18 @@ export function create(channelCount: number, length?: number): T {
   );
 }
 
-export function channels(buffer: T): number {
+export function channels(buffer: Buffer): number {
   return buffer.length;
 }
 
-export function length(buffer: T): number {
+export function length(buffer: Buffer): number {
   return buffer[0].length;
 }
 
 /**
  * Copy a mono or stereo source to a stereo destination.
  */
-export function copyStereo(src: T, dst: T) {
+export function copyStereo(src: Buffer, dst: Buffer) {
   if (channels(dst) !== 2) {
     throw new Error("Expected stereo destination for copy");
   }
@@ -96,7 +96,7 @@ export function copyStereo(src: T, dst: T) {
 /**
  * Copy an N-channel source to an N-channel destination
  */
-export function copy(src: T, dst: T) {
+export function copy(src: Buffer, dst: Buffer) {
   if (length(src) !== length(dst)) {
     throw new Error("Expected buffers of equal channel counts");
   }
@@ -105,7 +105,7 @@ export function copy(src: T, dst: T) {
   }
 }
 
-export function subFrame(buffer: T, subSample: number): number[] {
+export function subFrame(buffer: Buffer, subSample: number): number[] {
   const bufLen = length(buffer);
   const chans = channels(buffer);
   const leftSample = Math.max(Math.floor(subSample), 0);

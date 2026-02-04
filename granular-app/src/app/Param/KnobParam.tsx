@@ -8,7 +8,7 @@ export function KnobParam(props: ParamProps) {
   const { enabled, paramKey, label } = props;
   const [[val, set], range] = useParam(props);
 
-  const render = (events$: Observable<DragEvent.T>) => {
+  const render = (events$: Observable<DragEvent.DragEvent>) => {
     return (
       <Knob
         size="2rem"

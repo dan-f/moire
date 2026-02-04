@@ -1,7 +1,7 @@
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
 import { NoteEvent } from "../note";
-import * as Buffer from "./Buffer";
+import { upload, type UploadResult } from "./Buffer";
 import { Config, GranularNode, Message as Msg } from "./granular";
 import { SynthParamKey } from "./param";
 
@@ -35,8 +35,8 @@ export class Synth {
     return this.ctx.state;
   }
 
-  async uploadSample(file: File): Promise<Buffer.UploadResult> {
-    const result = await Buffer.upload(this.ctx, file);
+  async uploadSample(file: File): Promise<UploadResult> {
+    const result = await upload(this.ctx, file);
 
     switch (result.type) {
       case "SUCCESS":

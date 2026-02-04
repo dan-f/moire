@@ -1,4 +1,4 @@
-export type T = DragStart | DragMove | DragEnd;
+export type DragEvent = DragStart | DragMove | DragEnd;
 
 export enum EventType {
   DragStart = "DragStart",
@@ -36,6 +36,6 @@ export function end(x: number, y: number): DragEnd {
   return { type: EventType.DragEnd, x, y };
 }
 
-export function equals(a: T, b: T): boolean {
+export function equals(a: DragEvent, b: DragEvent): boolean {
   return a.type === b.type && a.x === b.x && a.y === b.y;
 }

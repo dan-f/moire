@@ -52,7 +52,7 @@ const MidiNoteEvent$ = NoteMessageEvent$.pipe(map(midiToNoteEvent));
 
 const AllNoteEvents$ = merge(MidiNoteEvent$, KeyboardNoteEvent$);
 
-function midiToNoteEvent(e: NoteMessageEvent): NoteEvent.T {
+function midiToNoteEvent(e: NoteMessageEvent): NoteEvent.NoteEvent {
   const { number } = e.note;
   if (e.type === "noteon") {
     return NoteEvent.noteon(number);

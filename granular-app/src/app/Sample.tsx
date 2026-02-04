@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import * as AsyncResult from "../lib/AsyncResult";
+import * as Ar from "../lib/AsyncResult";
 import { Buffer, Synth } from "../synth";
 import { Config } from "../synth/granular";
 import { Bordered } from "../ui-lib/Bordered";
@@ -13,7 +13,7 @@ export function Sample() {
   const inputRef = useRef<HTMLInputElement>(null);
   const synth = useSynth();
   const [sampleResult, setSampleResult] =
-    useState<AsyncResult.T<Buffer.UploadResult>>();
+    useState<Ar.AsyncResult<Buffer.UploadResult>>();
   useAnimateSample(canvasRef, sampleResult);
 
   function triggerFileInput(event: React.KeyboardEvent) {
@@ -27,8 +27,8 @@ export function Sample() {
     if (!file) {
       return;
     }
-    setSampleResult(AsyncResult.loading());
-    setSampleResult(AsyncResult.done(await synth.uploadSample(file)));
+    setSampleResult(Ar.loading());
+    setSampleResult(Ar.done(await synth.uploadSample(file)));
   }
 
   return (
@@ -61,7 +61,7 @@ export function Sample() {
 
 function useAnimateSample(
   canvasRef: RefObject<HTMLCanvasElement>,
-  uploadResult: AsyncResult.T<Buffer.UploadResult> | undefined,
+  uploadResult: Ar.AsyncResult<Buffer.UploadResult> | undefined,
 ) {
   const synth = useSynth();
   const theme = useTheme();
@@ -82,13 +82,13 @@ class SampleAnimation {
   private readonly canvasRef: RefObject<HTMLCanvasElement>;
   private readonly synth: Synth;
   private readonly theme: Theme;
-  private readonly uploadResult?: AsyncResult.T<Buffer.UploadResult>;
+  private readonly uploadResult?: Ar.AsyncResult<Buffer.UploadResult>;
 
   constructor(
     canvasRef: RefObject<HTMLCanvasElement>,
     synth: Synth,
     theme: Theme,
-    uploadResult: AsyncResult.T<Buffer.UploadResult> | undefined,
+    uploadResult: Ar.AsyncResult<Buffer.UploadResult> | undefined,
   ) {
     this.canvasRef = canvasRef;
     this.synth = synth;
@@ -112,7 +112,7 @@ class SampleAnimation {
     ctx.fillRect(0, 0, this.width, this.height);
 
     if (
-      this.uploadResult?.state === AsyncResult.ResultState.Done &&
+      this.uploadResult?.state === Ar.ResultState.Done &&
       this.uploadResult.result.type === Buffer.UploadResultType.Success
     ) {
       this.drawWave(ctx, this.uploadResult.result.buffer);
@@ -120,7 +120,7 @@ class SampleAnimation {
     }
   }
 
-  private drawWave(ctx: CanvasRenderingContext2D, buffer: Buffer.T) {
+  private drawWave(ctx: CanvasRenderingContext2D, buffer: Buffer.Buffer) {
     const verticalOffset = this.height / 2;
     const centerPosition = this.height / 2;
 

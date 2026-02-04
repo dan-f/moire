@@ -10,7 +10,7 @@
  * messages, along with window `keydown` / `keyup` messages, and map them all to
  * this domain-specific event.
  */
-export interface T {
+export interface NoteEvent {
   type: "noteon" | "noteoff";
   /**
    * Midi note number, e.g. C4 = 60.
@@ -18,14 +18,14 @@ export interface T {
   note: number;
 }
 
-export interface TimedNoteEvent extends T {
+export interface TimedNoteEvent extends NoteEvent {
   time: number;
 }
 
-export function noteon(note: number): T {
+export function noteon(note: number): NoteEvent {
   return { type: "noteon", note };
 }
 
-export function noteoff(note: number): T {
+export function noteoff(note: number): NoteEvent {
   return { type: "noteoff", note };
 }

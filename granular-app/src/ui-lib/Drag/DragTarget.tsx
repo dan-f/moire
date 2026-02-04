@@ -1,10 +1,10 @@
 import { type Observable } from "rxjs";
 import { useBeginDrag, useDragEvents } from "./DragContext";
-import * as DragEvent from "./DragEvent";
+import { type DragEvent } from "./DragEvent";
 
 interface Props {
   id: string;
-  render: (dragEvents$: Observable<DragEvent.T>) => React.ReactNode;
+  render: (dragEvents$: Observable<DragEvent>) => React.ReactNode;
 }
 
 export function DragTarget(props: Props) {

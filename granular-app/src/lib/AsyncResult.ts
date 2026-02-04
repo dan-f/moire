@@ -1,4 +1,4 @@
-export type T<R> = Loading | Done<R>;
+export type AsyncResult<R> = Loading | Done<R>;
 
 export interface Loading {
   state: ResultState.Loading;

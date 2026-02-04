@@ -1,7 +1,7 @@
 import { DefaultLogger } from "../../lib/DefaultLogger";
 import { range } from "../../lib/iter";
 import { serve } from "../../lib/messaging";
-import * as Buffer from "../Buffer";
+import * as Buf from "../Buffer";
 import { Config } from "./Config";
 import { Engine } from "./engine";
 import { Max, Min } from "./Env";
@@ -84,20 +84,20 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 
   process(
-    _inputs: Buffer.T[],
-    outputs: Buffer.T[],
+    _inputs: Buf.Buffer[],
+    outputs: Buf.Buffer[],
     params: ProcessorParams,
   ): boolean {
     const [dstAudio, dstPlayheads, ...dstBigBufViews] = outputs;
-    this.engine.checkResizeProcessingBuffers(Buffer.length(dstAudio));
+    this.engine.checkResizeProcessingBuffers(Buf.length(dstAudio));
     this.engine.setParams(params);
     const [srcAudio, srcPlayheads, srcBigBufViews] = this.engine.process();
 
-    Buffer.copy(srcAudio, dstAudio);
-    Buffer.copy(srcPlayheads, dstPlayheads);
+    Buf.copy(srcAudio, dstAudio);
+    Buf.copy(srcPlayheads, dstPlayheads);
 
     for (let i = 0; i < 8; i++) {
-      Buffer.copy(srcBigBufViews[i], dstBigBufViews[i]);
+      Buf.copy(srcBigBufViews[i], dstBigBufViews[i]);
     }
 
     return true;

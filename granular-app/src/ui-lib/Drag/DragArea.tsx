@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Subject } from "rxjs";
 import { DragContext, DragEventsTable } from "./DragContext";
-import * as DragEvent from "./DragEvent";
+import * as Drag from "./DragEvent";
 
 interface Props {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export function DragArea(props: Props) {
   const [target, setTarget] = useState<string | undefined>(undefined);
 
   const registerTarget = useCallback(
-    (target: string, events$: Subject<DragEvent.T>) => {
+    (target: string, events$: Subject<Drag.DragEvent>) => {
       setDragEvents((dragEvents) => ({ ...dragEvents, [target]: events$ }));
     },
     [],
@@ -29,7 +29,7 @@ export function DragArea(props: Props) {
   const beginDrag = useCallback(
     (target: string, x: number, y: number) => {
       setTarget(target);
-      dragEvents[target].next(DragEvent.start(x, y));
+      dragEvents[target].next(Drag.start(x, y));
     },
     [dragEvents],
   );
@@ -39,7 +39,7 @@ export function DragArea(props: Props) {
       if (typeof target === "undefined") {
         return;
       }
-      dragEvents[target].next(DragEvent.move(e.clientX, e.clientY));
+      dragEvents[target].next(Drag.move(e.clientX, e.clientY));
     }
 
     function handleMouseUp(e: MouseEvent) {
@@ -47,7 +47,7 @@ export function DragArea(props: Props) {
         return;
       }
       setTarget(undefined);
-      dragEvents[target].next(DragEvent.end(e.clientX, e.clientY));
+      dragEvents[target].next(Drag.end(e.clientX, e.clientY));
     }
 
     window.addEventListener("mousemove", handleMouseMove);

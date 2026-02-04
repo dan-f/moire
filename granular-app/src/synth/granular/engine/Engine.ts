@@ -1,7 +1,7 @@
 import { DefaultLogger } from "../../../lib/DefaultLogger";
 import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
-import * as Buffer from "../../Buffer";
+import * as Buf from "../../Buffer";
 import { Config } from "../Config";
 import {
   StreamParamKey,
@@ -19,13 +19,13 @@ export class Engine {
   private readonly instance: Instance;
   private readonly engine: Pointer;
   private readonly outputBuf: Pointer;
-  private outputBufView: Buffer.T = Buffer.create(2);
+  private outputBufView: Buf.Buffer = Buf.create(2);
   private readonly playheadsBuf: Pointer;
-  private playheadsBufView: Buffer.T = Buffer.create(Config.NumStreams);
+  private playheadsBufView: Buf.Buffer = Buf.create(Config.NumStreams);
   // BEGIN TEST
   private readonly bigBuf: Pointer; // 256-channel buffer
-  private bigBufViews: Buffer.T[] = Array.from(
-    repeat(8, () => Buffer.create(32)),
+  private bigBufViews: Buf.Buffer[] = Array.from(
+    repeat(8, () => Buf.create(32)),
   ); // 8 32-channel buffers
   // END TEST
   private sampleBuf?: Pointer;
@@ -150,7 +150,7 @@ export class Engine {
     }
   }
 
-  process(): [Buffer.T, Buffer.T, Buffer.T[]] {
+  process(): [Buf.Buffer, Buf.Buffer, Buf.Buffer[]] {
     if (typeof this.sampleBuf !== "undefined") {
       this.instance.exports.process(
         this.engine,
@@ -163,9 +163,9 @@ export class Engine {
     return [this.outputBufView, this.playheadsBufView, this.bigBufViews];
   }
 
-  updateSample(sample: Buffer.T) {
+  updateSample(sample: Buf.Buffer) {
     this.log.info("allocating sample buffer");
-    const bufLen = Buffer.length(sample);
+    const bufLen = Buf.length(sample);
     if (typeof this.sampleBuf === "undefined") {
       this.sampleBuf = this.instance.exports.new_buffer(2, bufLen, bufLen);
     } else {
@@ -187,7 +187,7 @@ export class Engine {
         bufLen,
       ),
     ];
-    Buffer.copyStereo(sample, destBufView);
+    Buf.copyStereo(sample, destBufView);
     this.instance.exports.reset_after_update_sample(this.engine);
   }
 

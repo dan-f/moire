@@ -1,22 +1,22 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { distinctUntilChanged, Subject, type Observable } from "rxjs";
-import * as DragEvent from "./DragEvent";
+import * as Drag from "./DragEvent";
 
 export interface DragCtx {
-  dragEvents: Record<string, Subject<DragEvent.T>>;
+  dragEvents: Record<string, Subject<Drag.DragEvent>>;
   target?: string;
 
-  registerTarget(target: string, events$: Subject<DragEvent.T>): void;
+  registerTarget(target: string, events$: Subject<Drag.DragEvent>): void;
   deregisterTarget(target: string): void;
 
   beginDrag(target: string, x: number, y: number): void;
 }
 
-export type DragEventsTable = Record<string, Subject<DragEvent.T>>;
+export type DragEventsTable = Record<string, Subject<Drag.DragEvent>>;
 
 export const DragContext = createContext<DragCtx | null>(null);
 
-export function useDragEvents(target: string): Observable<DragEvent.T> {
+export function useDragEvents(target: string): Observable<Drag.DragEvent> {
   const { dragEvents, registerTarget, deregisterTarget } = useDragContext();
   const events$ = useMemo(
     () => dragEvents[target] ?? new Subject(),
@@ -28,7 +28,7 @@ export function useDragEvents(target: string): Observable<DragEvent.T> {
     return () => deregisterTarget(target);
   }, [deregisterTarget, events$, registerTarget, target]);
 
-  return events$.pipe(distinctUntilChanged(DragEvent.equals));
+  return events$.pipe(distinctUntilChanged(Drag.equals));
 }
 
 export function useBeginDrag(): DragCtx["beginDrag"] {

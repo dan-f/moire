@@ -15,7 +15,7 @@ interface KnobProps {
   setVal(val: number): void;
   id: string;
   label: string;
-  dragEvents$: Observable<DragEvent.T>;
+  dragEvents$: Observable<DragEvent.DragEvent>;
   disabled?: boolean;
 }
 

@@ -1,14 +1,14 @@
 import { type Observable, concatMap } from "rxjs";
-import * as NoteEvent from "./NoteEvent";
+import { type NoteEvent } from "./NoteEvent";
 
-export type NoteEventMapper<T> = (event: NoteEvent.T) => T | undefined;
+export type NoteEventMapper<T> = (event: NoteEvent) => T | undefined;
 
 /**
- * Transform a stream of {@linkcode NoteEvent.T}s a la map-filter.
+ * Transform a stream of {@linkcode NoteEvent}s a la map-filter.
  */
 export function mapNoteEvents<T>(
   f: NoteEventMapper<T>,
-  notes$: Observable<NoteEvent.T>,
+  notes$: Observable<NoteEvent>,
 ): Observable<T> {
   return notes$.pipe(
     concatMap((e) => {

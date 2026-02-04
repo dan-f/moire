@@ -1,5 +1,5 @@
 import { filter, fromEvent, map, merge, pipe } from "rxjs";
-import * as NoteEvent from "./NoteEvent";
+import { noteoff, noteon } from "./NoteEvent";
 
 const toNote = pipe(
   map((e: KeyboardEvent) => KeyToMidiNote[e.key]),
@@ -7,18 +7,15 @@ const toNote = pipe(
 );
 
 /**
- * Stream of {@linkcode NoteEvent.T} coming from the computer keyboard.
+ * Stream of {@linkcode NoteEvent.NoteEvent} coming from the computer keyboard.
  */
 export const KeyboardNoteEvent$ = merge(
   fromEvent<KeyboardEvent>(window, "keydown").pipe(
     filter((e) => !e.repeat),
     toNote,
-    map(NoteEvent.noteon),
+    map(noteon),
   ),
-  fromEvent<KeyboardEvent>(window, "keyup").pipe(
-    toNote,
-    map(NoteEvent.noteoff),
-  ),
+  fromEvent<KeyboardEvent>(window, "keyup").pipe(toNote, map(noteoff)),
 );
 
 const KeyToMidiNote: Record<string, number | undefined> = {
