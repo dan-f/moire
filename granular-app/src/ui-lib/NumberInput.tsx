@@ -24,7 +24,19 @@ export function NumberInput(props: Props) {
           disabled={disabled}
           onClick={decrement}
         />
-        <input ref={ref} {...props} id={id} size={1} className={style.input} />
+        <input
+          ref={ref}
+          {...props}
+          id={id}
+          size={1}
+          className={style.input}
+          onFocus={() => ref.current?.select()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              ref.current?.blur();
+            }
+          }}
+        />
         <IconButton
           icon={<Icon name="arrowRight" alt={i18n("Increment")} />}
           disabled={disabled}
