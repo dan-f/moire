@@ -4,6 +4,14 @@ const English = {
 
   Increment: "increment",
   Decrement: "decrement",
+
+  subdivision: "subdivision",
+  start: "start",
+  size: "size",
+  gain: "gain",
+  tune: "tune",
+  pan: "pan",
+  env: "env",
 };
 
 type SupportedLanguage = "en";
