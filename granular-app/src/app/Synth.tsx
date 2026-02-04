@@ -27,7 +27,7 @@ export function Synth() {
         <Sample />
       </div>
       <div>
-        <Param.Knob param="bpm" label="tempo" enabled range={[40, 300]} />
+        <Param.Knob paramKey="bpm" label="tempo" enabled />
         {/* <fieldset>
           <legend>Voice Mode</legend>
           <label>

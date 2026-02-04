@@ -2,27 +2,27 @@ import { useState } from "react";
 import { useSynth } from "../AppContext";
 import * as ParamProps from "./ParamProps";
 
-export function useParamVal(
-  props: Pick<ParamProps.T, "param" | "range" | "enabled">,
-): [ParamVal, SetParamVal] {
-  const { param, range: [min] = ParamProps.defaultRange, enabled } = props;
+export function useParam(
+  props: Pick<ParamProps.T, "paramKey" | "enabled">,
+): [[ParamVal, SetParamVal], range: [min: number, max: number]] {
+  const { paramKey, enabled } = props;
   const synth = useSynth();
-  const [val, setVal] = useState(get);
-
-  function get(): number {
-    return synth.getParamVal(param) ?? min;
-  }
+  const param = synth.getParam(paramKey);
+  const [val, setVal] = useState(param.value);
 
   const set: SetParamVal = (valOrCb) => {
     if (!enabled) {
       return;
     }
-    const newVal = typeof valOrCb === "number" ? valOrCb : valOrCb(get());
-    synth.setParam(param, newVal);
+    const newVal = typeof valOrCb === "number" ? valOrCb : valOrCb(param.value);
+    param.setValueAtTime(newVal, 0);
     setVal(newVal);
   };
 
-  return [val, set];
+  return [
+    [val, set],
+    [param.minValue, param.maxValue],
+  ];
 }
 
 type ParamVal = number;

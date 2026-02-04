@@ -1,12 +1,12 @@
 import { type Observable } from "rxjs";
 import { DragEvent, DragTarget } from "../../ui-lib/Drag";
 import { Knob } from "../../ui-lib/Knob";
-import { useParamVal } from "./hooks";
+import { useParam } from "./hooks";
 import * as ParamProps from "./ParamProps";
 
 export function KnobParam(props: ParamProps.T) {
-  const { enabled, range = ParamProps.defaultRange, param, label } = props;
-  const [val, set] = useParamVal(props);
+  const { enabled, paramKey, label } = props;
+  const [[val, set], range] = useParam(props);
 
   const render = (events$: Observable<DragEvent.T>) => {
     return (
@@ -15,7 +15,7 @@ export function KnobParam(props: ParamProps.T) {
         val={val}
         range={range}
         setVal={set}
-        id={param}
+        id={paramKey}
         label={label}
         dragEvents$={events$}
         disabled={!enabled}
@@ -23,5 +23,5 @@ export function KnobParam(props: ParamProps.T) {
     );
   };
 
-  return <DragTarget id={props.param} render={render} />;
+  return <DragTarget id={props.paramKey} render={render} />;
 }

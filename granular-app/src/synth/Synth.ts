@@ -57,29 +57,19 @@ export class Synth {
 
   sendNoteEvent(event: NoteEvent.TimedNoteEvent) {
     const noteVal = event.note + 1;
-    this.setParam(
-      "note_event",
+    const param = this.getParam("note_event");
+    param.setValueAtTime(
       event.type === "noteon" ? noteVal : -noteVal,
       event.time,
     );
   }
 
-  getParamVal(key: SynthParam.T): number | undefined {
-    return this.findParam(key)?.value;
-  }
-
-  setParam(key: SynthParam.T, val: number, time?: number) {
-    const param = this.findParam(key);
+  getParam(key: SynthParam.T): AudioParam {
+    const param = this.granularNode.parameters.get(key);
     if (!param) {
-      return;
+      throw new Error(`Bug - unknown parameter key ${key}`);
     }
-    this.setParamAtTime(param, val, time);
-  }
-
-  setParams(params: [SynthParam.T, number][]) {
-    for (const [key, val] of params) {
-      this.setParam(key, val);
-    }
+    return param;
   }
 
   playheadPosition(streamId: number): number {
@@ -104,18 +94,5 @@ export class Synth {
       type: Msg.ReqType.UpdateSample,
       sample,
     });
-  }
-
-  private findParam(key: SynthParam.T): AudioParam | undefined {
-    const param = this.granularNode.parameters.get(key);
-    if (!param) {
-      this.log.warn("unknown parameter key", { key });
-    }
-    return param;
-  }
-
-  private setParamAtTime(param: AudioParam, value: number, time?: number) {
-    const timeAt = time ?? this.ctx.currentTime;
-    param.setValueAtTime(value, timeAt);
   }
 }

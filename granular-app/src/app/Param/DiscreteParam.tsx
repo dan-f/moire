@@ -2,16 +2,11 @@ import { useState } from "react";
 import { clamp } from "../../lib/math";
 import { NumberInput } from "../../ui-lib/NumberInput";
 import * as ParamProps from "./ParamProps";
-import { useParamVal } from "./hooks";
+import { useParam } from "./hooks";
 
 export function DiscreteParam(props: ParamProps.T) {
-  const {
-    param,
-    enabled,
-    label,
-    range: [min, max] = ParamProps.defaultRange,
-  } = props;
-  const [val, setVal] = useParamVal(props);
+  const { paramKey, enabled, label } = props;
+  const [[val, setVal], [min, max]] = useParam(props);
   const [input, setInput] = useState<string>(`${val}`);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -40,7 +35,7 @@ export function DiscreteParam(props: ParamProps.T) {
 
   return (
     <NumberInput
-      id={param}
+      id={paramKey}
       disabled={!enabled}
       value={input}
       label={label}

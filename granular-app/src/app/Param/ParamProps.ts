@@ -1,10 +1,7 @@
 import { SynthParam } from "../../synth";
 
 export interface T {
-  param: SynthParam.T;
-  enabled: boolean;
-  range?: [min: number, max: number];
+  paramKey: SynthParam.T;
   label: string;
+  enabled: boolean;
 }
-
-export const defaultRange: [number, number] = [0, 1];
