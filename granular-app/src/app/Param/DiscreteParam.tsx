@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { clamp } from "../../lib/math";
 import { NumberInput } from "../../ui-lib/NumberInput";
-import * as ParamProps from "./ParamProps";
 import { useParam } from "./hooks";
+import { type ParamProps } from "./ParamProps";
 
-export function DiscreteParam(props: ParamProps.T) {
+export function DiscreteParam(props: ParamProps) {
   const { paramKey, enabled, label } = props;
   const [[val, setVal], [min, max]] = useParam(props);
   const [input, setInput] = useState<string>(`${val}`);

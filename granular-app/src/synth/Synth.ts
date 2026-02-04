@@ -3,7 +3,7 @@ import { range } from "../lib/iter";
 import { NoteEvent } from "../note";
 import * as Buffer from "./Buffer";
 import { Config, GranularNode, Message as Msg } from "./granular";
-import * as SynthParam from "./SynthParam";
+import { SynthParamKey } from "./param";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -64,7 +64,7 @@ export class Synth {
     );
   }
 
-  getParam(key: SynthParam.T): AudioParam {
+  getParam(key: SynthParamKey): AudioParam {
     const param = this.granularNode.parameters.get(key);
     if (!param) {
       throw new Error(`Bug - unknown parameter key ${key}`);

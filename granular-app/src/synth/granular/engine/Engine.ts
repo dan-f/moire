@@ -3,7 +3,11 @@ import { repeat } from "../../../lib/iter";
 import { type Logger } from "../../../lib/Logger";
 import * as Buffer from "../../Buffer";
 import { Config } from "../Config";
-import * as PP from "../ProcessorParam";
+import {
+  StreamParamKey,
+  unpackStreamParam,
+  type ProcessorParams,
+} from "../param";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
 
@@ -75,7 +79,7 @@ export class Engine {
     this.createBufferViews();
   }
 
-  setParams(params: PP.ProcessorParams) {
+  setParams(params: ProcessorParams) {
     const {
       bpm,
       note_event,
@@ -96,7 +100,7 @@ export class Engine {
     );
 
     for (const [streamParam, [val]] of Object.entries(streamParams)) {
-      const result = PP.unpackStreamParam(streamParam as PP.StreamParam);
+      const result = unpackStreamParam(streamParam as StreamParamKey);
       if (!result) {
         this.log.warn("unable to parse StreamParam", { streamParam });
         continue;

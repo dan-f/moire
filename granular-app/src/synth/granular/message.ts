@@ -1,26 +1,21 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import * as StreamParams from "./StreamParams";
 
 /**
  * Request payloads passed into the `GranularNode.port`
  */
-export type Request = UpdateSample.Req | AddStream.Req | DeleteStream.Req;
+export type Request = UpdateSample.Req;
 
 /**
  * Response payloads returned from the `GranularNode.port`
  */
-export type Response = UpdateSample.Rsp | AddStream.Rsp | DeleteStream.Rsp;
+export type Response = UpdateSample.Rsp;
 
 export enum ReqType {
   UpdateSample = "UpdateSample",
-  AddStream = "AddStream",
-  DeleteStream = "DeleteStream",
 }
 
 export enum RspType {
   SampleUpdated = "SampleUpdated",
-  StreamAdded = "StreamAdded",
-  StreamDeleted = "StreamDeleted",
 }
 
 export namespace UpdateSample {
@@ -30,27 +25,6 @@ export namespace UpdateSample {
   }
   export interface Rsp extends BaseResponse {
     type: RspType.SampleUpdated;
-  }
-}
-
-export namespace AddStream {
-  export interface Req extends BaseRequest {
-    type: ReqType.AddStream;
-    stream: StreamParams.T;
-  }
-  export interface Rsp extends BaseResponse {
-    type: RspType.StreamAdded;
-    streamId?: number;
-  }
-}
-
-export namespace DeleteStream {
-  export interface Req extends BaseRequest {
-    type: ReqType.DeleteStream;
-    streamId: number;
-  }
-  export interface Rsp extends BaseResponse {
-    type: RspType.StreamDeleted;
   }
 }
 

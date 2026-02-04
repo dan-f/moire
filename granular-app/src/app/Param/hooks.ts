@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useSynth } from "../AppContext";
-import * as ParamProps from "./ParamProps";
+import { type ParamProps } from "./ParamProps";
 
 export function useParam(
-  props: Pick<ParamProps.T, "paramKey" | "enabled">,
+  props: Pick<ParamProps, "paramKey" | "enabled">,
 ): [[ParamVal, SetParamVal], range: [min: number, max: number]] {
   const { paramKey, enabled } = props;
   const synth = useSynth();

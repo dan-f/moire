@@ -1,7 +1,7 @@
-import { SynthParam } from "../../synth";
+import { SynthParamKey } from "../../synth";
 
-export interface T {
-  paramKey: SynthParam.T;
+export interface ParamProps {
+  paramKey: SynthParamKey;
   label: string;
   enabled: boolean;
 }

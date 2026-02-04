@@ -1,6 +1,9 @@
 import { useCallback } from "react";
-import { SynthParam } from "../synth";
-import { StreamParams } from "../synth/granular";
+import {
+  packStreamParam,
+  type StreamParamName,
+  type SynthParamKey,
+} from "../synth";
 import { Bordered } from "../ui-lib/Bordered";
 import { Column } from "../ui-lib/Column";
 import { Icon } from "../ui-lib/Icon";
@@ -17,8 +20,7 @@ interface StreamProps {
 export function Stream(props: StreamProps) {
   const { stream } = props;
   const synthParam = useCallback(
-    (key: StreamParams.Key): SynthParam.T =>
-      SynthParam.packStreamParam(stream, key),
+    (key: StreamParamName): SynthParamKey => packStreamParam(stream, key),
     [stream],
   );
   const [[enabled, setEnabled]] = useParam({

@@ -7,8 +7,7 @@ import { Engine } from "./engine";
 import { Max, Min } from "./Env";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 import { ReqType, Response, RspType, type Request } from "./message";
-import * as PP from "./ProcessorParam";
-import * as StreamParams from "./StreamParams";
+import { packStreamParam, ProcessorParams, StreamParamName } from "./param";
 
 /**
  * The `AudioWorkletProcessor` responsible for ultimately filling output buffers
@@ -87,7 +86,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   process(
     _inputs: Buffer.T[],
     outputs: Buffer.T[],
-    params: PP.ProcessorParams,
+    params: ProcessorParams,
   ): boolean {
     const [dstAudio, dstPlayheads, ...dstBigBufViews] = outputs;
     this.engine.checkResizeProcessingBuffers(Buffer.length(dstAudio));
@@ -109,16 +108,6 @@ class GranularProcessor extends AudioWorkletProcessor {
       case ReqType.UpdateSample:
         this.engine.updateSample(req.sample);
         return { type: RspType.SampleUpdated };
-      case ReqType.AddStream: {
-        // TODO delete these AddStream/DeleteStream request types
-        return {
-          type: RspType.StreamAdded,
-          streamId: 999,
-        };
-      }
-      case ReqType.DeleteStream:
-        // TODO as stated above, delete me too
-        return { type: RspType.StreamDeleted };
     }
   }
 
@@ -131,7 +120,7 @@ class GranularProcessor extends AudioWorkletProcessor {
   private static perStreamParamDescriptors(
     streamId: number,
   ): ParamDescriptor[] {
-    const name = (key: StreamParams.Key) => PP.packStreamParam(streamId, key);
+    const name = (key: StreamParamName) => packStreamParam(streamId, key);
     return [
       {
         name: name("enabled"),

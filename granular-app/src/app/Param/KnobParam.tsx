@@ -2,9 +2,9 @@ import { type Observable } from "rxjs";
 import { DragEvent, DragTarget } from "../../ui-lib/Drag";
 import { Knob } from "../../ui-lib/Knob";
 import { useParam } from "./hooks";
-import * as ParamProps from "./ParamProps";
+import { type ParamProps } from "./ParamProps";
 
-export function KnobParam(props: ParamProps.T) {
+export function KnobParam(props: ParamProps) {
   const { enabled, paramKey, label } = props;
   const [[val, set], range] = useParam(props);
 
