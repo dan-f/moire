@@ -22,19 +22,8 @@ export class GranularNode extends AudioWorkletNode {
   private constructor(ctx: AudioContext, engineModule: WebAssembly.Module) {
     super(ctx, "GranularProcessor", {
       numberOfInputs: 0,
-      numberOfOutputs: 10,
-      outputChannelCount: [
-        2,
-        Config.NumStreams,
-        32,
-        32,
-        32,
-        32,
-        32,
-        32,
-        32,
-        32,
-      ],
+      numberOfOutputs: 2,
+      outputChannelCount: [2, Config.NumStreams],
       processorOptions: { granularModule: engineModule },
     });
   }

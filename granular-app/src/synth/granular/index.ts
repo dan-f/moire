@@ -10,4 +10,3 @@ export {
   type ProcessorParams,
   type StreamParamKey,
 } from "./param";
-export * as StreamParams from "./StreamParams";
