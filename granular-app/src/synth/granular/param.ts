@@ -19,14 +19,14 @@ export const ParamDescriptors = [
     automationRate: "k-rate",
     defaultValue: 10,
     minValue: 0,
-    maxValue: 5000,
+    maxValue: 1000,
   },
   {
     name: "decay" as const,
     automationRate: "k-rate",
     defaultValue: 50,
     minValue: 0,
-    maxValue: 5000,
+    maxValue: 2000,
   },
   {
     name: "sustain" as const,
@@ -40,7 +40,7 @@ export const ParamDescriptors = [
     automationRate: "k-rate",
     defaultValue: 250,
     minValue: 0,
-    maxValue: 10000,
+    maxValue: 3000,
   },
   {
     name: "note_event" as const,
