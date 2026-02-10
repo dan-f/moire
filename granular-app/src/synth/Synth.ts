@@ -1,3 +1,4 @@
+import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
 import { NoteEvent } from "../note";
@@ -10,17 +11,17 @@ import { SynthParamKey } from "./param";
  */
 export class Synth {
   private readonly ctx: AudioContext;
-  private readonly granularNode: GranularNode;
+  private readonly nodes: SynthNodes;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new DefaultLogger(Synth.name);
 
-  private constructor(ctx: AudioContext, granularNode: GranularNode) {
+  private constructor(ctx: AudioContext, nodes: SynthNodes) {
     this.ctx = ctx;
-    this.granularNode = granularNode;
+    this.nodes = nodes;
     this.analysers = Array(Config.NumStreams);
     const splitter = ctx.createChannelSplitter(Config.NumStreams);
-    this.granularNode.connect(splitter, 1);
+    this.nodes.granular.connect(splitter, 1);
     for (const s of range(Config.NumStreams)) {
       const analyser = ctx.createAnalyser();
       splitter.connect(analyser, s);
@@ -65,7 +66,10 @@ export class Synth {
   }
 
   getParam(key: SynthParamKey): AudioParam {
-    const param = this.granularNode.parameters.get(key);
+    const param =
+      key === "reverbBalance"
+        ? this.nodes.reverbBalance.offset
+        : this.nodes.granular.parameters.get(key);
     if (!param) {
       throw new Error(`Bug - unknown parameter key ${key}`);
     }
@@ -78,21 +82,77 @@ export class Synth {
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {
-    const granularNode = await GranularNode.new(ctx);
-    const limiter = ctx.createDynamicsCompressor();
-    granularNode.connect(limiter);
-    limiter.threshold.value = -0.5;
-    limiter.ratio.value = limiter.ratio.maxValue;
-    limiter.attack.value = 0.003;
-    limiter.release.value = 0.05;
+    const granular = await GranularNode.new(ctx);
+    const dry = new GainNode(ctx, { gain: 0 });
+    const wet = new GainNode(ctx, { gain: 0 });
+    const reverb = new ConvolverNode(ctx, {
+      buffer: await fetch(reverbIrUrl)
+        .then((r) => r.arrayBuffer())
+        .then((ab) => ctx.decodeAudioData(ab)),
+    });
+    const limiter = new DynamicsCompressorNode(ctx, {
+      threshold: -0.5,
+      ratio: 20,
+      attack: 0.003,
+      release: 0.05,
+    });
+
+    const reverbBalance = constantSourceNode(ctx, { offset: -1 });
+    const [dryGain, wetGain] = crossFadedGainNodes(ctx, reverbBalance);
+    dryGain.connect(dry.gain);
+    wetGain.connect(wet.gain);
+
+    granular.connect(dry).connect(limiter);
+    granular.connect(wet).connect(reverb).connect(limiter);
     limiter.connect(ctx.destination);
-    return new Synth(ctx, granularNode);
+
+    return new Synth(ctx, { granular, reverbBalance });
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {
-    await this.granularNode.request({
+    await this.nodes.granular.request({
       type: Msg.ReqType.UpdateSample,
       sample,
     });
   }
+}
+
+function constantSourceNode(
+  ctx: AudioContext,
+  options?: ConstantSourceOptions,
+): ConstantSourceNode {
+  const node = new ConstantSourceNode(ctx, options);
+  node.start();
+  return node;
+}
+
+/**
+ * Given a signal in the range [-1, 1], create two nodes specifying gain
+ * suitable for crossfading. See
+ * https://dsp.stackexchange.com/questions/14754/equal-power-crossfade
+ */
+function crossFadedGainNodes(
+  ctx: AudioContext,
+  balance: AudioNode,
+): [AudioNode, AudioNode] {
+  const bufLen = 65536;
+  const curveA = new Float32Array(bufLen);
+  const curveB = new Float32Array(bufLen);
+  for (let i = 0; i < bufLen; i++) {
+    const x = (2 * i) / bufLen - 1;
+    curveA[i] = Math.sqrt(0.5 * (1 - x)); // 1 to 0
+    curveB[i] = Math.sqrt(0.5 * (1 + x)); // 0 to 1
+  }
+
+  const shaperA = new WaveShaperNode(ctx, { curve: curveA });
+  const shaperB = new WaveShaperNode(ctx, { curve: curveB });
+  balance.connect(shaperA);
+  balance.connect(shaperB);
+
+  return [shaperA, shaperB];
+}
+
+interface SynthNodes {
+  granular: GranularNode;
+  reverbBalance: ConstantSourceNode;
 }

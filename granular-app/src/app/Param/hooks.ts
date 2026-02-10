@@ -3,9 +3,9 @@ import { useSynth } from "../AppContext";
 import { type ParamProps } from "./ParamProps";
 
 export function useParam(
-  props: Pick<ParamProps, "paramKey" | "enabled">,
+  props: Pick<ParamProps, "paramKey" | "enabled" | "range">,
 ): [[ParamVal, SetParamVal], range: [min: number, max: number]] {
-  const { paramKey, enabled } = props;
+  const { paramKey, enabled, range } = props;
   const synth = useSynth();
   const param = synth.getParam(paramKey);
   const [val, setVal] = useState(param.value);
@@ -19,10 +19,7 @@ export function useParam(
     setVal(newVal);
   };
 
-  return [
-    [val, set],
-    [param.minValue, param.maxValue],
-  ];
+  return [[val, set], range ?? [param.minValue, param.maxValue]];
 }
 
 type ParamVal = number;
