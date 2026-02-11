@@ -1,5 +1,5 @@
-@value black, lightgrey from "../ui-lib/color.module.css";
-@value xxs from "../ui-lib/sizing.module.css";
+@value black, lightgrey, white from "../ui-lib/color.module.css";
+@value xxs, xs from "../ui-lib/sizing.module.css";
 @value fontSizeSm from "../ui-lib/typography.module.css";
 
 .container {
@@ -12,7 +12,11 @@
   font-size: fontSizeSm;
 }
 
-.ring {
+.barrel-container {
+  position: relative;
+}
+
+.barrel {
   border-radius: 100%;
   background-color: lightgrey;
   border: xxs solid black;
@@ -24,4 +28,18 @@
   width: xxs;
   background-color: black;
   height: 20%;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(calc(xxs * -1));
+
+  border-radius: xs;
+  padding: xxs;
+  background-color: rgb(from white r g b / 0.85);
+  font-size: fontSizeSm;
+  user-select: none;
 }

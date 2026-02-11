@@ -1,50 +1,78 @@
 import { createRef, useEffect } from "react";
-import { filter, map, merge, pairwise, type Observable } from "rxjs";
 import {
-  useObservableCallback,
+  BehaviorSubject,
+  filter,
+  map,
+  merge,
+  Observable,
+  pairwise,
+} from "rxjs";
+import {
+  useBehaviorSubjectState,
+  useSubject,
   useSubscription,
 } from "../app/hooks/observable";
 import { clamp } from "../lib/math";
-import { DragEvent } from "./Drag";
+import { DragEvent, DragTarget } from "./Drag";
 import style from "./Knob.module.css";
 
 interface KnobProps {
-  size: string;
-  val: number;
-  range: [min: number, max: number];
+  val$: BehaviorSubject<number>;
   setVal(val: number): void;
+  range: [min: number, max: number];
   id: string;
+  size: string;
   label: string;
-  dragEvents$: Observable<DragEvent.DragEvent>;
   disabled?: boolean;
 }
 
 export function Knob(props: KnobProps) {
-  const {
-    size,
-    val,
-    range,
-    setVal,
-    id,
-    label,
-    dragEvents$,
-    disabled = false,
-  } = props;
+  const { val$, setVal, range, id, size, label, disabled } = props;
 
-  const [wheel$, handleWheel] =
-    useObservableCallback<React.WheelEvent<HTMLDivElement>>();
-  const [key$, handleKeyDown] = useObservableCallback<React.KeyboardEvent>();
+  const renderBarrel = (dragEvent$: Observable<DragEvent.DragEvent>) => {
+    return (
+      <Barrel
+        dragEvent$={dragEvent$}
+        val$={val$}
+        setVal={setVal}
+        range={range}
+        id={id}
+        size={size}
+        disabled={disabled}
+      />
+    );
+  };
 
+  return (
+    <div className={style.container}>
+      <DragTarget id={id} render={renderBarrel}></DragTarget>
+      <label className={style.label} id={id}>
+        {label}
+      </label>
+    </div>
+  );
+}
+
+interface BarrelProps {
+  dragEvent$: Observable<DragEvent.DragEvent>;
+  val$: BehaviorSubject<number>;
+  setVal: (val: number) => void;
+  range: [min: number, max: number];
+  id: string;
+  size: string;
+  disabled?: boolean;
+}
+
+function Barrel(props: BarrelProps) {
+  const { dragEvent$, val$, setVal, range, id, size, disabled } = props;
+
+  const val = useBehaviorSubjectState(val$);
+  const wheel$ = useSubject<React.WheelEvent<HTMLDivElement>>();
+  const key$ = useSubject<React.KeyboardEvent>();
   const ringRef = createRef<HTMLDivElement>();
   const notchRef = createRef<HTMLDivElement>();
 
-  function set(val: number) {
-    if (!disabled) {
-      setVal(val);
-    }
-  }
-
-  const dragDelta$ = dragEvents$.pipe(
+  const dragDelta$ = dragEvent$.pipe(
     pairwise(),
     filter(([a, _]) => a.type !== "DragEnd"),
     map(([a, b]) => b.y - a.y),
@@ -61,14 +89,15 @@ export function Knob(props: KnobProps) {
   );
 
   useSubscription(merge(dragDelta$, wheelDelta$, keyDelta$), (delta) => {
-    set(clamp(val + delta, range[0], range[1]));
+    setVal(clamp(val$.value + delta, range[0], range[1]));
   });
 
   usePreventWheelScrolling(notchRef, ringRef);
 
   return (
-    <div className={style.container}>
+    <div className={style["barrel-container"]}>
       <div
+        className={style.barrel}
         ref={ringRef}
         tabIndex={disabled ? -1 : 0}
         role="slider"
@@ -77,9 +106,12 @@ export function Knob(props: KnobProps) {
         aria-valuemax={range[1]}
         aria-valuenow={val}
         aria-labelledby={id}
-        onKeyDown={handleKeyDown}
-        onWheel={handleWheel}
-        className={style.ring}
+        onKeyDown={key$.next}
+        onWheel={wheel$.next}
+        // onFocus={() => setTooltipActive(true)}
+        // onBlur={() => setTooltipActive(false)}
+        // onMouseOver={() => setTooltipActive(true)}
+        // onMouseLeave={() => setTooltipActive(false)}
         style={{
           width: size,
           height: size,
@@ -88,9 +120,7 @@ export function Knob(props: KnobProps) {
       >
         <div ref={notchRef} className={style.notch} />
       </div>
-      <label className={style.label} id={id}>
-        {label}
-      </label>
+      {/* {!disabled && <div className={style.tooltip}>{val.toFixed(2)}</div>} */}
     </div>
   );
 }

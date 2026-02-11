@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { clamp } from "../../lib/math";
 import { NumberInput } from "../../ui-lib/NumberInput";
+import { useBehaviorSubjectState } from "../hooks/observable";
 import { useParam } from "./hooks";
 import { type ParamProps } from "./ParamProps";
 
 export function DiscreteParam(props: ParamProps) {
   const { paramKey, enabled, label } = props;
-  const [[val, setVal], [min, max]] = useParam(props);
+  const [[val$, setVal], [min, max]] = useParam(props);
+  const val = useBehaviorSubjectState(val$);
   const [input, setInput] = useState<string>(`${val}`);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {

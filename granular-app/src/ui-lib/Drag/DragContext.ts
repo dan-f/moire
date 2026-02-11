@@ -28,7 +28,10 @@ export function useDragEvents(target: string): Observable<Drag.DragEvent> {
     return () => deregisterTarget(target);
   }, [deregisterTarget, events$, registerTarget, target]);
 
-  return events$.pipe(distinctUntilChanged(Drag.equals));
+  return useMemo(
+    () => events$.pipe(distinctUntilChanged(Drag.equals)),
+    [events$],
+  );
 }
 
 export function useBeginDrag(): DragCtx["beginDrag"] {

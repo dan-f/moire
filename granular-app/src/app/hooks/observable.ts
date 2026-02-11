@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Subject, type Observable } from "rxjs";
+import { useEffect, useMemo, useState } from "react";
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 
 /**
  * Run an effect on every emitted value from the observable
@@ -12,33 +12,40 @@ export function useSubscription<T>(obs$: Observable<T>, f: (t: T) => void) {
 }
 
 /**
- * Treat the provided observable as react state
+ * Returns a memoized {@linkcode Subject} and bound methods
  */
-export function useObservableState<T>(obs$: Observable<T>): T | undefined;
-export function useObservableState<T>(obs$: Observable<T>, initial: T): T;
-export function useObservableState<T>(
-  obs$: Observable<T>,
-  initial?: T,
-): T | undefined {
-  const [state, setState] = useState<T | undefined>(initial);
-  useSubscription(obs$, setState);
-  return state;
+export function useSubject<T>(): Subject<T> {
+  const subj$ = useMemo(() => {
+    const subj$ = new Subject<T>();
+    subj$.next = subj$.next.bind(subj$);
+    subj$.error = subj$.error.bind(subj$);
+    subj$.complete = subj$.complete.bind(subj$);
+    return subj$;
+  }, []);
+
+  return subj$;
 }
 
 /**
- * Returns an observable of values which are pushed via `capture`.
+ * Returns a memoized {@linkcode BehaviorSubject} and bound methods
  */
-export function useObservableCallback<T>(): [
-  values$: Observable<T>,
-  capture: (val: T) => void,
-] {
-  const values$ = useMemo(() => new Subject<T>(), []);
-  const capture = useCallback(
-    (e: T) => {
-      values$.next(e);
-    },
-    [values$],
-  );
+export function useBehaviorSubject<T>(initial: T): BehaviorSubject<T> {
+  const subj$ = useMemo(() => {
+    const subj$ = new BehaviorSubject<T>(initial);
+    subj$.next = subj$.next.bind(subj$);
+    subj$.error = subj$.error.bind(subj$);
+    subj$.complete = subj$.complete.bind(subj$);
+    return subj$;
+  }, [initial]);
 
-  return [values$, capture];
+  return subj$;
+}
+
+/**
+ * Treat the provided {@linkcode BehaviorSubject} as react state
+ */
+export function useBehaviorSubjectState<T>(subj$: BehaviorSubject<T>): T {
+  const [state, setState] = useState(subj$.value);
+  useSubscription(subj$, setState);
+  return state;
 }

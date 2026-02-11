@@ -1,5 +1,4 @@
-import { useObservableState } from "../hooks/observable";
-import { loadTheme } from "./css";
+import { useBehaviorSubjectState } from "../hooks/observable";
 import { Theme$ } from "./observable";
 import { ThemeContext } from "./ThemeContext";
 
@@ -8,7 +7,7 @@ interface Props {
 }
 
 export function ThemeProvider(props: Props) {
-  const theme = useObservableState(Theme$, InitialTheme);
+  const theme = useBehaviorSubjectState(Theme$);
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -16,5 +15,3 @@ export function ThemeProvider(props: Props) {
     </ThemeContext.Provider>
   );
 }
-
-const InitialTheme = loadTheme();

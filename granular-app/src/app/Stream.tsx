@@ -11,6 +11,7 @@ import { IconButton } from "../ui-lib/IconButton";
 import { classes } from "../ui-lib/css";
 import { Param, useParam } from "./Param";
 import style from "./Stream.module.css";
+import { useBehaviorSubjectState } from "./hooks/observable";
 import { i18n } from "./i18n";
 
 interface StreamProps {
@@ -23,10 +24,11 @@ export function Stream(props: StreamProps) {
     (key: StreamParamName): SynthParamKey => packStreamParam(stream, key),
     [stream],
   );
-  const [[enabled, setEnabled]] = useParam({
+  const [[enabled$, setEnabled]] = useParam({
     paramKey: synthParam("enabled"),
     enabled: true,
   });
+  const enabled = useBehaviorSubjectState(enabled$);
   const isEnabled = enabled === 1;
 
   const containerClasses = classes(

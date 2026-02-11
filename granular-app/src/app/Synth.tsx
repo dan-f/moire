@@ -5,9 +5,10 @@ import { range } from "../lib/iter";
 import { NoteMessageEvent$ } from "../midi";
 import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Config } from "../synth/granular";
-import { Adsr } from "./Adsr";
+import { Column } from "../ui-lib/Column";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
+import { i18n } from "./i18n";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
@@ -22,30 +23,35 @@ export function Synth() {
 
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
-      <Adsr />
+      <Column>
+        <Param.Knob paramKey="attack" label={i18n("attack")} enabled />
+        <Param.Knob paramKey="decay" label={i18n("decay")} enabled />
+        <Param.Knob paramKey="sustain" label={i18n("sustain")} enabled />
+        <Param.Knob paramKey="release" label={i18n("release")} enabled />
+      </Column>
       <div className={style.sample}>
         <Sample />
       </div>
-      <div>
+      <Column>
         <Param.Knob
           paramKey="masterGain"
-          label="level"
+          label={i18n("level")}
           range={[0, 2]}
           enabled
         />
         <Param.Knob
           paramKey="saturationGain"
-          label="drive"
+          label={i18n("drive")}
           range={[0.5, 5]}
           enabled
         />
         <Param.Knob
           paramKey="reverbBalance"
-          label="reverb"
+          label={i18n("reverb")}
           range={[-1, 1]}
           enabled
         />
-        <Param.Knob paramKey="bpm" label="tempo" enabled />
+        <Param.Knob paramKey="bpm" label={i18n("tempo")} enabled />
         {/* <fieldset>
           <legend>Voice Mode</legend>
           <label>
@@ -56,7 +62,7 @@ export function Synth() {
           </label>
         </fieldset> */}
         {/* end TODO */}
-      </div>
+      </Column>
       {[...range(Config.NumStreams)].map((stream) => (
         <div key={stream} className={style.stream}>
           <Stream stream={stream} />
