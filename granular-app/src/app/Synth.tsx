@@ -27,13 +27,25 @@ export function Synth() {
         <Sample />
       </div>
       <div>
-        <Param.Knob paramKey="bpm" label="tempo" enabled />
+        <Param.Knob
+          paramKey="masterGain"
+          label="level"
+          range={[0, 2]}
+          enabled
+        />
+        <Param.Knob
+          paramKey="saturationGain"
+          label="drive"
+          range={[0.5, 5]}
+          enabled
+        />
         <Param.Knob
           paramKey="reverbBalance"
           label="reverb"
           range={[-1, 1]}
           enabled
         />
+        <Param.Knob paramKey="bpm" label="tempo" enabled />
         {/* <fieldset>
           <legend>Voice Mode</legend>
           <label>

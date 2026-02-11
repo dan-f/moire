@@ -5,6 +5,11 @@ import { NoteEvent } from "../note";
 import { upload, type UploadResult } from "./Buffer";
 import { Config, GranularNode, Message as Msg } from "./granular";
 import { SynthParamKey } from "./param";
+import {
+  constantSourceNode,
+  saturationModule,
+  xFadedGainNodes,
+} from "./webaudio";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -20,10 +25,12 @@ export class Synth {
     this.ctx = ctx;
     this.nodes = nodes;
     this.analysers = Array(Config.NumStreams);
-    const splitter = ctx.createChannelSplitter(Config.NumStreams);
+    const splitter = new ChannelSplitterNode(ctx, {
+      numberOfOutputs: Config.NumStreams,
+    });
     this.nodes.granular.connect(splitter, 1);
     for (const s of range(Config.NumStreams)) {
-      const analyser = ctx.createAnalyser();
+      const analyser = new AnalyserNode(ctx);
       splitter.connect(analyser, s);
       this.analysers[s] = analyser;
     }
@@ -66,10 +73,22 @@ export class Synth {
   }
 
   getParam(key: SynthParamKey): AudioParam {
-    const param =
-      key === "reverbBalance"
-        ? this.nodes.reverbBalance.offset
-        : this.nodes.granular.parameters.get(key);
+    let param;
+    switch (key) {
+      case "masterGain":
+        param = this.nodes.masterGain.offset;
+        break;
+      case "saturationGain":
+        param = this.nodes.saturationGain.offset;
+        break;
+      case "reverbBalance":
+        param = this.nodes.reverbBalance.offset;
+        break;
+      default:
+        param = this.nodes.granular.parameters.get(key);
+        break;
+    }
+
     if (!param) {
       throw new Error(`Bug - unknown parameter key ${key}`);
     }
@@ -82,14 +101,17 @@ export class Synth {
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {
+    // audio nodes
     const granular = await GranularNode.new(ctx);
     const dry = new GainNode(ctx, { gain: 0 });
     const wet = new GainNode(ctx, { gain: 0 });
+    const saturation = saturationModule(ctx);
     const reverb = new ConvolverNode(ctx, {
       buffer: await fetch(reverbIrUrl)
         .then((r) => r.arrayBuffer())
         .then((ab) => ctx.decodeAudioData(ab)),
     });
+    const mix = new GainNode(ctx, { gain: 0 });
     const limiter = new DynamicsCompressorNode(ctx, {
       threshold: -0.5,
       ratio: 20,
@@ -97,16 +119,26 @@ export class Synth {
       release: 0.05,
     });
 
+    // control nodes
+    const masterGain = constantSourceNode(ctx, { offset: 1 });
     const reverbBalance = constantSourceNode(ctx, { offset: -1 });
-    const [dryGain, wetGain] = crossFadedGainNodes(ctx, reverbBalance);
+    const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
     dryGain.connect(dry.gain);
     wetGain.connect(wet.gain);
+    masterGain.connect(mix.gain);
 
-    granular.connect(dry).connect(limiter);
-    granular.connect(wet).connect(reverb).connect(limiter);
-    limiter.connect(ctx.destination);
+    // audio graph
+    granular.connect(saturation.input);
+    saturation.output.connect(dry).connect(mix);
+    saturation.output.connect(wet).connect(reverb).connect(mix);
+    mix.connect(limiter).connect(ctx.destination);
 
-    return new Synth(ctx, { granular, reverbBalance });
+    return new Synth(ctx, {
+      granular,
+      saturationGain: saturation.gain,
+      reverbBalance,
+      masterGain,
+    });
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {
@@ -117,42 +149,9 @@ export class Synth {
   }
 }
 
-function constantSourceNode(
-  ctx: AudioContext,
-  options?: ConstantSourceOptions,
-): ConstantSourceNode {
-  const node = new ConstantSourceNode(ctx, options);
-  node.start();
-  return node;
-}
-
-/**
- * Given a signal in the range [-1, 1], create two nodes specifying gain
- * suitable for crossfading. See
- * https://dsp.stackexchange.com/questions/14754/equal-power-crossfade
- */
-function crossFadedGainNodes(
-  ctx: AudioContext,
-  balance: AudioNode,
-): [AudioNode, AudioNode] {
-  const bufLen = 65536;
-  const curveA = new Float32Array(bufLen);
-  const curveB = new Float32Array(bufLen);
-  for (let i = 0; i < bufLen; i++) {
-    const x = (2 * i) / bufLen - 1;
-    curveA[i] = Math.sqrt(0.5 * (1 - x)); // 1 to 0
-    curveB[i] = Math.sqrt(0.5 * (1 + x)); // 0 to 1
-  }
-
-  const shaperA = new WaveShaperNode(ctx, { curve: curveA });
-  const shaperB = new WaveShaperNode(ctx, { curve: curveB });
-  balance.connect(shaperA);
-  balance.connect(shaperB);
-
-  return [shaperA, shaperB];
-}
-
 interface SynthNodes {
   granular: GranularNode;
+  saturationGain: ConstantSourceNode;
   reverbBalance: ConstantSourceNode;
+  masterGain: ConstantSourceNode;
 }

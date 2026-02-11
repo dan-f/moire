@@ -4,6 +4,10 @@
 
 import { type ProcessorParamKey } from "./granular";
 
-export type SynthParamKey = ProcessorParamKey | "reverbBalance";
+export type SynthParamKey =
+  | ProcessorParamKey
+  | "masterGain"
+  | "saturationGain"
+  | "reverbBalance";
 
 export * from "./granular/param";
