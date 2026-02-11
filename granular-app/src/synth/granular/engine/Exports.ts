@@ -57,6 +57,11 @@ export interface Exports extends WebAssembly.Exports {
     stream_id: number,
     grain_size_ms: number,
   ): void;
+  set_stream_grain_probability(
+    engine: Pointer,
+    stream_id: number,
+    probability: number,
+  ): void;
   set_stream_gain(engine: Pointer, stream_id: number, gain: number): void;
   set_stream_tune(engine: Pointer, stream_id: number, tune: number): void;
   set_stream_pan(engine: Pointer, stream_id: number, pan: number): void;

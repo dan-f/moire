@@ -117,6 +117,13 @@ export class Engine {
             val,
           );
           break;
+        case "grainProbability":
+          this.instance.exports.set_stream_grain_probability(
+            this.engine,
+            streamId,
+            val,
+          );
+          break;
         case "gain":
           this.instance.exports.set_stream_gain(this.engine, streamId, val);
           break;

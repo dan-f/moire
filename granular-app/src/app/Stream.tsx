@@ -64,6 +64,11 @@ export function Stream(props: StreamProps) {
             enabled={isEnabled}
           />
           <Param.Knob
+            paramKey={synthParam("grainProbability")}
+            label={i18n("probability")}
+            enabled={isEnabled}
+          />
+          <Param.Knob
             paramKey={synthParam("gain")}
             label={i18n("gain")}
             enabled={isEnabled}

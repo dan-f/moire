@@ -72,7 +72,6 @@ pub unsafe extern "C" fn apply_note_event(engine: *mut Engine<NUM_STREAMS>, note
     engine.as_mut().unwrap().apply_note_event(note_event);
 }
 
-// TODO(poly) change to set_voice_<param>(engine, voice, stream, param_val)
 #[no_mangle]
 pub unsafe extern "C" fn set_adsr(
     engine: *mut Engine<NUM_STREAMS>,
@@ -133,6 +132,18 @@ pub unsafe extern "C" fn set_stream_grain_size_ms(
         .as_mut()
         .unwrap()
         .set_stream_grain_size_ms(stream_id, grain_size_ms);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_stream_grain_probability(
+    engine: *mut Engine<NUM_STREAMS>,
+    stream_id: usize,
+    probability: f32,
+) {
+    engine
+        .as_mut()
+        .unwrap()
+        .set_stream_grain_probability(stream_id, probability);
 }
 
 #[no_mangle]

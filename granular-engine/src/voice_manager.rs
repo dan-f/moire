@@ -99,6 +99,12 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
+    pub fn set_stream_grain_probability(&mut self, stream_id: usize, probability: f32) {
+        for voice in self.voices.iter_mut() {
+            voice.set_grain_probability(stream_id, probability);
+        }
+    }
+
     pub fn set_stream_gain(&mut self, stream_id: usize, gain: f32) {
         for voice in self.voices.iter_mut() {
             voice.set_gain(stream_id, gain);

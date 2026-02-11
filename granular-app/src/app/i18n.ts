@@ -8,6 +8,7 @@ const English = {
   subdivision: "subdivision",
   start: "start",
   size: "size",
+  probability: "probability",
   gain: "gain",
   tune: "tune",
   pan: "pan",

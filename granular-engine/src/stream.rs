@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use num_rational::Rational64;
 
-use crate::{buffer::Buffer, env::Env, grain::Grain, time::clock::Clock, tuning::tune_equal};
+use crate::{buffer::Buffer, env::Env, grain::Grain, rand, time::clock::Clock, tuning::tune_equal};
 
 /// Grain producer
 pub struct Stream {
@@ -10,6 +10,7 @@ pub struct Stream {
     clock: Rc<RefCell<Clock>>,
     grain_start: f32,
     grain_size_ms: usize,
+    probability: f32,
     gain: f32,
     tune: i32,
     pan: f32,
@@ -21,6 +22,7 @@ impl Stream {
         clock: Rc<RefCell<Clock>>,
         grain_start: f32,
         grain_size_ms: usize,
+        probability: f32,
         gain: f32,
         tune: i32,
         pan: f32,
@@ -31,6 +33,7 @@ impl Stream {
             clock,
             grain_start,
             grain_size_ms,
+            probability,
             gain,
             tune,
             pan,
@@ -39,7 +42,7 @@ impl Stream {
     }
 
     pub fn default_with_clock(clock: Rc<RefCell<Clock>>) -> Self {
-        Self::new(clock, 0., 250, 1., 0, 0.5, Env::Tri)
+        Self::new(clock, 0., 250, 1., 1., 0, 0.5, Env::Tri)
     }
 
     pub fn spawn_new_grains(
@@ -49,7 +52,7 @@ impl Stream {
         sample: &Buffer,
         sample_rate: usize,
     ) -> Option<Grain> {
-        if self.enabled && self.clock.borrow().is_zero() {
+        if self.enabled && self.clock.borrow().is_zero() && rand::random() <= self.probability {
             let i = sample.len as f32 * self.grain_start;
             let len = (sample_rate as f32 / 1000.) * self.grain_size_ms as f32;
             let end = f32::min(sample.len as f32, i + len);
@@ -76,6 +79,10 @@ impl Stream {
 
     pub fn set_grain_size_ms(&mut self, grain_size_ms: usize) {
         self.grain_size_ms = grain_size_ms;
+    }
+
+    pub fn set_grain_probability(&mut self, probability: f32) {
+        self.probability = probability;
     }
 
     pub fn set_gain(&mut self, gain: f32) {

@@ -134,6 +134,12 @@ impl<const S: usize> Voice<S> {
         });
     }
 
+    pub fn set_grain_probability(&mut self, stream_id: usize, probability: f32) {
+        self.with_stream(stream_id, |stream| {
+            stream.set_grain_probability(probability);
+        });
+    }
+
     pub fn set_gain(&mut self, stream_id: usize, gain: f32) {
         self.with_stream(stream_id, |stream| {
             stream.set_gain(gain);

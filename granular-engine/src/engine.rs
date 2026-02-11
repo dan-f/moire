@@ -85,6 +85,11 @@ impl<const S: usize> Engine<S> {
             .set_stream_grain_size_ms(stream_id, grain_size_ms);
     }
 
+    pub fn set_stream_grain_probability(&mut self, stream_id: usize, probability: f32) {
+        self.voices
+            .set_stream_grain_probability(stream_id, probability);
+    }
+
     pub fn set_stream_gain(&mut self, stream_id: usize, gain: f32) {
         self.voices.set_stream_gain(stream_id, gain);
     }

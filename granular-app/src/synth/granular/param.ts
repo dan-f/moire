@@ -82,6 +82,13 @@ export const ParamDescriptors = [
         maxValue: 500,
       },
       {
+        name: name("grainProbability"),
+        automationRate: "k-rate",
+        defaultValue: 1,
+        minValue: 0,
+        maxValue: 1,
+      },
+      {
         name: name("gain"),
         automationRate: "k-rate",
         defaultValue: 1,
