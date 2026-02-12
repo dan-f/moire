@@ -1,20 +1,29 @@
 import { createRef, useEffect } from "react";
 import {
   BehaviorSubject,
+  catchError,
+  combineLatest,
+  concat,
+  distinctUntilChanged,
   filter,
   map,
   merge,
   Observable,
+  of,
   pairwise,
+  timeout,
 } from "rxjs";
 import {
+  useBehaviorSubject,
   useBehaviorSubjectState,
+  useObservableState,
   useSubject,
   useSubscription,
 } from "../app/hooks/observable";
 import { clamp } from "../lib/math";
 import { DragEvent, DragTarget } from "./Drag";
 import style from "./Knob.module.css";
+import { classes } from "./css";
 
 interface KnobProps {
   val$: BehaviorSubject<number>;
@@ -29,23 +38,26 @@ interface KnobProps {
 export function Knob(props: KnobProps) {
   const { val$, setVal, range, id, size, label, disabled } = props;
 
-  const renderBarrel = (dragEvent$: Observable<DragEvent.DragEvent>) => {
-    return (
-      <Barrel
-        dragEvent$={dragEvent$}
-        val$={val$}
-        setVal={setVal}
-        range={range}
-        id={id}
-        size={size}
-        disabled={disabled}
-      />
-    );
-  };
-
   return (
     <div className={style.container}>
-      <DragTarget id={id} render={renderBarrel}></DragTarget>
+      <DragTarget
+        id={id}
+        render={(dragEvent$, dragFocus$) => {
+          return (
+            <BarrelContainer
+              dragEvent$={dragEvent$}
+              dragFocus$={dragFocus$}
+              val$={val$}
+              setVal={setVal}
+              range={range}
+              id={id}
+              size={size}
+              disabled={disabled}
+            />
+          );
+        }}
+        enabled={!disabled}
+      ></DragTarget>
       <label className={style.label} id={id}>
         {label}
       </label>
@@ -53,8 +65,9 @@ export function Knob(props: KnobProps) {
   );
 }
 
-interface BarrelProps {
+interface BarrelContainerProps {
   dragEvent$: Observable<DragEvent.DragEvent>;
+  dragFocus$: Observable<"current" | "other" | null>;
   val$: BehaviorSubject<number>;
   setVal: (val: number) => void;
   range: [min: number, max: number];
@@ -63,14 +76,28 @@ interface BarrelProps {
   disabled?: boolean;
 }
 
-function Barrel(props: BarrelProps) {
-  const { dragEvent$, val$, setVal, range, id, size, disabled } = props;
+function BarrelContainer(props: BarrelContainerProps) {
+  const { dragEvent$, dragFocus$, val$, setVal, range, id, size, disabled } =
+    props;
 
-  const val = useBehaviorSubjectState(val$);
-  const wheel$ = useSubject<React.WheelEvent<HTMLDivElement>>();
+  const wheel$ = useSubject<React.WheelEvent>();
   const key$ = useSubject<React.KeyboardEvent>();
   const ringRef = createRef<HTMLDivElement>();
   const notchRef = createRef<HTMLDivElement>();
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!disabled) {
+      key$.next(event);
+    }
+  };
+
+  const handleWheel = (event: React.WheelEvent) => {
+    if (!disabled) {
+      wheel$.next(event);
+    }
+  };
+
+  usePreventWheelScrolling(notchRef, ringRef);
 
   const dragDelta$ = dragEvent$.pipe(
     pairwise(),
@@ -92,7 +119,113 @@ function Barrel(props: BarrelProps) {
     setVal(clamp(val$.value + delta, range[0], range[1]));
   });
 
-  usePreventWheelScrolling(notchRef, ringRef);
+  const isDragging$ = concat(
+    of(false),
+    dragEvent$.pipe(map((e) => e.type !== DragEvent.EventType.DragEnd)),
+  );
+
+  const isScrolling$ = concat(
+    of(false),
+    wheel$.pipe(
+      map(() => true),
+      timeout(350),
+      catchError((_err, caught) => concat(of(false), caught)),
+    ),
+  );
+
+  const isFocusing$ = useBehaviorSubject(false);
+  const handleFocus = () => {
+    isFocusing$.next(true);
+  };
+  const handleBlur = () => {
+    isFocusing$.next(false);
+  };
+
+  const isHovering$ = useBehaviorSubject(false);
+  const handleMouseEnter = () => {
+    isHovering$.next(true);
+  };
+  const handleMouseLeave = () => {
+    isHovering$.next(false);
+  };
+
+  const isHoveringOrFocusing$ = combineLatest([
+    isHovering$,
+    isFocusing$,
+    dragFocus$,
+  ]).pipe(
+    map(
+      ([hovering, focusing, dragFocus]) =>
+        !disabled && (hovering || focusing) && dragFocus === null,
+    ),
+    distinctUntilChanged(),
+  );
+
+  const isInteracting$ = combineLatest([
+    isDragging$,
+    isScrolling$,
+    isHoveringOrFocusing$,
+  ]).pipe(
+    map(
+      ([dragging, scrolling, hoverOrFocus]) =>
+        dragging || scrolling || hoverOrFocus,
+    ),
+    distinctUntilChanged(),
+  );
+
+  return (
+    <Barrel
+      val$={val$}
+      range={range}
+      id={id}
+      size={size}
+      tooltip$={isInteracting$}
+      disabled={disabled}
+      onKeyDown={handleKeyDown}
+      onWheel={handleWheel}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    />
+  );
+}
+
+interface BarrelProps {
+  val$: BehaviorSubject<number>;
+  range: [min: number, max: number];
+  id: string;
+  size: string;
+  tooltip$: Observable<boolean>;
+  disabled?: boolean;
+  onKeyDown: React.KeyboardEventHandler;
+  onWheel: React.WheelEventHandler;
+  onFocus: React.FocusEventHandler;
+  onBlur: React.FocusEventHandler;
+  onMouseEnter: React.MouseEventHandler;
+  onMouseLeave: React.MouseEventHandler;
+}
+
+function Barrel(props: BarrelProps) {
+  const {
+    val$,
+    range,
+    id,
+    size,
+    tooltip$,
+    disabled,
+    onKeyDown,
+    onWheel,
+    onFocus,
+    onBlur,
+    onMouseEnter,
+    onMouseLeave,
+  } = props;
+
+  const val = useBehaviorSubjectState(val$);
+  const tooltip = useObservableState(tooltip$, false);
+  const ringRef = createRef<HTMLDivElement>();
+  const notchRef = createRef<HTMLDivElement>();
 
   return (
     <div className={style["barrel-container"]}>
@@ -106,12 +239,12 @@ function Barrel(props: BarrelProps) {
         aria-valuemax={range[1]}
         aria-valuenow={val}
         aria-labelledby={id}
-        onKeyDown={key$.next}
-        onWheel={wheel$.next}
-        // onFocus={() => setTooltipActive(true)}
-        // onBlur={() => setTooltipActive(false)}
-        // onMouseOver={() => setTooltipActive(true)}
-        // onMouseLeave={() => setTooltipActive(false)}
+        onKeyDown={onKeyDown}
+        onWheel={onWheel}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
         style={{
           width: size,
           height: size,
@@ -120,7 +253,9 @@ function Barrel(props: BarrelProps) {
       >
         <div ref={notchRef} className={style.notch} />
       </div>
-      {/* {!disabled && <div className={style.tooltip}>{val.toFixed(2)}</div>} */}
+      <div className={classes(style.tooltip, !tooltip && style.hidden)}>
+        {val.toFixed(2)}
+      </div>
     </div>
   );
 }

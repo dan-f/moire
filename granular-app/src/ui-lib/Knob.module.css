@@ -39,7 +39,13 @@
 
   border-radius: xs;
   padding: xxs;
-  background-color: rgb(from white r g b / 0.85);
+  background-color: rgb(from var(--background) r g b / 0.85);
   font-size: fontSizeSm;
   user-select: none;
+
+  transition: opacity 100ms;
+}
+
+.hidden {
+  opacity: 0%;
 }

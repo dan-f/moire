@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { type Subject } from "rxjs";
+import { useBehaviorSubject } from "../../app/hooks/observable";
 import { DragContext, DragEventsTable } from "./DragContext";
 import * as Drag from "./DragEvent";
 
@@ -9,45 +10,44 @@ interface Props {
 
 export function DragArea(props: Props) {
   const { children } = props;
-  const [dragEvents, setDragEvents] = useState<DragEventsTable>({});
-  const [target, setTarget] = useState<string | undefined>(undefined);
+  const dragEvents = useRef<DragEventsTable>({});
+  const target$ = useBehaviorSubject<string | null>(null);
 
   const registerTarget = useCallback(
     (target: string, events$: Subject<Drag.DragEvent>) => {
-      setDragEvents((dragEvents) => ({ ...dragEvents, [target]: events$ }));
+      dragEvents.current[target] = events$;
     },
     [],
   );
 
   const deregisterTarget = useCallback((target: string) => {
-    setDragEvents((dragEvents) => {
-      const { [target]: _, ...updated } = dragEvents;
-      return updated;
-    });
+    delete dragEvents.current[target];
   }, []);
 
   const beginDrag = useCallback(
-    (target: string, x: number, y: number) => {
-      setTarget(target);
-      dragEvents[target].next(Drag.start(x, y));
+    (target_: string, x: number, y: number) => {
+      target$.next(target_);
+      dragEvents.current[target_].next(Drag.start(x, y));
     },
-    [dragEvents],
+    [target$],
   );
 
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
-      if (typeof target === "undefined") {
+      const curTarget = target$.value;
+      if (curTarget === null) {
         return;
       }
-      dragEvents[target].next(Drag.move(e.clientX, e.clientY));
+      dragEvents.current[curTarget].next(Drag.move(e.clientX, e.clientY));
     }
 
     function handleMouseUp(e: MouseEvent) {
-      if (typeof target === "undefined") {
+      const curTarget = target$.value;
+      if (curTarget === null) {
         return;
       }
-      setTarget(undefined);
-      dragEvents[target].next(Drag.end(e.clientX, e.clientY));
+      dragEvents.current[curTarget].next(Drag.end(e.clientX, e.clientY));
+      target$.next(null);
     }
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -57,13 +57,13 @@ export function DragArea(props: Props) {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [dragEvents, target]);
+  }, [target$]);
 
   return (
     <DragContext.Provider
       value={{
         dragEvents,
-        target,
+        target$,
         registerTarget,
         deregisterTarget,
         beginDrag,

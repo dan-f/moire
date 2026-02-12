@@ -42,6 +42,20 @@ export function useBehaviorSubject<T>(initial: T): BehaviorSubject<T> {
 }
 
 /**
+ * Treat the provided {@linkcode Observable} as react state
+ */
+export function useObservableState<T>(obs$: Observable<T>): T | undefined;
+export function useObservableState<T>(obs$: Observable<T>, initial: T): T;
+export function useObservableState<T>(
+  obs$: Observable<T>,
+  initial?: T,
+): T | undefined {
+  const [state, setState] = useState(initial);
+  useSubscription(obs$, setState);
+  return state;
+}
+
+/**
  * Treat the provided {@linkcode BehaviorSubject} as react state
  */
 export function useBehaviorSubjectState<T>(subj$: BehaviorSubject<T>): T {

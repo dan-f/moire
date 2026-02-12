@@ -1,10 +1,15 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
-import { distinctUntilChanged, Subject, type Observable } from "rxjs";
+import {
+  BehaviorSubject,
+  distinctUntilChanged,
+  Subject,
+  type Observable,
+} from "rxjs";
 import * as Drag from "./DragEvent";
 
 export interface DragCtx {
-  dragEvents: Record<string, Subject<Drag.DragEvent>>;
-  target?: string;
+  dragEvents: React.MutableRefObject<Record<string, Subject<Drag.DragEvent>>>;
+  target$: BehaviorSubject<string | null>;
 
   registerTarget(target: string, events$: Subject<Drag.DragEvent>): void;
   deregisterTarget(target: string): void;
@@ -19,7 +24,7 @@ export const DragContext = createContext<DragCtx | null>(null);
 export function useDragEvents(target: string): Observable<Drag.DragEvent> {
   const { dragEvents, registerTarget, deregisterTarget } = useDragContext();
   const events$ = useMemo(
-    () => dragEvents[target] ?? new Subject(),
+    () => dragEvents.current[target] ?? new Subject(),
     [dragEvents, target],
   );
 
@@ -36,6 +41,10 @@ export function useDragEvents(target: string): Observable<Drag.DragEvent> {
 
 export function useBeginDrag(): DragCtx["beginDrag"] {
   return useDragContext().beginDrag;
+}
+
+export function useDragTarget$(): Observable<string | null> {
+  return useDragContext().target$;
 }
 
 function useDragContext(): DragCtx {
