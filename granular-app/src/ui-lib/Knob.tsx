@@ -24,6 +24,7 @@ import { clamp } from "../lib/math";
 import { DragEvent, DragTarget } from "./Drag";
 import style from "./Knob.module.css";
 import { classes } from "./css";
+import { decimal, ValueFormatter } from "./format";
 
 interface KnobProps {
   val$: BehaviorSubject<number>;
@@ -32,11 +33,12 @@ interface KnobProps {
   id: string;
   size: string;
   label: string;
+  formatValue?: ValueFormatter;
   disabled?: boolean;
 }
 
 export function Knob(props: KnobProps) {
-  const { val$, setVal, range, id, size, label, disabled } = props;
+  const { val$, setVal, range, id, size, label, formatValue, disabled } = props;
 
   return (
     <div className={style.container}>
@@ -52,6 +54,7 @@ export function Knob(props: KnobProps) {
               range={range}
               id={id}
               size={size}
+              formatValue={formatValue}
               disabled={disabled}
             />
           );
@@ -73,12 +76,22 @@ interface BarrelContainerProps {
   range: [min: number, max: number];
   id: string;
   size: string;
+  formatValue?: ValueFormatter;
   disabled?: boolean;
 }
 
 function BarrelContainer(props: BarrelContainerProps) {
-  const { dragEvent$, dragFocus$, val$, setVal, range, id, size, disabled } =
-    props;
+  const {
+    dragEvent$,
+    dragFocus$,
+    val$,
+    setVal,
+    range,
+    id,
+    size,
+    formatValue,
+    disabled,
+  } = props;
 
   const wheel$ = useSubject<React.WheelEvent>();
   const key$ = useSubject<React.KeyboardEvent>();
@@ -179,6 +192,7 @@ function BarrelContainer(props: BarrelContainerProps) {
       range={range}
       id={id}
       size={size}
+      formatValue={formatValue}
       tooltip$={isInteracting$}
       disabled={disabled}
       onKeyDown={handleKeyDown}
@@ -196,6 +210,7 @@ interface BarrelProps {
   range: [min: number, max: number];
   id: string;
   size: string;
+  formatValue?: ValueFormatter;
   tooltip$: Observable<boolean>;
   disabled?: boolean;
   onKeyDown: React.KeyboardEventHandler;
@@ -212,6 +227,7 @@ function Barrel(props: BarrelProps) {
     range,
     id,
     size,
+    formatValue = decimal,
     tooltip$,
     disabled,
     onKeyDown,
@@ -254,7 +270,7 @@ function Barrel(props: BarrelProps) {
         <div ref={notchRef} className={style.notch} />
       </div>
       <div className={classes(style.tooltip, !tooltip && style.hidden)}>
-        {val.toFixed(2)}
+        {formatValue(val)}
       </div>
     </div>
   );

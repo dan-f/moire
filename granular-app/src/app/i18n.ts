@@ -4,6 +4,12 @@ const English = {
 
   Increment: "increment",
   Decrement: "decrement",
+  Milliseconds: "ms",
+  Dry: "dry",
+  Wet: "wet",
+  Center: "center",
+  Left: "left",
+  Right: "right",
 
   level: "level",
   drive: "drive",
