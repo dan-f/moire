@@ -7,6 +7,7 @@ import { Config, GranularNode, Message as Msg } from "./granular";
 import { SynthParamKey } from "./param";
 import {
   constantSourceNode,
+  paramModule,
   saturationModule,
   xFadedGainNodes,
 } from "./webaudio";
@@ -118,14 +119,18 @@ export class Synth {
       attack: 0.003,
       release: 0.05,
     });
+    const lfo = new OscillatorNode(ctx, { type: "sine", frequency: 1 });
+    lfo.start();
 
     // control nodes
-    const masterGain = constantSourceNode(ctx, { offset: 1 });
+    const masterGain = paramModule(ctx, [0, 2]);
     const reverbBalance = constantSourceNode(ctx, { offset: -1 });
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
     dryGain.connect(dry.gain);
     wetGain.connect(wet.gain);
-    masterGain.connect(mix.gain);
+    lfo.connect(masterGain.modTarget);
+    masterGain.modTarget.gain.setValueAtTime(1, ctx.currentTime);
+    masterGain.output.connect(mix.gain);
 
     // audio graph
     granular.connect(saturation.input);
@@ -137,7 +142,7 @@ export class Synth {
       granular,
       saturationGain: saturation.gain,
       reverbBalance,
-      masterGain,
+      masterGain: masterGain.manual,
     });
   }
 

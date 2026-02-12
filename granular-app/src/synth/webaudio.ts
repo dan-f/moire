@@ -1,3 +1,5 @@
+import { clamp } from "../lib/math";
+
 /**
  * Given a signal in the range [-1, 1], create two nodes specifying gain
  * suitable for crossfading. See
@@ -44,6 +46,50 @@ export function saturationModule(ctx: AudioContext): {
 }
 
 /**
+ * Modulatable parameter where `manual` is the user-defined value, `modTarget`
+ * is the connection point for a modulation signal as well as its attenuation
+ * point, and `output` is the modulated parameter signal.
+ */
+export function paramModule(
+  ctx: AudioContext,
+  range: [min: number, max: number],
+): {
+  manual: ConstantSourceNode;
+  modTarget: GainNode;
+  output: AudioNode;
+} {
+  // normalize the incoming manual parameter to the [-1, 1] range
+  const [min, max] = range;
+  const manual = constantSourceNode(ctx);
+  const normalized = manual
+    .connect(
+      constantSourceNode(ctx, { offset: -(min + (max - min) / 2) }).connect(
+        new GainNode(ctx),
+      ),
+    )
+    .connect(new GainNode(ctx, { gain: 1 / ((max - min) / 2) }));
+
+  // modulate the signal, hard-clipping to prevent modulating outside of the
+  // original range
+  const modTarget = new GainNode(ctx, { gain: 0 });
+  const mix = new GainNode(ctx);
+  normalized.connect(mix);
+  modTarget.connect(mix);
+  const clipped = mix.connect(new WaveShaperNode(ctx, { curve: Curves.hard }));
+
+  // bring the modulated parameter signal back to its original range
+  const output = clipped
+    .connect(new GainNode(ctx, { gain: (max - min) / 2 }))
+    .connect(
+      constantSourceNode(ctx, { offset: min + (max - min) / 2 }).connect(
+        new GainNode(ctx),
+      ),
+    );
+
+  return { manual, modTarget, output };
+}
+
+/**
  * Convenience constructor to automatically start
  * {@linkcode ConstantSourceNode}s.
  */
@@ -74,4 +120,5 @@ const Curves = {
   atan: createWsCurve((x) => (2 / Math.PI) * Math.atan(x)),
   cubic: createWsCurve((x) => x - Math.pow(x, 3) / 3),
   exp: createWsCurve((x) => Math.sign(x) * (1 - Math.exp(-Math.abs(x)))),
+  hard: createWsCurve((x) => clamp(x, -1, 1)),
 };
