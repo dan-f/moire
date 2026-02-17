@@ -4,9 +4,10 @@ export { Config } from "./Config";
 export * as Env from "./Env";
 export * as Message from "./message";
 export {
+  GranularParamDefs,
   packStreamParam,
   unpackStreamParam,
-  type ProcessorParamKey,
-  type ProcessorParams,
+  type GranularParamKey,
+  type GranularParams,
   type StreamParamKey,
 } from "./param";

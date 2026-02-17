@@ -1,11 +1,11 @@
+import * as Buf from "../../../lib/Buffer";
 import { DefaultLogger } from "../../../lib/DefaultLogger";
 import { type Logger } from "../../../lib/Logger";
-import * as Buf from "../../Buffer";
 import { Config } from "../Config";
 import {
   StreamParamKey,
   unpackStreamParam,
-  type ProcessorParams,
+  type GranularParams,
 } from "../param";
 import { type Pointer } from "./Exports";
 import { Instance } from "./Instance";
@@ -65,7 +65,7 @@ export class Engine {
     this.createBufferViews();
   }
 
-  setParams(params: ProcessorParams) {
+  setParams(params: GranularParams) {
     const {
       bpm,
       note_event,

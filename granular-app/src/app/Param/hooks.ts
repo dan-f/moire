@@ -12,18 +12,19 @@ export function useParam(
   const { paramKey, enabled, range } = props;
   const synth = useSynth();
   const param = synth.getParam(paramKey);
-  const val$ = useBehaviorSubject(param.value);
+  const val$ = useBehaviorSubject(param.manual.value);
 
   const set: SetParamVal = (valOrCb) => {
     if (!enabled) {
       return;
     }
-    const newVal = typeof valOrCb === "number" ? valOrCb : valOrCb(param.value);
-    param.setValueAtTime(newVal, 0);
+    const newVal =
+      typeof valOrCb === "number" ? valOrCb : valOrCb(param.manual.value);
+    param.manual.setValueAtTime(newVal, 0);
     val$.next(newVal);
   };
 
-  return [[val$, set], range ?? [param.minValue, param.maxValue]];
+  return [[val$, set], range ?? param.def.value.range];
 }
 
 type ParamVal = number;

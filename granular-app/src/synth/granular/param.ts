@@ -1,149 +1,136 @@
+import { i18n } from "../../app/i18n";
 import { range } from "../../lib/iter";
+import { type ParamDef } from "../../lib/param";
+import { percent, unit } from "../../ui-lib/format";
 import { Config } from "./Config";
-import { Max, Min } from "./Env";
 
-/**
- * Parameter descriptors for the `GranularNode`. See
- * {@link https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/parameterDescriptors_static}
- */
-export const ParamDescriptors = [
+const ParamDefs = [
   {
-    name: "bpm" as const,
-    automationRate: "k-rate",
-    defaultValue: 120,
-    minValue: 40,
-    maxValue: 300,
+    key: "bpm" as const,
+    value: { range: [40, 300], default: 120 },
+    display: { name: i18n("tempo"), format: unit(i18n("Bpm")) },
   },
   {
-    name: "attack" as const,
-    automationRate: "k-rate",
-    defaultValue: 10,
-    minValue: 0,
-    maxValue: 1000,
+    key: "attack" as const,
+    value: { range: [0, 1000], default: 10 },
+    display: { name: i18n("attack"), format: unit(i18n("Milliseconds")) },
   },
   {
-    name: "decay" as const,
-    automationRate: "k-rate",
-    defaultValue: 50,
-    minValue: 0,
-    maxValue: 2000,
+    key: "decay" as const,
+    value: { range: [0, 2000], default: 50 },
+    display: { name: i18n("decay"), format: unit(i18n("Milliseconds")) },
   },
   {
-    name: "sustain" as const,
-    automationRate: "k-rate",
-    defaultValue: 0.8,
-    minValue: 0,
-    maxValue: 1,
+    key: "sustain" as const,
+    value: { range: [0, 1], default: 0.8 },
+    display: { name: i18n("sustain"), format: percent() },
   },
   {
-    name: "release" as const,
-    automationRate: "k-rate",
-    defaultValue: 250,
-    minValue: 0,
-    maxValue: 3000,
+    key: "release" as const,
+    value: { range: [0, 3000], default: 250 },
+    display: { name: i18n("release"), format: unit(i18n("Milliseconds")) },
   },
   {
-    name: "note_event" as const,
-    automationRate: "k-rate",
-    defaultValue: 0,
-    minValue: -128,
-    maxValue: 128,
+    key: "note_event" as const,
+    value: { range: [-128, 128], default: 0 },
   },
   ...Array.from(range(Config.NumStreams)).flatMap((streamId) => {
-    const name = <N extends string>(name: N) =>
+    const key = <N extends string>(name: N) =>
       `stream_${streamId}_${name}` as const;
     return [
       {
-        name: name("enabled"),
-        automationRate: "k-rate",
-        defaultValue: streamId === 0 ? 1 : 0,
-        minValue: 0,
-        maxValue: 1,
+        key: key("enabled"),
+        value: { range: [0, 1], default: streamId === 0 ? 1 : 0 },
       },
       {
-        name: name("subdivision"),
-        automationRate: "k-rate",
-        defaultValue: 1,
-        minValue: 1,
-        maxValue: 100,
+        key: key("subdivision"),
+        value: { range: [1, 100], default: streamId + 1 },
+        display: { name: i18n("subdivision") },
       },
       {
-        name: name("grainStart"),
-        automationRate: "k-rate",
-        defaultValue: 0,
-        minValue: 0,
-        maxValue: 1,
+        key: key("grainStart"),
+        value: { range: [0, 1], default: 0 },
+        display: { name: i18n("start"), format: percent() },
       },
       {
-        name: name("grainSizeMs"),
-        automationRate: "k-rate",
-        defaultValue: 150,
-        minValue: 10,
-        maxValue: 500,
+        key: key("grainSizeMs"),
+        value: { range: [10, 500], default: 150 },
+        display: { name: i18n("size"), format: unit(i18n("Milliseconds")) },
       },
       {
-        name: name("grainProbability"),
-        automationRate: "k-rate",
-        defaultValue: 1,
-        minValue: 0,
-        maxValue: 1,
+        key: key("grainProbability"),
+        value: { range: [0, 1], default: 1 },
+        display: { name: i18n("probability"), format: percent() },
       },
       {
-        name: name("gain"),
-        automationRate: "k-rate",
-        defaultValue: 1,
-        minValue: 0,
-        maxValue: 1,
+        key: key("gain"),
+        value: { range: [0, 1], default: 1 },
+        display: { name: i18n("gain"), format: percent() },
       },
       {
-        name: name("tune"),
-        automationRate: "k-rate",
-        defaultValue: 0,
-        minValue: -24,
-        maxValue: 24,
+        key: key("tune"),
+        value: { range: [-24, 24], default: 0 },
+        display: { name: i18n("tune") },
       },
       {
-        name: name("pan"),
-        automationRate: "k-rate",
-        defaultValue: 0.5,
-        minValue: 0,
-        maxValue: 1,
+        key: key("pan"),
+        value: { range: [0, 1], default: 0.5 },
+        display: {
+          name: i18n("pan"),
+          format: (value) => {
+            if (value === 0.5) {
+              return i18n("Center");
+            }
+            if (value < 0.5) {
+              return `${percent([0.5, 0])(value)} ${i18n("Left")}`;
+            }
+            return `${percent([0.5, 1])(value)} ${i18n("Right")}`;
+          },
+        },
       },
       {
-        name: name("env"),
-        automationRate: "k-rate",
-        defaultValue: 1,
-        minValue: Min,
-        maxValue: Max,
+        key: key("env"),
+        value: { range: [0, 4], default: 1 },
+        display: { name: i18n("env") },
       },
-    ] satisfies AudioParamDescriptor[];
+    ] satisfies ParamDef[];
   }),
-] satisfies AudioParamDescriptor[];
+] satisfies ParamDef[];
+
+/**
+ * All {@linkcode ParamDef}s for the granular node
+ */
+export const GranularParamDefs = ParamDefs.reduce<
+  Record<(typeof ParamDefs)[number]["key"], ParamDef>
+>(
+  (defs, def) => ({ ...defs, [def.key]: def }),
+  {} as Record<(typeof ParamDefs)[number]["key"], ParamDef>,
+);
 
 /**
  * Key type of all {@linkcode AudioParam} parameters of the `GranularProcessor`
  */
-export type ProcessorParamKey = (typeof ParamDescriptors)[number]["name"];
+export type GranularParamKey = keyof typeof GranularParamDefs;
 
 /**
  * Key type of all per-stream {@linkcode AudioParam} parameters of the
  * `GranularProcessor`
  */
 export type StreamParamKey = Extract<
-  ProcessorParamKey,
+  GranularParamKey,
   `stream_${number}_${string}`
 >;
 
 /**
  * Names of per-stream parameters. Must be concatenated with per-stream ID via
  * {@linkcode packStreamParam} to form fully-qualified
- * {@linkcode ProcessorParamKey}.
+ * {@linkcode GranularParamKey}.
  * */
 export type StreamParamName =
   StreamParamKey extends `stream_${number}_${infer Name}` ? Name : never;
 
 /**
- * Create a {@linkcode ProcessorParamKey} for a given stream param name and stream ID
+ * Create a {@linkcode GranularParamKey} for a given stream param name and stream ID
  */
 export function packStreamParam(
   streamId: number,
@@ -156,7 +143,7 @@ export function packStreamParam(
  * Type of the `params` parameter map passed into the
  * `GranularProcessor.process` callback
  */
-export type ProcessorParams = Record<ProcessorParamKey, Float32Array>;
+export type GranularParams = Record<GranularParamKey, Float32Array>;
 
 /**
  * Get the stream ID and stream key from a processor param key

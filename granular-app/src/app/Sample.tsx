@@ -1,6 +1,7 @@
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
 import * as Ar from "../lib/AsyncResult";
-import { Buffer, Synth } from "../synth";
+import * as Buf from "../lib/Buffer";
+import { Synth } from "../synth";
 import { Config } from "../synth/granular";
 import { Bordered } from "../ui-lib/Bordered";
 import { useSynth } from "./AppContext";
@@ -13,7 +14,7 @@ export function Sample() {
   const inputRef = useRef<HTMLInputElement>(null);
   const synth = useSynth();
   const [sampleResult, setSampleResult] =
-    useState<Ar.AsyncResult<Buffer.UploadResult>>();
+    useState<Ar.AsyncResult<Buf.UploadResult>>();
   useAnimateSample(canvasRef, sampleResult);
 
   function triggerFileInput(event: React.KeyboardEvent) {
@@ -61,7 +62,7 @@ export function Sample() {
 
 function useAnimateSample(
   canvasRef: RefObject<HTMLCanvasElement>,
-  uploadResult: Ar.AsyncResult<Buffer.UploadResult> | undefined,
+  uploadResult: Ar.AsyncResult<Buf.UploadResult> | undefined,
 ) {
   const synth = useSynth();
   const theme = useTheme();
@@ -82,13 +83,13 @@ class SampleAnimation {
   private readonly canvasRef: RefObject<HTMLCanvasElement>;
   private readonly synth: Synth;
   private readonly theme: Theme;
-  private readonly uploadResult?: Ar.AsyncResult<Buffer.UploadResult>;
+  private readonly uploadResult?: Ar.AsyncResult<Buf.UploadResult>;
 
   constructor(
     canvasRef: RefObject<HTMLCanvasElement>,
     synth: Synth,
     theme: Theme,
-    uploadResult: Ar.AsyncResult<Buffer.UploadResult> | undefined,
+    uploadResult: Ar.AsyncResult<Buf.UploadResult> | undefined,
   ) {
     this.canvasRef = canvasRef;
     this.synth = synth;
@@ -113,14 +114,14 @@ class SampleAnimation {
 
     if (
       this.uploadResult?.state === Ar.ResultState.Done &&
-      this.uploadResult.result.type === Buffer.UploadResultType.Success
+      this.uploadResult.result.type === Buf.UploadResultType.Success
     ) {
       this.drawWave(ctx, this.uploadResult.result.buffer);
       this.drawPlayheads(ctx);
     }
   }
 
-  private drawWave(ctx: CanvasRenderingContext2D, buffer: Buffer.Buffer) {
+  private drawWave(ctx: CanvasRenderingContext2D, buffer: Buf.Buffer) {
     const verticalOffset = this.height / 2;
     const centerPosition = this.height / 2;
 
@@ -129,8 +130,8 @@ class SampleAnimation {
     ctx.beginPath();
 
     for (let x = 0; x < this.width; x++) {
-      const subSample = (x / this.width) * Buffer.length(buffer);
-      const frame = Buffer.subFrame(buffer, subSample);
+      const subSample = (x / this.width) * Buf.length(buffer);
+      const frame = Buf.subFrame(buffer, subSample);
       ctx.lineTo(x, centerPosition + frame[0] * verticalOffset);
     }
 
@@ -142,8 +143,8 @@ class SampleAnimation {
     ctx.beginPath();
 
     for (let x = 0; x < this.width; x++) {
-      const subSample = (x / this.width) * Buffer.length(buffer);
-      const frame = Buffer.subFrame(buffer, subSample);
+      const subSample = (x / this.width) * Buf.length(buffer);
+      const frame = Buf.subFrame(buffer, subSample);
       ctx.lineTo(x, centerPosition + frame[1] * verticalOffset);
     }
 

@@ -1,13 +1,13 @@
+import * as Buf from "../../lib/Buffer";
 import { DefaultLogger } from "../../lib/DefaultLogger";
 import { serve } from "../../lib/messaging";
-import * as Buf from "../Buffer";
 import { Engine } from "./engine";
 import { type GranularWorkletNodeOptions } from "./GranularNode";
 import { ReqType, RspType, type Request, type Response } from "./message";
 import {
-  ParamDescriptors,
+  GranularParamDefs,
   type AudioParamDescriptor,
-  type ProcessorParams,
+  type GranularParams,
 } from "./param";
 
 /**
@@ -34,13 +34,19 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 
   static get parameterDescriptors(): AudioParamDescriptor[] {
-    return ParamDescriptors;
+    return Object.values(GranularParamDefs).map(({ key, value }) => ({
+      name: key,
+      automationRate: "k-rate",
+      defaultValue: value.default,
+      minValue: value.range[0],
+      maxValue: value.range[1],
+    }));
   }
 
   process(
     _inputs: Buf.Buffer[],
     outputs: Buf.Buffer[],
-    params: ProcessorParams,
+    params: GranularParams,
   ): boolean {
     const [dstAudio, dstPlayheads] = outputs;
     this.engine.checkResizeProcessingBuffers(Buf.length(dstAudio));

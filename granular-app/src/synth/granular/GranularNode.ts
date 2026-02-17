@@ -3,6 +3,7 @@ import { Config } from "./Config";
 import { EngineWasmUrl } from "./engine";
 import granularProcessorUrl from "./GranularProcessor?worker&url";
 import { type Request, type Response } from "./message";
+import { GranularParamKey } from "./param";
 
 /**
  * Top-level WebAudio `AudioNode` subtype for constructing a granular synth.
@@ -34,6 +35,16 @@ export class GranularNode extends AudioWorkletNode {
       ctx.audioWorklet.addModule(granularProcessorUrl),
     ]);
     return new GranularNode(ctx, engineModule);
+  }
+
+  // TODO: do we wrap these params in modules at *this* point, or on the synth
+  // itself?
+  //
+  // I think actually we still just return `AudioParam` here as it's not really
+  // the GranularNode's job to understand the broader synth modulation
+  // architecture.
+  getParam(key: GranularParamKey): AudioParam {
+    return this.parameters.get(key)!;
   }
 
   request<Req extends Request, Rsp extends Response>(

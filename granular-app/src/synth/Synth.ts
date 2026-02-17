@@ -1,13 +1,19 @@
 import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
+import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
+import { Param } from "../lib/param";
 import { NoteEvent } from "../note";
-import { upload, type UploadResult } from "./Buffer";
-import { Config, GranularNode, Message as Msg } from "./granular";
-import { SynthParamKey } from "./param";
+import {
+  Config,
+  GranularNode,
+  GranularParamDefs,
+  GranularParamKey,
+  Message as Msg,
+} from "./granular";
+import { SynthParamDefs, SynthParamKey } from "./param";
 import {
   constantSourceNode,
-  paramModule,
   saturationModule,
   xFadedGainNodes,
 } from "./webaudio";
@@ -17,19 +23,21 @@ import {
  */
 export class Synth {
   private readonly ctx: AudioContext;
-  private readonly nodes: SynthNodes;
+  private readonly granular: GranularNode;
+  private readonly params: Map<string, Param>;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new DefaultLogger(Synth.name);
 
-  private constructor(ctx: AudioContext, nodes: SynthNodes) {
+  private constructor(ctx: AudioContext, options: SynthOptions) {
     this.ctx = ctx;
-    this.nodes = nodes;
+    this.granular = options.granular;
+    this.params = options.params;
     this.analysers = Array(Config.NumStreams);
     const splitter = new ChannelSplitterNode(ctx, {
       numberOfOutputs: Config.NumStreams,
     });
-    this.nodes.granular.connect(splitter, 1);
+    this.granular.connect(splitter, 1);
     for (const s of range(Config.NumStreams)) {
       const analyser = new AnalyserNode(ctx);
       splitter.connect(analyser, s);
@@ -67,33 +75,16 @@ export class Synth {
   sendNoteEvent(event: NoteEvent.TimedNoteEvent) {
     const noteVal = event.note + 1;
     const param = this.getParam("note_event");
-    param.setValueAtTime(
+    param.manual.setValueAtTime(
       event.type === "noteon" ? noteVal : -noteVal,
       event.time,
     );
   }
 
-  getParam(key: SynthParamKey): AudioParam {
-    let param;
-    switch (key) {
-      case "masterGain":
-        param = this.nodes.masterGain.offset;
-        break;
-      case "saturationGain":
-        param = this.nodes.saturationGain.offset;
-        break;
-      case "reverbBalance":
-        param = this.nodes.reverbBalance.offset;
-        break;
-      default:
-        param = this.nodes.granular.parameters.get(key);
-        break;
-    }
-
-    if (!param) {
-      throw new Error(`Bug - unknown parameter key ${key}`);
-    }
-    return param;
+  getParam(key: SynthParamKey): Param;
+  getParam(key: string): Param | undefined;
+  getParam(key: string): Param | undefined {
+    return this.params.get(key);
   }
 
   playheadPosition(streamId: number): number {
@@ -119,20 +110,36 @@ export class Synth {
       attack: 0.003,
       release: 0.05,
     });
-    const lfo = new OscillatorNode(ctx, { type: "sine", frequency: 1 });
-    lfo.start();
 
-    // control nodes
-    const masterGain = paramModule(ctx, [0, 2]);
+    // params
+    const params = new Map<string, Param>();
+    const masterGain = constantSourceNode(ctx, { offset: 1 });
     const reverbBalance = constantSourceNode(ctx, { offset: -1 });
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
-    dryGain.connect(dry.gain);
-    wetGain.connect(wet.gain);
-    lfo.connect(masterGain.modTarget);
-    masterGain.modTarget.gain.setValueAtTime(1, ctx.currentTime);
-    masterGain.output.connect(mix.gain);
+    params.set("masterGain", {
+      def: SynthParamDefs.masterGain,
+      manual: mix.gain,
+    });
+    params.set("saturationGain", {
+      def: SynthParamDefs.saturationGain,
+      manual: saturation.gain.offset,
+    });
+    params.set("reverbBalance", {
+      def: SynthParamDefs.reverbBalance,
+      manual: reverbBalance.offset,
+    });
+    Object.values(GranularParamDefs).map((def) => {
+      // TODO modulation
+      params.set(def.key, {
+        def,
+        manual: granular.getParam(def.key as GranularParamKey),
+      });
+    });
 
     // audio graph
+    dryGain.connect(dry.gain);
+    wetGain.connect(wet.gain);
+    masterGain.connect(mix.gain);
     granular.connect(saturation.input);
     saturation.output.connect(dry).connect(mix);
     saturation.output.connect(wet).connect(reverb).connect(mix);
@@ -140,23 +147,19 @@ export class Synth {
 
     return new Synth(ctx, {
       granular,
-      saturationGain: saturation.gain,
-      reverbBalance,
-      masterGain: masterGain.manual,
+      params,
     });
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {
-    await this.nodes.granular.request({
+    await this.granular.request({
       type: Msg.ReqType.UpdateSample,
       sample,
     });
   }
 }
 
-interface SynthNodes {
+interface SynthOptions {
   granular: GranularNode;
-  saturationGain: ConstantSourceNode;
-  reverbBalance: ConstantSourceNode;
-  masterGain: ConstantSourceNode;
+  params: Map<string, Param>;
 }

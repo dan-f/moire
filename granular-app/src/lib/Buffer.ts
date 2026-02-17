@@ -1,4 +1,4 @@
-import { repeat } from "../lib/iter";
+import { repeat } from "./iter";
 
 export type Buffer = Float32Array[];
 
