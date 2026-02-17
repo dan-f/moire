@@ -7,7 +7,7 @@ import style from "./NumberInput.module.css";
 interface Props
   extends Omit<React.ComponentProps<"input">, "type" | "className"> {
   id: string;
-  label: string;
+  label?: string;
 }
 
 export function NumberInput(props: Props) {
@@ -43,9 +43,11 @@ export function NumberInput(props: Props) {
           onClick={increment}
         />
       </div>
-      <label htmlFor={id} className={style.label} id={id}>
-        {label}
-      </label>
+      {label && (
+        <label htmlFor={id} className={style.label} id={id}>
+          {label}
+        </label>
+      )}
     </div>
   );
 }

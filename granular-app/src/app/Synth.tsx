@@ -6,10 +6,8 @@ import { NoteMessageEvent$ } from "../midi";
 import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Config } from "../synth/granular";
 import { Column } from "../ui-lib/Column";
-import { percent, unit } from "../ui-lib/format";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
-import { i18n } from "./i18n";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
@@ -25,72 +23,19 @@ export function Synth() {
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
       <Column>
-        <Param.Knob
-          paramKey="attack"
-          label={i18n("attack")}
-          formatValue={fmtMillis}
-          enabled
-        />
-        <Param.Knob
-          paramKey="decay"
-          label={i18n("decay")}
-          formatValue={fmtMillis}
-          enabled
-        />
-        <Param.Knob
-          paramKey="sustain"
-          label={i18n("sustain")}
-          formatValue={percent()}
-          enabled
-        />
-        <Param.Knob
-          paramKey="release"
-          label={i18n("release")}
-          formatValue={fmtMillis}
-          enabled
-        />
+        <Param.Knob paramKey="attack" enabled />
+        <Param.Knob paramKey="decay" enabled />
+        <Param.Knob paramKey="sustain" enabled />
+        <Param.Knob paramKey="release" enabled />
       </Column>
       <div className={style.sample}>
         <Sample />
       </div>
       <Column>
-        <Param.Knob
-          paramKey="masterGain"
-          label={i18n("level")}
-          formatValue={percent([0, 2])}
-          range={[0, 2]}
-          enabled
-        />
-        <Param.Knob
-          paramKey="saturationGain"
-          label={i18n("drive")}
-          formatValue={percent([0.5, 5])}
-          range={[0.5, 5]}
-          enabled
-        />
-        <Param.Knob
-          paramKey="reverbBalance"
-          label={i18n("reverb")}
-          formatValue={percent([-1, 1])}
-          range={[-1, 1]}
-          enabled
-        />
-        <Param.Knob
-          paramKey="bpm"
-          label={i18n("tempo")}
-          formatValue={unit("bpm")}
-          enabled
-        />
-        {/* <fieldset>
-          <legend>Voice Mode</legend>
-          <label>
-            Mono <input type="radio" name="voice" value="mono" checked></input>
-          </label>
-          <label>
-            Poly <input type="radio" name="voice" value="poly"></input>
-          </label>
-        </fieldset> */}
-        {/* end TODO */}
+        <Param.Knob paramKey="masterGain" enabled />
+        <Param.Knob paramKey="saturationGain" enabled />
+        <Param.Knob paramKey="reverbBalance" enabled />
+        <Param.Knob paramKey="bpm" enabled />
       </Column>
       {[...range(Config.NumStreams)].map((stream) => (
         <div key={stream} className={style.stream}>
@@ -100,8 +45,6 @@ export function Synth() {
     </div>
   );
 }
-
-const fmtMillis = unit(i18n("Milliseconds"));
 
 const MidiNoteEvent$ = NoteMessageEvent$.pipe(map(midiToNoteEvent));
 

@@ -6,8 +6,9 @@ import { useParam } from "./hooks";
 import { type ParamProps } from "./ParamProps";
 
 export function DiscreteParam(props: ParamProps) {
-  const { paramKey, enabled, label } = props;
-  const [[val$, setVal], [min, max]] = useParam(props);
+  const { paramKey, enabled } = props;
+  const [[val$, setVal], paramDef] = useParam(props);
+  const [min, max] = paramDef.value.range;
   const val = useBehaviorSubjectState(val$);
   const [input, setInput] = useState<string>(`${val}`);
 
@@ -40,7 +41,7 @@ export function DiscreteParam(props: ParamProps) {
       id={paramKey}
       disabled={!enabled}
       value={input}
-      label={label}
+      label={paramDef.display?.name}
       min={min}
       max={max}
       onChange={handleChange}

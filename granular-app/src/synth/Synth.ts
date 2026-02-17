@@ -118,7 +118,7 @@ export class Synth {
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
     params.set("masterGain", {
       def: SynthParamDefs.masterGain,
-      manual: mix.gain,
+      manual: masterGain.offset,
     });
     params.set("saturationGain", {
       def: SynthParamDefs.saturationGain,

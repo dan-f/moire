@@ -3,18 +3,18 @@ import { type ParamProps } from "./ParamProps";
 import { useParam } from "./hooks";
 
 export function KnobParam(props: ParamProps) {
-  const { enabled, paramKey, label, formatValue } = props;
-  const [[val$, set], range] = useParam(props);
+  const { enabled, paramKey } = props;
+  const [[val$, set], paramDef] = useParam(props);
 
   return (
     <Knob
       val$={val$}
       setVal={set}
-      range={range}
+      range={paramDef.value.range}
       id={paramKey}
       size="2rem"
-      label={label}
-      formatValue={formatValue}
+      label={paramDef.display?.name}
+      formatValue={paramDef.display?.format}
       disabled={!enabled}
     />
   );

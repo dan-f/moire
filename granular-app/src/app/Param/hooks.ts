@@ -1,15 +1,13 @@
 import { BehaviorSubject } from "rxjs";
+import { ParamDef } from "../../lib/param";
 import { useSynth } from "../AppContext";
 import { useBehaviorSubject } from "../hooks/observable";
 import { type ParamProps } from "./ParamProps";
 
 export function useParam(
-  props: Pick<ParamProps, "paramKey" | "enabled" | "range">,
-): [
-  [BehaviorSubject<ParamVal>, SetParamVal],
-  range: [min: number, max: number],
-] {
-  const { paramKey, enabled, range } = props;
+  props: Pick<ParamProps, "paramKey" | "enabled">,
+): [[BehaviorSubject<ParamVal>, SetParamVal], ParamDef] {
+  const { paramKey, enabled } = props;
   const synth = useSynth();
   const param = synth.getParam(paramKey);
   const val$ = useBehaviorSubject(param.manual.value);
@@ -24,7 +22,7 @@ export function useParam(
     val$.next(newVal);
   };
 
-  return [[val$, set], range ?? param.def.value.range];
+  return [[val$, set], param.def];
 }
 
 type ParamVal = number;

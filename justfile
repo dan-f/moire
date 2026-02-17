@@ -16,8 +16,8 @@ build-engine: (engine 'build')
     {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
     {{app_dir}}/src/synth/granular/engine/
 
-app recipe:
-  just {{app_dir}}/{{recipe}}
+app recipe *ARGS:
+  just {{app_dir}}/{{recipe}} {{ARGS}}
 
-engine recipe:
-  just {{engine_dir}}/{{recipe}}
+engine recipe *ARGS:
+  just {{engine_dir}}/{{recipe}} {{ARGS}}

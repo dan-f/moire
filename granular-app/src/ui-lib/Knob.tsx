@@ -32,7 +32,7 @@ interface KnobProps {
   range: [min: number, max: number];
   id: string;
   size: string;
-  label: string;
+  label?: string;
   formatValue?: ValueFormatter;
   disabled?: boolean;
 }
@@ -61,9 +61,11 @@ export function Knob(props: KnobProps) {
         }}
         enabled={!disabled}
       ></DragTarget>
-      <label className={style.label} id={id}>
-        {label}
-      </label>
+      {label && (
+        <label className={style.label} id={id}>
+          {label}
+        </label>
+      )}
     </div>
   );
 }
