@@ -1,4 +1,5 @@
-import { clamp } from "../lib/math";
+import { clamp } from "./math";
+import { ParamDef, type ParamModule } from "./param";
 
 /**
  * Given a signal in the range [-1, 1], create two nodes specifying gain
@@ -15,10 +16,63 @@ export function xFadedGainNodes(
   ];
 }
 
-export function saturatorNode(ctx: AudioContext): WaveShaperNode {
-  return new WaveShaperNode(ctx, { curve: Curves.tanh });
+/**
+ * Constructs a subgraph for parameter modulation. Note that target parameters
+ * must be set to their min value prior to connecting the module's output to the
+ * target parameter.
+ */
+export function modulatedParamModule(
+  ctx: AudioContext,
+  def: ParamDef,
+): ParamModule {
+  // normalize the incoming manual parameter to the [-1, 1] range
+  const [min, max] = def.value.range;
+  const manualTarget = constantSourceNode(ctx, { offset: def.value.default });
+  const normalized = manualTarget
+    .connect(
+      constantSourceNode(ctx, { offset: -(min + (max - min) / 2) }).connect(
+        new GainNode(ctx),
+      ),
+    )
+    .connect(new GainNode(ctx, { gain: 1 / ((max - min) / 2) }));
+
+  // modulate the signal, hard-clipping to prevent modulating outside of the
+  // original range
+  const modTarget = constantSourceNode(ctx);
+  const modGain = new GainNode(ctx, { gain: 0 });
+  modTarget.connect(modGain);
+  const mix = new GainNode(ctx);
+  normalized.connect(mix);
+  modGain.connect(mix);
+  const clipped = mix.connect(new WaveShaperNode(ctx, { curve: Curves.hard }));
+
+  // bring the modulated parameter signal back to its original range
+  const output = clipped
+    .connect(new GainNode(ctx, { gain: (max - min) / 2 }))
+    .connect(
+      // NOTE that we do *not* offset by an additional `min`, thereby rooting
+      // our outgoing signal at `0` instead of the target parameter's `min`
+      // value. This is required because webaudio will SUM this signal with the
+      // connected parameter's current value (instead of overwriting the value).
+      // For this reason, target parameters must be set to their min value.
+      constantSourceNode(ctx, { offset: (max - min) / 2 }).connect(
+        new GainNode(ctx),
+      ),
+    );
+
+  return {
+    manualTarget: manualTarget.offset,
+    modulation: {
+      target: modTarget.offset,
+      gain: modGain.gain,
+    },
+    output,
+  };
 }
 
+/**
+ * Soft-clipping subgraph with bias
+ */
 export function saturationModule(ctx: AudioContext): {
   input: AudioNode;
   output: AudioNode;
@@ -43,50 +97,6 @@ export function saturationModule(ctx: AudioContext): {
   gain.connect(input.gain);
 
   return { input, output, gain };
-}
-
-/**
- * Modulatable parameter where `manual` is the user-defined value, `modTarget`
- * is the connection point for a modulation signal as well as its attenuation
- * point, and `output` is the modulated parameter signal.
- */
-export function paramModule(
-  ctx: AudioContext,
-  range: [min: number, max: number],
-): {
-  manual: ConstantSourceNode;
-  modTarget: GainNode;
-  output: AudioNode;
-} {
-  // normalize the incoming manual parameter to the [-1, 1] range
-  const [min, max] = range;
-  const manual = constantSourceNode(ctx);
-  const normalized = manual
-    .connect(
-      constantSourceNode(ctx, { offset: -(min + (max - min) / 2) }).connect(
-        new GainNode(ctx),
-      ),
-    )
-    .connect(new GainNode(ctx, { gain: 1 / ((max - min) / 2) }));
-
-  // modulate the signal, hard-clipping to prevent modulating outside of the
-  // original range
-  const modTarget = new GainNode(ctx, { gain: 0 });
-  const mix = new GainNode(ctx);
-  normalized.connect(mix);
-  modTarget.connect(mix);
-  const clipped = mix.connect(new WaveShaperNode(ctx, { curve: Curves.hard }));
-
-  // bring the modulated parameter signal back to its original range
-  const output = clipped
-    .connect(new GainNode(ctx, { gain: (max - min) / 2 }))
-    .connect(
-      constantSourceNode(ctx, { offset: min + (max - min) / 2 }).connect(
-        new GainNode(ctx),
-      ),
-    );
-
-  return { manual, modTarget, output };
 }
 
 /**

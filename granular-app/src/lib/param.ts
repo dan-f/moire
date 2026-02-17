@@ -14,13 +14,36 @@ export interface ParamDef {
 }
 
 /**
- * Webaudio parameter with accompanying metadata and optional modulation support
+ * Modulatable webaudio parameter subgraph
+ */
+export interface ParamModule {
+  /**
+   * User endpoint for manual tweaking
+   */
+  manualTarget: AudioParam;
+  /**
+   * Modulation endpoints for automation
+   */
+  modulation?: {
+    /**
+     * Specifies the modulation amplitude pre-attenuation
+     */
+    target: AudioParam;
+    /**
+     * Attenuates the modulation amplitude
+     */
+    gain: AudioParam;
+  };
+  /**
+   * Outgoing parameter value
+   */
+  output: AudioNode;
+}
+
+/**
+ * Live parameter representation for app consumption
  */
 export interface Param {
   def: ParamDef;
-  manual: AudioParam;
-  mod?: {
-    target: AudioParam;
-    output: AudioNode;
-  };
+  module: Omit<ParamModule, "output">;
 }

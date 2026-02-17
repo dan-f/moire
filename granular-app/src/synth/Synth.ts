@@ -3,6 +3,12 @@ import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
 import { Param } from "../lib/param";
+import {
+  constantSourceNode,
+  modulatedParamModule,
+  saturationModule,
+  xFadedGainNodes,
+} from "../lib/webaudio";
 import { NoteEvent } from "../note";
 import {
   Config,
@@ -10,13 +16,9 @@ import {
   GranularParamDefs,
   GranularParamKey,
   Message as Msg,
+  unpackStreamParam,
 } from "./granular";
 import { SynthParamDefs, SynthParamKey } from "./param";
-import {
-  constantSourceNode,
-  saturationModule,
-  xFadedGainNodes,
-} from "./webaudio";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -75,7 +77,7 @@ export class Synth {
   sendNoteEvent(event: NoteEvent.TimedNoteEvent) {
     const noteVal = event.note + 1;
     const param = this.getParam("note_event");
-    param.manual.setValueAtTime(
+    param.module.manualTarget.setValueAtTime(
       event.type === "noteon" ? noteVal : -noteVal,
       event.time,
     );
@@ -118,22 +120,30 @@ export class Synth {
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
     params.set("masterGain", {
       def: SynthParamDefs.masterGain,
-      manual: masterGain.offset,
+      module: { manualTarget: masterGain.offset },
     });
     params.set("saturationGain", {
       def: SynthParamDefs.saturationGain,
-      manual: saturation.gain.offset,
+      module: { manualTarget: saturation.gain.offset },
     });
     params.set("reverbBalance", {
       def: SynthParamDefs.reverbBalance,
-      manual: reverbBalance.offset,
+      module: { manualTarget: reverbBalance.offset },
     });
-    Object.values(GranularParamDefs).map((def) => {
-      // TODO modulation
-      params.set(def.key, {
-        def,
-        manual: granular.getParam(def.key as GranularParamKey),
-      });
+    Object.values(GranularParamDefs).forEach((def) => {
+      const streamParam = unpackStreamParam(def.key as GranularParamKey);
+      const granularParam = granular.getParam(def.key as GranularParamKey);
+      if (
+        streamParam &&
+        !["subdivision", "tune", "env"].includes(streamParam[1])
+      ) {
+        const module = modulatedParamModule(ctx, def);
+        granularParam.value = granularParam.minValue;
+        module.output.connect(granularParam);
+        params.set(def.key, { def, module });
+      } else {
+        params.set(def.key, { def, module: { manualTarget: granularParam } });
+      }
     });
 
     // audio graph

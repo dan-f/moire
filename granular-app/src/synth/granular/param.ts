@@ -149,7 +149,7 @@ export type GranularParams = Record<GranularParamKey, Float32Array>;
  * Get the stream ID and stream key from a processor param key
  */
 export function unpackStreamParam(
-  param: StreamParamKey,
+  param: GranularParamKey,
 ): [number, StreamParamName] | undefined {
   const re = /^stream_(\d+)_(\w+)$/;
   const match = param.match(re);

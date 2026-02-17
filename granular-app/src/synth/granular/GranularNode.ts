@@ -37,12 +37,6 @@ export class GranularNode extends AudioWorkletNode {
     return new GranularNode(ctx, engineModule);
   }
 
-  // TODO: do we wrap these params in modules at *this* point, or on the synth
-  // itself?
-  //
-  // I think actually we still just return `AudioParam` here as it's not really
-  // the GranularNode's job to understand the broader synth modulation
-  // architecture.
   getParam(key: GranularParamKey): AudioParam {
     return this.parameters.get(key)!;
   }
