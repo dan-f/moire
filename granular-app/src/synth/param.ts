@@ -2,6 +2,7 @@ import { i18n } from "../app/i18n";
 import { type ParamDef } from "../lib/param";
 import { percent, unit } from "../ui-lib/format";
 import { type GranularParamKey, GranularParamDefs } from "./granular";
+import { type Modulation } from "./modulation";
 
 const SynthLevelDefs = {
   masterGain: {
@@ -45,5 +46,9 @@ export const SynthParamDefs: Record<
 };
 
 export type SynthParamKey = keyof typeof SynthParamDefs;
+
+export function modulationGainParamKey(modulationId: Modulation["id"]): string {
+  return `modulation_${modulationId}_gain`;
+}
 
 export * from "./granular/param";

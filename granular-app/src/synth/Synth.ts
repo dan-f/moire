@@ -1,9 +1,10 @@
+import { BehaviorSubject, Observable } from "rxjs";
 import { i18n } from "../app/i18n";
 import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
 import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range } from "../lib/iter";
-import { Param } from "../lib/param";
+import { Param, ParamDef } from "../lib/param";
 import {
   constantSourceNode,
   modulatedParamModule,
@@ -12,6 +13,7 @@ import {
   xFadedGainNodes,
 } from "../lib/webaudio";
 import { NoteEvent } from "../note";
+import { percent } from "../ui-lib/format";
 import {
   Config,
   GranularNode,
@@ -20,8 +22,12 @@ import {
   Message as Msg,
   unpackStreamParam,
 } from "./granular";
-import { ModulationSource } from "./modulation";
-import { SynthParamDefs, SynthParamKey } from "./param";
+import { type Modulation, type ModulationSource } from "./modulation";
+import {
+  modulationGainParamKey,
+  SynthParamDefs,
+  type SynthParamKey,
+} from "./param";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -30,7 +36,11 @@ export class Synth {
   private readonly ctx: AudioContext;
   private readonly granular: GranularNode;
   private readonly params: Map<string, Param>;
-  private readonly _modSources: Map<string, ModulationSource>;
+  private nextModId = 0;
+  private readonly modSources: Map<ModulationSource["key"], ModulationSource>;
+  private readonly modulationsSubj$: BehaviorSubject<
+    Record<Modulation["id"], Modulation>
+  >;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new DefaultLogger(Synth.name);
@@ -39,7 +49,8 @@ export class Synth {
     this.ctx = ctx;
     this.granular = options.granular;
     this.params = options.params;
-    this._modSources = options.modSources;
+    this.modSources = options.modSources;
+    this.modulationsSubj$ = new BehaviorSubject({});
     this.analysers = Array(Config.NumStreams);
     const splitter = new ChannelSplitterNode(ctx, {
       numberOfOutputs: Config.NumStreams,
@@ -88,15 +99,115 @@ export class Synth {
     );
   }
 
-  getParam(key: SynthParamKey): Param;
-  getParam(key: string): Param | undefined;
-  getParam(key: string): Param | undefined {
-    return this.params.get(key);
-  }
-
   playheadPosition(streamId: number): number {
     this.analysers[streamId].getFloatTimeDomainData(this.analyserResultBuf);
     return this.analyserResultBuf[0];
+  }
+
+  getParam(key: SynthParamKey): Param;
+  getParam(key: string): Param | undefined;
+  getParam(key: string): Param | undefined {
+    const param = this.params.get(key);
+    if (!param) {
+      this.log.warn(`Could not find param with key: ${key}`);
+    }
+    return param;
+  }
+
+  get modulations$(): Observable<(typeof this.modulationsSubj$)["value"]> {
+    return this.modulationsSubj$.asObservable();
+  }
+
+  createModulation(): void {
+    const id = this.nextModId++;
+
+    const initialGain = 0.5;
+    const gain = new GainNode(this.ctx, { gain: initialGain });
+    const range: [number, number] = [-1, 1];
+    const def: ParamDef = {
+      key: modulationGainParamKey(id),
+      value: { default: initialGain, range },
+      display: { name: i18n("gain"), format: percent() },
+    };
+    this.params.set(def.key, { def, module: { manualTarget: gain.gain } });
+
+    this.modulationsSubj$.next({
+      ...this.modulationsSubj$.value,
+      [id]: { id, gain },
+    });
+  }
+
+  setModulationSource(
+    id: Modulation["id"],
+    sourceKey: ModulationSource["key"],
+  ): void {
+    const modulation = this.modulationsSubj$.value[id];
+    if (!modulation) {
+      this.log.error(`Called \`setModulationSource\` with unknown id: ${id}`);
+      return;
+    }
+    const source = this.modSources.get(sourceKey);
+    if (!source) {
+      this.log.error(
+        `Called \`setModulationSource\` with unknown sourceKey: ${sourceKey}`,
+      );
+      return;
+    }
+
+    if (modulation.source) {
+      modulation.source.output.disconnect(modulation.gain);
+    }
+    source.output.connect(modulation.gain);
+    this.modulationsSubj$.next({
+      ...this.modulationsSubj$.value,
+      [id]: { ...modulation, source },
+    });
+  }
+
+  setModulationTarget(
+    id: Modulation["id"],
+    targetKey: Param["def"]["key"],
+  ): void {
+    const modulation = this.modulationsSubj$.value[id];
+    if (!modulation) {
+      this.log.error(`Called \`setModulationTarget\` with unknown id: ${id}`);
+      return;
+    }
+    const possibleTarget = this.getParam(targetKey);
+    if (!possibleTarget || !possibleTarget.module.modulationTarget) {
+      this.log.error(
+        `Called \`setModulationTarget\` with invalid targetKey: ${targetKey}`,
+      );
+      return;
+    }
+    const target = possibleTarget as Required<Modulation>["target"];
+
+    if (modulation.target) {
+      modulation.gain.disconnect(modulation.target.module.modulationTarget);
+    }
+    modulation.gain.connect(target.module.modulationTarget);
+    this.modulationsSubj$.next({
+      ...this.modulationsSubj$.value,
+      [id]: { ...modulation, target },
+    });
+  }
+
+  removeModulation(id: Modulation["id"]): void {
+    const { [id]: modulation, ...remainingModulations } =
+      this.modulationsSubj$.value;
+    if (!modulation) {
+      this.log.error(`Called \`removeModulation\` with unknown id: ${id}`);
+      return;
+    }
+
+    if (modulation.source) {
+      modulation.source.output.disconnect(modulation.gain);
+    }
+    if (modulation.target) {
+      modulation.gain.disconnect(modulation.target.module.modulationTarget);
+    }
+
+    this.modulationsSubj$.next(remainingModulations);
   }
 
   static async new(ctx: AudioContext): Promise<Synth> {
@@ -139,15 +250,15 @@ export class Synth {
     const masterGain = constantSourceNode(ctx, { offset: 1 });
     const reverbBalance = constantSourceNode(ctx, { offset: -1 });
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
-    params.set("masterGain", {
+    params.set(SynthParamDefs.masterGain.key, {
       def: SynthParamDefs.masterGain,
       module: { manualTarget: masterGain.offset },
     });
-    params.set("saturationGain", {
+    params.set(SynthParamDefs.saturationGain.key, {
       def: SynthParamDefs.saturationGain,
       module: { manualTarget: saturation.gain.offset },
     });
-    params.set("reverbBalance", {
+    params.set(SynthParamDefs.reverbBalance.key, {
       def: SynthParamDefs.reverbBalance,
       module: { manualTarget: reverbBalance.offset },
     });

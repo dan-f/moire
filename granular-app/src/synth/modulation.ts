@@ -3,7 +3,8 @@ import { Param } from "../lib/param";
 export interface Modulation {
   id: number;
   source?: ModulationSource;
-  destination?: Param & { module: Required<Param["module"]> };
+  gain: GainNode;
+  target?: Param & { module: Required<Param["module"]> };
 }
 
 export interface ModulationSource {
