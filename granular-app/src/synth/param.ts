@@ -1,6 +1,6 @@
 import { i18n } from "../app/i18n";
 import { type ParamDef } from "../lib/param";
-import { percent } from "../ui-lib/format";
+import { percent, unit } from "../ui-lib/format";
 import { type GranularParamKey, GranularParamDefs } from "./granular";
 
 const SynthLevelDefs = {
@@ -18,6 +18,21 @@ const SynthLevelDefs = {
     key: "reverbBalance",
     value: { default: -1, range: [-1, 1] },
     display: { name: i18n("reverb"), format: percent([-1, 1]) },
+  } satisfies ParamDef,
+  lfo1Freq: {
+    key: "lfo1Freq",
+    value: { default: 1, range: [0, 50] },
+    display: { name: `${i18n("Lfo")} 1`, format: unit("Hz") },
+  } satisfies ParamDef,
+  lfo2Freq: {
+    key: "lfo2Freq",
+    value: { default: 5, range: [0, 50] },
+    display: { name: `${i18n("Lfo")} 2`, format: unit("Hz") },
+  } satisfies ParamDef,
+  lfo3Freq: {
+    key: "lfo3Freq",
+    value: { default: 10, range: [0, 50] },
+    display: { name: `${i18n("Lfo")} 3`, format: unit("Hz") },
   } satisfies ParamDef,
 };
 

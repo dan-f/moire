@@ -6,6 +6,7 @@ import { Param } from "../lib/param";
 import {
   constantSourceNode,
   modulatedParamModule,
+  oscillatorNode,
   saturationModule,
   xFadedGainNodes,
 } from "../lib/webaudio";
@@ -118,6 +119,11 @@ export class Synth {
     const masterGain = constantSourceNode(ctx, { offset: 1 });
     const reverbBalance = constantSourceNode(ctx, { offset: -1 });
     const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
+    const lfos = [
+      oscillatorNode(ctx),
+      oscillatorNode(ctx),
+      oscillatorNode(ctx),
+    ];
     params.set("masterGain", {
       def: SynthParamDefs.masterGain,
       module: { manualTarget: masterGain.offset },
@@ -129,6 +135,13 @@ export class Synth {
     params.set("reverbBalance", {
       def: SynthParamDefs.reverbBalance,
       module: { manualTarget: reverbBalance.offset },
+    });
+    lfos.forEach((node, i) => {
+      const paramKey = `lfo${i + 1}Freq` as SynthParamKey;
+      params.set(paramKey, {
+        def: SynthParamDefs[paramKey],
+        module: { manualTarget: node.frequency },
+      });
     });
     Object.values(GranularParamDefs).forEach((def) => {
       const streamParam = unpackStreamParam(def.key as GranularParamKey);

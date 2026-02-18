@@ -112,6 +112,18 @@ export function constantSourceNode(
   return node;
 }
 
+/**
+ * Convenience constructor to automatically start {@linkcode OscillatorNode}s.
+ */
+export function oscillatorNode(
+  ctx: AudioContext,
+  options?: OscillatorOptions,
+): OscillatorNode {
+  const node = new OscillatorNode(ctx, options);
+  node.start();
+  return node;
+}
+
 function createWsCurve(f: (x: number) => number): Float32Array {
   const curve = new Float32Array(WS_BUFLEN);
   for (let i = 0; i < WS_BUFLEN; i++) {
