@@ -14,26 +14,20 @@ export interface ParamDef {
 }
 
 /**
- * Modulatable webaudio parameter subgraph
+ * Modulatable webaudio parameter subgraph. The `output` value is produced by
+ * summing the incoming manual signal with any incoming modulation signal. The
+ * modulation signal should be normalized to a maximum of `[-1, 1]`, as it will
+ * be internally scaled to effect the full range of the target parameter.
  */
 export interface ParamModule {
   /**
-   * User endpoint for manual tweaking
+   * Endpoint for manual tweaking
    */
   manualTarget: AudioParam;
   /**
-   * Modulation endpoints for automation
+   * Endpoint for modulation amplitude. Full effect is in the `[-1, 1]` range.
    */
-  modulation?: {
-    /**
-     * Specifies the modulation amplitude pre-attenuation
-     */
-    target: AudioParam;
-    /**
-     * Attenuates the modulation amplitude
-     */
-    gain: AudioParam;
-  };
+  modulationTarget?: AudioParam;
   /**
    * Outgoing parameter value
    */

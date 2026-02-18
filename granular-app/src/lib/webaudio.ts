@@ -39,11 +39,9 @@ export function modulatedParamModule(
   // modulate the signal, hard-clipping to prevent modulating outside of the
   // original range
   const modTarget = constantSourceNode(ctx);
-  const modGain = new GainNode(ctx, { gain: 0 });
-  modTarget.connect(modGain);
   const mix = new GainNode(ctx);
   normalized.connect(mix);
-  modGain.connect(mix);
+  modTarget.connect(mix);
   const clipped = mix.connect(new WaveShaperNode(ctx, { curve: Curves.hard }));
 
   // bring the modulated parameter signal back to its original range
@@ -62,10 +60,7 @@ export function modulatedParamModule(
 
   return {
     manualTarget: manualTarget.offset,
-    modulation: {
-      target: modTarget.offset,
-      gain: modGain.gain,
-    },
+    modulationTarget: modTarget.offset,
     output,
   };
 }
