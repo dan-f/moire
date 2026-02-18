@@ -68,4 +68,4 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("GranularProcessor", GranularProcessor);
+registerProcessor(GranularProcessor.name, GranularProcessor);

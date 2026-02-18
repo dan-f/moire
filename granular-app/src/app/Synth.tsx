@@ -44,6 +44,9 @@ export function Synth() {
       <Param.Knob paramKey="lfo1Freq" enabled />
       <Param.Knob paramKey="lfo2Freq" enabled />
       <Param.Knob paramKey="lfo3Freq" enabled />
+      <Param.Knob paramKey="rand1Freq" enabled />
+      <Param.Knob paramKey="rand2Freq" enabled />
+      <Param.Knob paramKey="rand3Freq" enabled />
       <Modulations />
     </div>
   );

@@ -14,6 +14,7 @@ const English = {
   Left: "left",
   Right: "right",
   Lfo: "lfo",
+  Random: "random",
 
   level: "level",
   drive: "drive",

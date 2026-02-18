@@ -28,6 +28,7 @@ import {
   SynthParamDefs,
   type SynthParamKey,
 } from "./param";
+import { RandomNode } from "./RandomNode";
 
 /**
  * Top-level interface for the application to orchestrate sound generation
@@ -241,12 +242,25 @@ export class Synth {
       oscillatorNode(ctx),
       oscillatorNode(ctx),
     ];
+    const rands = await Promise.all([
+      RandomNode.new(ctx),
+      RandomNode.new(ctx),
+      RandomNode.new(ctx),
+    ]);
     const modSources = new Map<string, ModulationSource>();
     lfos.forEach((node, i) => {
       const key = `lfo${i + 1}`;
       modSources.set(key, {
         key,
         displayName: `${i18n("Lfo")} ${i + 1}`,
+        output: node,
+      });
+    });
+    rands.forEach((node, i) => {
+      const key = `rand${i + 1}`;
+      modSources.set(key, {
+        key,
+        displayName: `${i18n("Random")} ${i + 1}`,
         output: node,
       });
     });
@@ -270,6 +284,15 @@ export class Synth {
     });
     lfos.forEach((node, i) => {
       const paramKey = `lfo${i + 1}Freq` as SynthParamKey;
+      const def = SynthParamDefs[paramKey];
+      node.frequency.value = def.value.default;
+      params.set(paramKey, {
+        def,
+        module: { manualTarget: node.frequency },
+      });
+    });
+    rands.forEach((node, i) => {
+      const paramKey = `rand${i + 1}Freq` as SynthParamKey;
       const def = SynthParamDefs[paramKey];
       node.frequency.value = def.value.default;
       params.set(paramKey, {
