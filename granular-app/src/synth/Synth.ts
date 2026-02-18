@@ -37,7 +37,7 @@ export class Synth {
   private readonly granular: GranularNode;
   private readonly params: Map<string, Param>;
   private nextModId = 0;
-  private readonly modSources: Map<ModulationSource["key"], ModulationSource>;
+  readonly modSources: Map<ModulationSource["key"], ModulationSource>;
   private readonly modulationsSubj$: BehaviorSubject<
     Record<Modulation["id"], Modulation>
   >;
@@ -104,14 +104,20 @@ export class Synth {
     return this.analyserResultBuf[0];
   }
 
-  getParam(key: SynthParamKey): Param;
-  getParam(key: string): Param | undefined;
-  getParam(key: string): Param | undefined {
+  getParam(key: string): Param {
     const param = this.params.get(key);
     if (!param) {
-      this.log.warn(`Could not find param with key: ${key}`);
+      throw new Error(`Could not find param with key: ${key}`);
     }
     return param;
+  }
+
+  *modulationTargets(): Iterable<NonNullable<Modulation["target"]>> {
+    for (const param of this.params.values()) {
+      if (param.module.modulationTarget) {
+        yield param as NonNullable<Modulation["target"]>;
+      }
+    }
   }
 
   get modulations$(): Observable<(typeof this.modulationsSubj$)["value"]> {
@@ -123,7 +129,7 @@ export class Synth {
 
     const initialGain = 0.5;
     const gain = new GainNode(this.ctx, { gain: initialGain });
-    const range: [number, number] = [-1, 1];
+    const range: [number, number] = [0, 1];
     const def: ParamDef = {
       key: modulationGainParamKey(id),
       value: { default: initialGain, range },
@@ -276,7 +282,7 @@ export class Synth {
       const granularParam = granular.getParam(def.key as GranularParamKey);
       if (
         streamParam &&
-        !["subdivision", "tune", "env"].includes(streamParam[1])
+        !["subdivision", "tune", "env", "enabled"].includes(streamParam[1])
       ) {
         const module = modulatedParamModule(ctx, def);
         granularParam.value = granularParam.minValue;

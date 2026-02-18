@@ -22,17 +22,17 @@ const SynthLevelDefs = {
   } satisfies ParamDef,
   lfo1Freq: {
     key: "lfo1Freq",
-    value: { default: 1, range: [0, 50] },
+    value: { default: 0.5, range: [0, 10] },
     display: { name: `${i18n("Lfo")} 1`, format: unit("Hz") },
   } satisfies ParamDef,
   lfo2Freq: {
     key: "lfo2Freq",
-    value: { default: 5, range: [0, 50] },
+    value: { default: 1, range: [0, 10] },
     display: { name: `${i18n("Lfo")} 2`, format: unit("Hz") },
   } satisfies ParamDef,
   lfo3Freq: {
     key: "lfo3Freq",
-    value: { default: 10, range: [0, 50] },
+    value: { default: 2, range: [0, 10] },
     display: { name: `${i18n("Lfo")} 3`, format: unit("Hz") },
   } satisfies ParamDef,
 };

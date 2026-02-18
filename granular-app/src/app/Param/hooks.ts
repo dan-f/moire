@@ -21,7 +21,7 @@ export function useParam(
     }
     const newVal =
       typeof valOrCb === "number" ? valOrCb : valOrCb(manualTarget.value);
-    manualTarget.setValueAtTime(newVal, 0);
+    manualTarget.value = newVal;
     val$.next(newVal);
   };
 

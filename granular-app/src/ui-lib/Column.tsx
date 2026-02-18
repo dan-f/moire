@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function Column(props: Props) {
-  const { children, gap = "sm", pad = "sm" } = props;
+  const { children, gap = "xxs", pad = "sm" } = props;
 
   return (
     <div

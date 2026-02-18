@@ -8,6 +8,7 @@ import { Config } from "../synth/granular";
 import { Column } from "../ui-lib/Column";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
+import { Modulations } from "./Modulations";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
@@ -43,6 +44,7 @@ export function Synth() {
       <Param.Knob paramKey="lfo1Freq" enabled />
       <Param.Knob paramKey="lfo2Freq" enabled />
       <Param.Knob paramKey="lfo3Freq" enabled />
+      <Modulations />
     </div>
   );
 }

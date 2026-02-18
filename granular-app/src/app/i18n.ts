@@ -1,6 +1,8 @@
 const English = {
   EnableStream: "enable stream",
   DisableStream: "disable stream",
+  SelectSource: "select source",
+  SelectTarget: "select target",
 
   Increment: "increment",
   Decrement: "decrement",

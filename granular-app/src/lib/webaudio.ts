@@ -38,7 +38,7 @@ export function modulatedParamModule(
 
   // modulate the signal, hard-clipping to prevent modulating outside of the
   // original range
-  const modTarget = constantSourceNode(ctx);
+  const modTarget = constantSourceNode(ctx, { offset: 0 });
   const mix = new GainNode(ctx);
   normalized.connect(mix);
   modTarget.connect(mix);
