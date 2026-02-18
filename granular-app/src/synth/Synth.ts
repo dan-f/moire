@@ -1,3 +1,4 @@
+import { i18n } from "../app/i18n";
 import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
 import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
@@ -19,6 +20,7 @@ import {
   Message as Msg,
   unpackStreamParam,
 } from "./granular";
+import { ModulationSource } from "./modulation";
 import { SynthParamDefs, SynthParamKey } from "./param";
 
 /**
@@ -28,6 +30,7 @@ export class Synth {
   private readonly ctx: AudioContext;
   private readonly granular: GranularNode;
   private readonly params: Map<string, Param>;
+  private readonly _modSources: Map<string, ModulationSource>;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
   private readonly log = new DefaultLogger(Synth.name);
@@ -36,6 +39,7 @@ export class Synth {
     this.ctx = ctx;
     this.granular = options.granular;
     this.params = options.params;
+    this._modSources = options.modSources;
     this.analysers = Array(Config.NumStreams);
     const splitter = new ChannelSplitterNode(ctx, {
       numberOfOutputs: Config.NumStreams,
@@ -114,16 +118,27 @@ export class Synth {
       release: 0.05,
     });
 
-    // params
-    const params = new Map<string, Param>();
-    const masterGain = constantSourceNode(ctx, { offset: 1 });
-    const reverbBalance = constantSourceNode(ctx, { offset: -1 });
-    const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
+    // modulation
     const lfos = [
       oscillatorNode(ctx),
       oscillatorNode(ctx),
       oscillatorNode(ctx),
     ];
+    const modSources = new Map<string, ModulationSource>();
+    lfos.forEach((node, i) => {
+      const key = `lfo${i + 1}`;
+      modSources.set(key, {
+        key,
+        displayName: `${i18n("Lfo")} ${i + 1}`,
+        output: node,
+      });
+    });
+
+    // params
+    const params = new Map<string, Param>();
+    const masterGain = constantSourceNode(ctx, { offset: 1 });
+    const reverbBalance = constantSourceNode(ctx, { offset: -1 });
+    const [dryGain, wetGain] = xFadedGainNodes(ctx, reverbBalance);
     params.set("masterGain", {
       def: SynthParamDefs.masterGain,
       module: { manualTarget: masterGain.offset },
@@ -173,6 +188,7 @@ export class Synth {
     return new Synth(ctx, {
       granular,
       params,
+      modSources,
     });
   }
 
@@ -187,4 +203,5 @@ export class Synth {
 interface SynthOptions {
   granular: GranularNode;
   params: Map<string, Param>;
+  modSources: Map<string, ModulationSource>;
 }

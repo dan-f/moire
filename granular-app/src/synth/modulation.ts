@@ -1,14 +1,13 @@
+import { Param } from "../lib/param";
+
 export interface Modulation {
-  source: ModSource;
-  destination: ModDestination;
+  id: number;
+  source?: ModulationSource;
+  destination?: Param & { module: Required<Param["module"]> };
 }
 
-export interface ModSource {
+export interface ModulationSource {
+  key: string;
   displayName: string;
-  node: AudioNode;
-}
-
-export interface ModDestination {
-  displayName: string;
-  node: GainNode;
+  output: AudioNode;
 }
