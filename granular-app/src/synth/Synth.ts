@@ -138,8 +138,10 @@ export class Synth {
     });
     lfos.forEach((node, i) => {
       const paramKey = `lfo${i + 1}Freq` as SynthParamKey;
+      const def = SynthParamDefs[paramKey];
+      node.frequency.value = def.value.default;
       params.set(paramKey, {
-        def: SynthParamDefs[paramKey],
+        def,
         module: { manualTarget: node.frequency },
       });
     });

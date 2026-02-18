@@ -38,10 +38,11 @@ export function Synth() {
         <Param.Knob paramKey="bpm" enabled />
       </Column>
       {[...range(Config.NumStreams)].map((stream) => (
-        <div key={stream} className={style.stream}>
-          <Stream stream={stream} />
-        </div>
+        <Stream stream={stream} key={stream} />
       ))}
+      <Param.Knob paramKey="lfo1Freq" enabled />
+      <Param.Knob paramKey="lfo2Freq" enabled />
+      <Param.Knob paramKey="lfo3Freq" enabled />
     </div>
   );
 }
