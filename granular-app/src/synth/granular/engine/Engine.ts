@@ -4,7 +4,7 @@ import { type Logger } from "../../../lib/Logger";
 import { Config } from "../Config";
 import {
   StreamParamKey,
-  unpackStreamParam,
+  unpackStreamParamKey,
   type GranularParams,
 } from "../param";
 import { type Pointer } from "./Exports";
@@ -86,7 +86,7 @@ export class Engine {
     );
 
     for (const [streamParam, [val]] of Object.entries(streamParams)) {
-      const result = unpackStreamParam(streamParam as StreamParamKey);
+      const result = unpackStreamParamKey(streamParam as StreamParamKey);
       if (!result) {
         this.log.warn("unable to parse StreamParam", { streamParam });
         continue;

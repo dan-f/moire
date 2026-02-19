@@ -12,7 +12,7 @@ class RandomProcessor extends AudioWorkletProcessor {
   constructor(_: AudioWorkletNodeOptions) {
     super();
     this.t = 0;
-    this.dt = sampleRate / DefaultFrequency;
+    this.dt = dt(DefaultFrequency);
     this.val = random();
   }
 
@@ -22,7 +22,7 @@ class RandomProcessor extends AudioWorkletProcessor {
         name: "frequency",
         automationRate: "k-rate",
         defaultValue: DefaultFrequency,
-        minValue: 1,
+        minValue: 0,
         maxValue: 20,
       },
     ];
@@ -33,14 +33,14 @@ class RandomProcessor extends AudioWorkletProcessor {
     outputs: Buf.Buffer[],
     params: { frequency: Float32Array },
   ): boolean {
-    this.dt = sampleRate / params.frequency[0];
+    this.dt = dt(params.frequency[0]);
 
     const channel = outputs[0][0];
     for (let i = 0; i < channel.length; i++) {
-      const prvT = this.t;
-      this.t = (this.t + this.dt) % 1;
-      if (this.t < prvT) {
+      this.t += this.dt;
+      if (this.t >= 1) {
         this.val = random();
+        this.t -= 1;
       }
       channel[i] = this.val;
     }
@@ -51,6 +51,10 @@ class RandomProcessor extends AudioWorkletProcessor {
 
 function random(): number {
   return Math.random() * 2 - 1;
+}
+
+function dt(frequency: number): number {
+  return frequency / sampleRate;
 }
 
 const DefaultFrequency = 4;

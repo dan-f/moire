@@ -123,7 +123,7 @@ export type StreamParamKey = Extract<
 
 /**
  * Names of per-stream parameters. Must be concatenated with per-stream ID via
- * {@linkcode packStreamParam} to form fully-qualified
+ * {@linkcode packStreamParamKey} to form fully-qualified
  * {@linkcode GranularParamKey}.
  * */
 export type StreamParamName =
@@ -132,7 +132,7 @@ export type StreamParamName =
 /**
  * Create a {@linkcode GranularParamKey} for a given stream param name and stream ID
  */
-export function packStreamParam(
+export function packStreamParamKey(
   streamId: number,
   key: StreamParamName,
 ): StreamParamKey {
@@ -148,8 +148,8 @@ export type GranularParams = Record<GranularParamKey, Float32Array>;
 /**
  * Get the stream ID and stream key from a processor param key
  */
-export function unpackStreamParam(
-  param: GranularParamKey,
+export function unpackStreamParamKey(
+  param: string,
 ): [number, StreamParamName] | undefined {
   const re = /^stream_(\d+)_(\w+)$/;
   const match = param.match(re);

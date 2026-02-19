@@ -2,7 +2,7 @@ import { Param } from "../lib/param";
 
 export interface Modulation {
   id: number;
-  source?: ModulationSource;
+  source: ModulationSource;
   gain: GainNode;
   target?: Param & { module: Required<Param["module"]> };
 }

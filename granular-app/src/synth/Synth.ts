@@ -3,7 +3,7 @@ import { i18n } from "../app/i18n";
 import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
 import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
-import { range } from "../lib/iter";
+import { range, repeat } from "../lib/iter";
 import { Param, ParamDef } from "../lib/param";
 import {
   constantSourceNode,
@@ -24,9 +24,10 @@ import {
 } from "./granular";
 import { type Modulation, type ModulationSource } from "./modulation";
 import {
-  modulationGainParamKey,
+  packModulationGainParamKey,
+  packStreamLfoFreqParamKey,
+  packStreamRandFreqParamKey,
   SynthParamDefs,
-  type SynthParamKey,
 } from "./param";
 import { RandomNode } from "./RandomNode";
 
@@ -93,7 +94,7 @@ export class Synth {
 
   sendNoteEvent(event: NoteEvent.TimedNoteEvent) {
     const noteVal = event.note + 1;
-    const param = this.getParam("note_event");
+    const param = this.getParam("note_event")!;
     param.module.manualTarget.setValueAtTime(
       event.type === "noteon" ? noteVal : -noteVal,
       event.time,
@@ -105,12 +106,8 @@ export class Synth {
     return this.analyserResultBuf[0];
   }
 
-  getParam(key: string): Param {
-    const param = this.params.get(key);
-    if (!param) {
-      throw new Error(`Could not find param with key: ${key}`);
-    }
-    return param;
+  getParam(key: string): Param | undefined {
+    return this.params.get(key);
   }
 
   *modulationTargets(): Iterable<NonNullable<Modulation["target"]>> {
@@ -125,22 +122,30 @@ export class Synth {
     return this.modulationsSubj$.asObservable();
   }
 
-  createModulation(): void {
-    const id = this.nextModId++;
+  createModulation(sourceKey: ModulationSource["key"]): void {
+    const source = this.modSources.get(sourceKey);
+    if (!source) {
+      this.log.error(
+        `Called \`createModulation\` with unknown sourceKey: ${sourceKey}`,
+      );
+      return;
+    }
 
+    const id = this.nextModId++;
     const initialGain = 0.5;
     const gain = new GainNode(this.ctx, { gain: initialGain });
+    source.output.connect(gain);
     const range: [number, number] = [0, 1];
     const def: ParamDef = {
-      key: modulationGainParamKey(id),
+      key: packModulationGainParamKey(id),
       value: { default: initialGain, range },
-      display: { name: i18n("gain"), format: percent() },
+      display: { name: i18n("Amount"), format: percent() },
     };
     this.params.set(def.key, { def, module: { manualTarget: gain.gain } });
 
     this.modulationsSubj$.next({
       ...this.modulationsSubj$.value,
-      [id]: { id, gain },
+      [id]: { id, source, gain },
     });
   }
 
@@ -160,10 +165,11 @@ export class Synth {
       );
       return;
     }
-
-    if (modulation.source) {
-      modulation.source.output.disconnect(modulation.gain);
+    if (source.key === modulation.source.key) {
+      return;
     }
+
+    modulation.source.output.disconnect(modulation.gain);
     source.output.connect(modulation.gain);
     this.modulationsSubj$.next({
       ...this.modulationsSubj$.value,
@@ -207,9 +213,7 @@ export class Synth {
       return;
     }
 
-    if (modulation.source) {
-      modulation.source.output.disconnect(modulation.gain);
-    }
+    modulation.source.output.disconnect(modulation.gain);
     if (modulation.target) {
       modulation.gain.disconnect(modulation.target.module.modulationTarget);
     }
@@ -237,32 +241,18 @@ export class Synth {
     });
 
     // modulation
-    const lfos = [
-      oscillatorNode(ctx),
-      oscillatorNode(ctx),
-      oscillatorNode(ctx),
-    ];
-    const rands = await Promise.all([
-      RandomNode.new(ctx),
-      RandomNode.new(ctx),
-      RandomNode.new(ctx),
-    ]);
+    const lfos = [...repeat(Config.NumStreams, () => oscillatorNode(ctx))];
+    const rands = await Promise.all(
+      repeat(Config.NumStreams, () => RandomNode.new(ctx)),
+    );
     const modSources = new Map<string, ModulationSource>();
     lfos.forEach((node, i) => {
-      const key = `lfo${i + 1}`;
-      modSources.set(key, {
-        key,
-        displayName: `${i18n("Lfo")} ${i + 1}`,
-        output: node,
-      });
+      const key = `lfo${i}`;
+      modSources.set(key, { key, displayName: i18n("Lfo"), output: node });
     });
     rands.forEach((node, i) => {
-      const key = `rand${i + 1}`;
-      modSources.set(key, {
-        key,
-        displayName: `${i18n("Random")} ${i + 1}`,
-        output: node,
-      });
+      const key = `rand${i}`;
+      modSources.set(key, { key, displayName: i18n("Random"), output: node });
     });
 
     // params
@@ -283,22 +273,16 @@ export class Synth {
       module: { manualTarget: reverbBalance.offset },
     });
     lfos.forEach((node, i) => {
-      const paramKey = `lfo${i + 1}Freq` as SynthParamKey;
+      const paramKey = packStreamLfoFreqParamKey(i);
       const def = SynthParamDefs[paramKey];
       node.frequency.value = def.value.default;
-      params.set(paramKey, {
-        def,
-        module: { manualTarget: node.frequency },
-      });
+      params.set(paramKey, { def, module: { manualTarget: node.frequency } });
     });
     rands.forEach((node, i) => {
-      const paramKey = `rand${i + 1}Freq` as SynthParamKey;
+      const paramKey = packStreamRandFreqParamKey(i);
       const def = SynthParamDefs[paramKey];
       node.frequency.value = def.value.default;
-      params.set(paramKey, {
-        def,
-        module: { manualTarget: node.frequency },
-      });
+      params.set(paramKey, { def, module: { manualTarget: node.frequency } });
     });
     Object.values(GranularParamDefs).forEach((def) => {
       const streamParam = unpackStreamParam(def.key as GranularParamKey);
@@ -325,11 +309,7 @@ export class Synth {
     saturation.output.connect(wet).connect(reverb).connect(mix);
     mix.connect(limiter).connect(ctx.destination);
 
-    return new Synth(ctx, {
-      granular,
-      params,
-      modSources,
-    });
+    return new Synth(ctx, { granular, params, modSources });
   }
 
   private async updateSample(sample: Float32Array[]): Promise<void> {

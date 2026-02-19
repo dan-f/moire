@@ -1,12 +1,11 @@
 export { GranularNode } from "./GranularNode";
 
 export { Config } from "./Config";
-export * as Env from "./Env";
 export * as Message from "./message";
 export {
   GranularParamDefs,
-  packStreamParam,
-  unpackStreamParam,
+  packStreamParamKey as packStreamParam,
+  unpackStreamParamKey as unpackStreamParam,
   type GranularParamKey,
   type GranularParams,
   type StreamParamKey,

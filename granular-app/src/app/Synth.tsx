@@ -8,10 +8,10 @@ import { Config } from "../synth/granular";
 import { Column } from "../ui-lib/Column";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
-import { Modulations } from "./Modulations";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
+import { StreamModulation } from "./StreamModulation";
 import style from "./Synth.module.css";
 
 export function Synth() {
@@ -41,13 +41,9 @@ export function Synth() {
       {[...range(Config.NumStreams)].map((stream) => (
         <Stream stream={stream} key={stream} />
       ))}
-      <Param.Knob paramKey="lfo1Freq" enabled />
-      <Param.Knob paramKey="lfo2Freq" enabled />
-      <Param.Knob paramKey="lfo3Freq" enabled />
-      <Param.Knob paramKey="rand1Freq" enabled />
-      <Param.Knob paramKey="rand2Freq" enabled />
-      <Param.Knob paramKey="rand3Freq" enabled />
-      <Modulations />
+      {[...range(Config.NumStreams)].map((stream) => (
+        <StreamModulation stream={stream} key={stream} />
+      ))}
     </div>
   );
 }

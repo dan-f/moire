@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import {
-  packStreamParam,
+  packStreamParamKey,
   type StreamParamName,
   type SynthParamKey,
 } from "../synth";
@@ -21,7 +21,7 @@ interface StreamProps {
 export function Stream(props: StreamProps) {
   const { stream } = props;
   const synthParam = useCallback(
-    (key: StreamParamName): SynthParamKey => packStreamParam(stream, key),
+    (key: StreamParamName): SynthParamKey => packStreamParamKey(stream, key),
     [stream],
   );
   const [[enabled$, setEnabled]] = useParam({
