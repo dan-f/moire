@@ -22,9 +22,9 @@ import {
 } from "../app/hooks/observable";
 import { clamp } from "../lib/math";
 import { DragEvent, DragTarget } from "./Drag";
-import style from "./Knob.module.css";
-import { classes } from "./css";
 import { decimal, ValueFormatter } from "./format";
+import style from "./Knob.module.css";
+import { Tooltipped } from "./Tooltipped";
 
 interface KnobProps {
   val$: BehaviorSubject<number>;
@@ -246,7 +246,7 @@ function Barrel(props: BarrelProps) {
   const notchRef = createRef<HTMLDivElement>();
 
   return (
-    <div className={style["barrel-container"]}>
+    <Tooltipped tooltip={formatValue(val)} visible={tooltip}>
       <div
         className={style.barrel}
         ref={ringRef}
@@ -271,10 +271,7 @@ function Barrel(props: BarrelProps) {
       >
         <div ref={notchRef} className={style.notch} />
       </div>
-      <div className={classes(style.tooltip, !tooltip && style.hidden)}>
-        {formatValue(val)}
-      </div>
-    </div>
+    </Tooltipped>
   );
 }
 

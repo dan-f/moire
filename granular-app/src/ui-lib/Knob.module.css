@@ -1,6 +1,6 @@
-@value black, lightgrey, white from "../ui-lib/color.module.css";
-@value xxs, xs from "../ui-lib/sizing.module.css";
-@value fontSizeSm from "../ui-lib/typography.module.css";
+@value black, lightgrey from "./color.module.css";
+@value xxs from "./sizing.module.css";
+@value fontSizeSm from "./typography.module.css";
 
 .container {
   display: flex;
@@ -10,10 +10,6 @@
 
 .label {
   font-size: fontSizeSm;
-}
-
-.barrel-container {
-  position: relative;
 }
 
 .barrel {
@@ -28,24 +24,4 @@
   width: xxs;
   background-color: black;
   height: 20%;
-}
-
-.tooltip {
-  position: absolute;
-  z-index: 1;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(calc(xxs * -1));
-
-  border-radius: xs;
-  padding: xxs;
-  background-color: rgb(from var(--background) r g b / 0.85);
-  font-size: fontSizeSm;
-  user-select: none;
-
-  transition: opacity 100ms;
-}
-
-.hidden {
-  opacity: 0%;
 }
