@@ -1,0 +1,54 @@
+@value xxs, xs, xxl from "../ui-lib/sizing.module.css";
+@value fontSizeXs, fontSizeSm from "../ui-lib/typography.module.css";
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.label {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: anchor-center;
+  gap: xs;
+
+  .select:first-of-type {
+    text-align: start;
+  }
+
+  .select:last-of-type {
+    text-align: end;
+  }
+}
+
+.select {
+  appearance: unset;
+  cursor: pointer;
+  margin: unset;
+  padding: xxs;
+  border: unset;
+  background-color: unset;
+  max-width: xxl;
+
+  font-size: fontSizeSm;
+  text-overflow: ellipsis;
+  text-align: center;
+  opacity: 1;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.6;
+    text-decoration: underline;
+  }
+  transition: opacity var(--transition-duration);
+}

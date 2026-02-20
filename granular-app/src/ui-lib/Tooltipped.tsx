@@ -4,12 +4,13 @@ import style from "./Tooltipped.module.css";
 
 interface Props {
   children: React.ReactNode;
+  className?: string;
   tooltip: React.ReactNode;
   visible?: boolean;
 }
 
 export function Tooltipped(props: Props) {
-  const { children, tooltip, visible } = props;
+  const { children, className, tooltip, visible } = props;
   const [isFocused, setIsFocused] = useState(false);
   const isVisible = typeof visible === "boolean" ? visible : isFocused;
 
@@ -21,7 +22,7 @@ export function Tooltipped(props: Props) {
   }, []);
 
   return (
-    <div className={style.container}>
+    <div className={classes(style.container, className)}>
       <div
         onMouseEnter={addFocus}
         onMouseLeave={removeFocus}

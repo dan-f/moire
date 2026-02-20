@@ -1,0 +1,7 @@
+.text-button {
+  text-decoration: none;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}

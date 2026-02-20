@@ -5,6 +5,8 @@
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  gap: 0;
+  padding: 0;
 }
 
 .gap-xxs {
@@ -27,22 +29,52 @@
   gap: lg;
 }
 
-.pad-xxs {
-  padding: xxs;
+.padH-xxs {
+  padding-left: xxs;
+  padding-right: xxs;
 }
 
-.pad-xs {
-  padding: xs;
+.padH-xs {
+  padding-left: xs;
+  padding-right: xs;
 }
 
-.pad-sm {
-  padding: sm;
+.padH-sm {
+  padding-left: sm;
+  padding-right: sm;
 }
 
-.pad-md {
-  padding: md;
+.padH-md {
+  padding-left: md;
+  padding-right: md;
 }
 
-.pad-lg {
-  padding: lg;
+.padH-lg {
+  padding-left: lg;
+  padding-right: lg;
+}
+
+.padV-xxs {
+  padding-top: xxs;
+  padding-bottom: xxs;
+}
+
+.padV-xs {
+  padding-top: xs;
+  padding-bottom: xs;
+}
+
+.padV-sm {
+  padding-top: sm;
+  padding-bottom: sm;
+}
+
+.padV-md {
+  padding-top: md;
+  padding-bottom: md;
+}
+
+.padV-lg {
+  padding-top: lg;
+  padding-bottom: lg;
 }

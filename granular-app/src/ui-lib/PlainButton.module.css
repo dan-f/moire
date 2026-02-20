@@ -1,0 +1,14 @@
+@value xxs from "./sizing.module.css";
+
+.button {
+  display: block;
+  background-color: #fff0;
+  border: unset;
+  padding: xxs;
+  opacity: 1;
+  &:hover,
+  &:focus-visible {
+    opacity: 0.6;
+  }
+  transition: opacity var(--transition-duration);
+}

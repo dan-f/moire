@@ -10,7 +10,7 @@ export function App() {
     <AppContext.Provider value={globals}>
       <ThemeProvider>
         <DragArea>
-          <GridLayout>
+          <GridLayout columns={6}>
             <Synth />
           </GridLayout>
         </DragArea>

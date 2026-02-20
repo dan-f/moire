@@ -1,5 +1,5 @@
 @value xs from "./sizing.module.css";
-@value fontSizeSm from "./typography.module.css";
+@value fontSizeXs from "./typography.module.css";
 
 .container {
   display: flex;
@@ -32,5 +32,5 @@
 }
 
 .label {
-  font-size: fontSizeSm;
+  font-size: fontSizeXs;
 }

@@ -1,7 +1,0 @@
-@value xxs from "./sizing.module.css";
-
-.iconButton {
-  background-color: #fff0;
-  border: none;
-  padding: xxs;
-}

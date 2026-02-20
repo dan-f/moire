@@ -4,7 +4,7 @@ export interface Modulation {
   id: number;
   source: ModulationSource;
   gain: GainNode;
-  target?: Param & { module: Required<Param["module"]> };
+  target: Param & { module: Required<Param["module"]> };
 }
 
 export interface ModulationSource {

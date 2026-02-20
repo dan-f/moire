@@ -174,5 +174,5 @@ class SampleAnimation {
   }
 }
 
-const Width = 300;
-const Height = 150;
+const Width = 0;
+const Height = 0;

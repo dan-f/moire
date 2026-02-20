@@ -16,9 +16,8 @@
   padding: xxs;
   background-color: rgb(from var(--background) r g b / 0.85);
   font-size: fontSizeSm;
-  user-select: none;
 
-  transition: opacity 100ms;
+  transition: opacity var(--transition-duration);
   transition-behavior: allow-discrete;
 }
 

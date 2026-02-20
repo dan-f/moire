@@ -1,8 +1,11 @@
 const English = {
   EnableStream: "enable stream",
   DisableStream: "disable stream",
-  SelectSource: "select source",
-  SelectTarget: "select target",
+  AddModulation: "add modulation",
+  AssignModulation: "assign modulation",
+  RemoveModulation: "remove modulation",
+  Source: "source",
+  Target: "target",
 
   Increment: "increment",
   Decrement: "decrement",
@@ -15,7 +18,7 @@ const English = {
   Right: "right",
   Lfo: "lfo",
   Random: "random",
-  Amount: "amount",
+  Depth: "depth",
 
   level: "level",
   drive: "drive",

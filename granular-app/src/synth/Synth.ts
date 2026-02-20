@@ -122,7 +122,10 @@ export class Synth {
     return this.modulationsSubj$.asObservable();
   }
 
-  createModulation(sourceKey: ModulationSource["key"]): void {
+  createModulation(
+    sourceKey: ModulationSource["key"],
+    targetKey: ParamDef["key"],
+  ): void {
     const source = this.modSources.get(sourceKey);
     if (!source) {
       this.log.error(
@@ -130,22 +133,31 @@ export class Synth {
       );
       return;
     }
+    const possibleTarget = this.getParam(targetKey);
+    if (!possibleTarget || !possibleTarget.module.modulationTarget) {
+      this.log.error(
+        `Called \`setModulationTarget\` with invalid targetKey: ${targetKey}`,
+      );
+      return;
+    }
+    const target = possibleTarget as Required<Modulation>["target"];
 
-    const id = this.nextModId++;
     const initialGain = 0.5;
     const gain = new GainNode(this.ctx, { gain: initialGain });
-    source.output.connect(gain);
+    source.output.connect(gain).connect(target.module.modulationTarget);
+
+    const id = this.nextModId++;
     const range: [number, number] = [0, 1];
     const def: ParamDef = {
       key: packModulationGainParamKey(id),
       value: { default: initialGain, range },
-      display: { name: i18n("Amount"), format: percent() },
+      display: { name: i18n("Depth"), format: percent() },
     };
     this.params.set(def.key, { def, module: { manualTarget: gain.gain } });
 
     this.modulationsSubj$.next({
       ...this.modulationsSubj$.value,
-      [id]: { id, source, gain },
+      [id]: { id, source, gain, target },
     });
   }
 
@@ -177,10 +189,7 @@ export class Synth {
     });
   }
 
-  setModulationTarget(
-    id: Modulation["id"],
-    targetKey: Param["def"]["key"],
-  ): void {
+  setModulationTarget(id: Modulation["id"], targetKey: ParamDef["key"]): void {
     const modulation = this.modulationsSubj$.value[id];
     if (!modulation) {
       this.log.error(`Called \`setModulationTarget\` with unknown id: ${id}`);
@@ -195,9 +204,7 @@ export class Synth {
     }
     const target = possibleTarget as Required<Modulation>["target"];
 
-    if (modulation.target) {
-      modulation.gain.disconnect(modulation.target.module.modulationTarget);
-    }
+    modulation.gain.disconnect(modulation.target.module.modulationTarget);
     modulation.gain.connect(target.module.modulationTarget);
     this.modulationsSubj$.next({
       ...this.modulationsSubj$.value,

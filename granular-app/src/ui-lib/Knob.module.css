@@ -1,15 +1,16 @@
 @value black, lightgrey from "./color.module.css";
 @value xxs from "./sizing.module.css";
-@value fontSizeSm from "./typography.module.css";
+@value fontSizeXs from "./typography.module.css";
 
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 3rem;
 }
 
 .label {
-  font-size: fontSizeSm;
+  font-size: fontSizeXs;
 }
 
 .barrel {

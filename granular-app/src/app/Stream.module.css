@@ -133,3 +133,21 @@
     bgColor 100%
   );
 }
+
+.modulation-sources {
+  justify-content: center;
+}
+
+.modulation-source {
+  display: flex;
+  flex-direction: column;
+}
+
+.modulations {
+  max-height: 200px;
+  overflow: scroll;
+}
+
+.modulation {
+  align-self: stretch;
+}

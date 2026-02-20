@@ -6,12 +6,12 @@ import { NoteMessageEvent$ } from "../midi";
 import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Config } from "../synth/granular";
 import { Column } from "../ui-lib/Column";
+import { Row } from "../ui-lib/Row";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
-import { StreamModulation } from "./StreamModulation";
 import style from "./Synth.module.css";
 
 export function Synth() {
@@ -23,26 +23,31 @@ export function Synth() {
 
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
-      <Column>
-        <Param.Knob paramKey="attack" enabled />
-        <Param.Knob paramKey="decay" enabled />
-        <Param.Knob paramKey="sustain" enabled />
-        <Param.Knob paramKey="release" enabled />
+      <Column gap="xxs">
+        <Row>
+          <Param.Knob paramKey="attack" enabled />
+          <Param.Knob paramKey="decay" enabled />
+        </Row>
+        <Row>
+          <Param.Knob paramKey="sustain" enabled />
+          <Param.Knob paramKey="release" enabled />
+        </Row>
       </Column>
       <div className={style.sample}>
         <Sample />
       </div>
-      <Column>
-        <Param.Knob paramKey="masterGain" enabled />
-        <Param.Knob paramKey="saturationGain" enabled />
-        <Param.Knob paramKey="reverbBalance" enabled />
-        <Param.Knob paramKey="bpm" enabled />
+      <Column gap="xxs">
+        <Row>
+          <Param.Knob paramKey="masterGain" enabled />
+          <Param.Knob paramKey="saturationGain" enabled />
+        </Row>
+        <Row>
+          <Param.Knob paramKey="reverbBalance" enabled />
+          <Param.Knob paramKey="bpm" enabled />
+        </Row>
       </Column>
       {[...range(Config.NumStreams)].map((stream) => (
         <Stream stream={stream} key={stream} />
-      ))}
-      {[...range(Config.NumStreams)].map((stream) => (
-        <StreamModulation stream={stream} key={stream} />
       ))}
     </div>
   );

@@ -4,19 +4,23 @@ import { type Size } from "./sizing";
 
 interface Props {
   children: React.ReactNode;
-  pad?: Size;
+  className?: string;
+  padH?: Size;
+  padV?: Size;
   gap?: Size;
 }
 
 export function Row(props: Props) {
-  const { children, gap = "sm", pad = "sm" } = props;
+  const { children, className, gap, padH, padV } = props;
 
   return (
     <div
       className={classes(
         styles.container,
-        styles[`gap-${gap}`],
-        styles[`pad-${pad}`],
+        gap && styles[`gap-${gap}`],
+        padH && styles[`padH-${padH}`],
+        padV && styles[`padV-${padV}`],
+        className,
       )}
     >
       {children}

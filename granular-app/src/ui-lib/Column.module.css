@@ -1,46 +1,80 @@
-@value row: "./Row.module.css";
+@value xxs, xs, sm, md, lg from "./sizing.module.css";
 
 .container {
-  composes: container from row;
+  display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0;
+  padding: 0;
 }
 
 .gap-xxs {
-  composes: gap-xxs from row;
+  gap: xxs;
 }
 
 .gap-xs {
-  composes: gap-xs from row;
+  gap: xs;
 }
 
 .gap-sm {
-  composes: gap-sm from row;
+  gap: sm;
 }
 
 .gap-md {
-  composes: gap-md from row;
+  gap: md;
 }
 
 .gap-lg {
-  composes: gap-lg from row;
+  gap: lg;
 }
 
-.pad-xxs {
-  composes: pad-xxs from row;
+.padH-xxs {
+  padding-left: xxs;
+  padding-right: xxs;
 }
 
-.pad-xs {
-  composes: pad-xs from row;
+.padH-xs {
+  padding-left: xs;
+  padding-right: xs;
 }
 
-.pad-sm {
-  composes: pad-sm from row;
+.padH-sm {
+  padding-left: sm;
+  padding-right: sm;
 }
 
-.pad-md {
-  composes: pad-md from row;
+.padH-md {
+  padding-left: md;
+  padding-right: md;
 }
 
-.pad-lg {
-  composes: pad-lg from row;
+.padH-lg {
+  padding-left: lg;
+  padding-right: lg;
+}
+
+.padV-xxs {
+  padding-top: xxs;
+  padding-bottom: xxs;
+}
+
+.padV-xs {
+  padding-top: xs;
+  padding-bottom: xs;
+}
+
+.padV-sm {
+  padding-top: sm;
+  padding-bottom: sm;
+}
+
+.padV-md {
+  padding-top: md;
+  padding-bottom: md;
+}
+
+.padV-lg {
+  padding-top: lg;
+  padding-bottom: lg;
 }

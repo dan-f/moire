@@ -3,20 +3,24 @@ import { classes } from "./css";
 import { type Size } from "./sizing";
 
 interface Props {
+  className?: string;
   children: React.ReactNode;
-  pad?: Size;
+  padH?: Size;
+  padV?: Size;
   gap?: Size;
 }
 
 export function Column(props: Props) {
-  const { children, gap = "xxs", pad = "sm" } = props;
+  const { className, children, gap, padH, padV } = props;
 
   return (
     <div
       className={classes(
         styles.container,
-        styles[`gap-${gap}`],
-        styles[`pad-${pad}`],
+        gap && styles[`gap-${gap}`],
+        padH && styles[`padH-${padH}`],
+        padV && styles[`padV-${padV}`],
+        className,
       )}
     >
       {children}

@@ -1,5 +1,5 @@
 import { classes } from "./css";
-import style from "./IconButton.module.css";
+import { PlainButton } from "./PlainButton";
 
 interface Props extends React.ComponentProps<"button"> {
   icon: React.ReactNode;
@@ -8,11 +8,8 @@ interface Props extends React.ComponentProps<"button"> {
 export function IconButton(props: Props) {
   const { icon, ...buttonProps } = props;
   return (
-    <button
-      {...buttonProps}
-      className={classes(props.className, style.iconButton)}
-    >
+    <PlainButton {...buttonProps} className={classes(props.className)}>
       {icon}
-    </button>
+    </PlainButton>
   );
 }
