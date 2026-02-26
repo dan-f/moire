@@ -6,6 +6,7 @@ import { Config } from "../synth/granular";
 import { Bordered } from "../ui-lib/Bordered";
 import { useSynth } from "./AppContext";
 import { useAnimationFrame } from "./hooks/animation";
+import { i18n } from "./i18n";
 import style from "./Sample.module.css";
 import { Theme, useTheme } from "./theme";
 
@@ -48,7 +49,7 @@ export function Sample() {
         role="button"
         tabIndex={0}
       >
-        <span>Upload a sample</span>
+        <span>{i18n("UploadSample")}</span>
         <input
           type="file"
           accept="audio/*"
@@ -109,7 +110,7 @@ class SampleAnimation {
   }
 
   private drawSampleWindow(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = this.theme.colors.backgroundSecondary;
+    ctx.fillStyle = this.theme.colors.backgroundRaised;
     ctx.fillRect(0, 0, this.width, this.height);
 
     if (

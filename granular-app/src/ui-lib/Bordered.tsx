@@ -3,7 +3,7 @@ import { classes } from "./css";
 
 export function Bordered(props: React.ComponentProps<"div">) {
   return (
-    <div className={classes(props.className, style.container)}>
+    <div {...props} className={classes(style.container, props.className)}>
       {props.children}
     </div>
   );

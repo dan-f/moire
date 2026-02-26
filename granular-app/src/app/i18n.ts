@@ -3,7 +3,8 @@ const English = {
   DisableStream: "disable stream",
   AddModulation: "add modulation",
   AssignModulation: "assign modulation",
-  RemoveModulation: "remove modulation",
+  RemoveModulation: "clear modulation",
+  UploadSample: "upload sample",
   Source: "source",
   Target: "target",
 

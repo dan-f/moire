@@ -142,6 +142,15 @@ export class Synth {
     }
     const target = possibleTarget as Required<Modulation>["target"];
 
+    for (const modulation of Object.values(this.modulationsSubj$.value)) {
+      if (
+        modulation.source.key === sourceKey &&
+        modulation.target.def.key === targetKey
+      ) {
+        return;
+      }
+    }
+
     const initialGain = 0.5;
     const gain = new GainNode(this.ctx, { gain: initialGain });
     source.output.connect(gain).connect(target.module.modulationTarget);

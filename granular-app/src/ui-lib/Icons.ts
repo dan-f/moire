@@ -1,5 +1,6 @@
 import add from "../assets/add-line.svg";
 import chevronDown from "../assets/arrow-drop-down-line.svg";
+import arrowRightLong from "../assets/arrow-right-long-line.svg";
 import close from "../assets/close-line 2.svg";
 import pulse from "../assets/pulse-line.svg";
 import arrowLeft from "../assets/remix-arrow-left-s-line.svg";
@@ -10,6 +11,7 @@ export const Icons = {
   add,
   arrowLeft,
   arrowRight,
+  arrowRightLong,
   chevronDown,
   close,
   power,

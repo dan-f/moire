@@ -3,7 +3,8 @@ export interface Theme {
     foreground: string;
     foregroundSecondary: string;
     background: string;
-    backgroundSecondary: string;
+    backgroundRaised: string;
+    backgroundRecessed: string;
     stream: string[];
   };
 }

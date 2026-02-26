@@ -3,6 +3,6 @@
 .container {
   display: flex;
   border: border solid var(--foreground-secondary);
-  border-radius: xs;
+  border-radius: var(--border-radius);
   overflow: hidden;
 }

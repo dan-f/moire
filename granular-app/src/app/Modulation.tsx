@@ -46,7 +46,11 @@ export function Modulation(props: Props) {
 
   return (
     <div className={style.container}>
-      <Tooltipped className={style.remove} tooltip={i18n("RemoveModulation")}>
+      <Tooltipped
+        id={`remove-mod-${modulation.id}`}
+        className={style.remove}
+        tooltip={i18n("RemoveModulation")}
+      >
         <IconButton
           aria-label={i18n("RemoveModulation")}
           icon={<Icon name="close" size="sm" />}
@@ -73,7 +77,7 @@ export function Modulation(props: Props) {
             </option>
           ))}
         </select>
-        <Icon name="pulse" size="sm" />
+        <Icon name="arrowRightLong" size="sm" />
         <select
           className={style.select}
           name={`stream_${stream}_mod_target_select`}

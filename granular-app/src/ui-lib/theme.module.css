@@ -2,20 +2,13 @@
   black,
   slate,
   white,
-  grey,
+  brightWhite,
+  softWhite,
   royalBlue,
   darkCrimson,
-  lightCrimson,
   greenTeal,
-  blueTeal,
   bronze,
-  lightBronze,
-  moon,
-  greenYellow,
   royalPurple,
-  lightPurple,
-  violet,
-  mauve,
   green
 ) from "./color.module.css";
 
@@ -23,13 +16,8 @@
 @value lightForeground: black;
 @value lightForegroundSecondary: slate;
 @value lightBackground: white;
-@value lightBackgroundSecondary: moon;
-
-/* Dark mode */
-@value darkForeground: white;
-@value darkForegroundSecondary: grey;
-@value darkBackground: black;
-@value darkBackgroundSecondary: slate;
+@value lightBackgroundRaised: brightWhite;
+@value lightBackgroundRecessed: softWhite;
 
 /* All modes */
 @value stream0: royalBlue;
@@ -38,9 +26,3 @@
 @value stream3: royalPurple;
 @value stream4: bronze;
 @value stream5: greenTeal;
-@value stream6: lightCrimson;
-@value stream7: mauve;
-@value stream8: lightPurple;
-@value stream9: blueTeal;
-@value stream10: greenYellow;
-@value stream11: violet;

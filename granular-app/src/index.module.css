@@ -4,23 +4,14 @@
   lightForeground,
   lightForegroundSecondary,
   lightBackground,
-  lightBackgroundSecondary,
-  darkForeground,
-  darkForegroundSecondary,
-  darkBackground,
-  darkBackgroundSecondary,
+  lightBackgroundRaised,
+  lightBackgroundRecessed,
   stream0,
   stream1,
   stream2,
   stream3,
   stream4,
-  stream5,
-  stream6,
-  stream7,
-  stream8,
-  stream9,
-  stream10,
-  stream11
+  stream5
 ) from "./ui-lib/theme.module.css";
 
 :root {
@@ -41,7 +32,8 @@
   --foreground: lightForeground;
   --foreground-secondary: lightForegroundSecondary;
   --background: lightBackground;
-  --background-secondary: lightBackgroundSecondary;
+  --background-raised: lightBackgroundRaised;
+  --background-recessed: lightBackgroundRecessed;
 
   --stream-color-0: stream0;
   --stream-color-1: stream1;
@@ -49,13 +41,8 @@
   --stream-color-3: stream3;
   --stream-color-4: stream4;
   --stream-color-5: stream5;
-  --stream-color-6: stream6;
-  --stream-color-7: stream7;
-  --stream-color-8: stream8;
-  --stream-color-9: stream9;
-  --stream-color-10: stream10;
-  --stream-color-11: stream11;
 
+  --border-radius: xs;
   --transition-duration: 100ms;
 }
 
@@ -65,17 +52,8 @@
     --foreground: lightForeground;
     --foreground-secondary: lightForegroundSecondary;
     --background: lightBackground;
-    --background-secondary: lightBackgroundSecondary;
-  }
-}
-
-/* Dark scheme colors */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground: darkForeground;
-    --foreground-secondary: darkForegroundSecondary;
-    --background: darkBackground;
-    --background-secondary: darkBackgroundSecondary;
+    --background-raised: lightBackgroundRaised;
+    --background-recessed: lightBackgroundRecessed;
   }
 }
 
@@ -111,5 +89,5 @@ button {
 
 :focus-visible {
   outline: border solid var(--foreground);
-  border-radius: xs;
+  border-radius: var(--border-radius);
 }

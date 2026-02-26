@@ -9,7 +9,8 @@ export function loadTheme(): Theme {
       foreground: getCssVar("foreground"),
       foregroundSecondary: getCssVar("foreground-secondary"),
       background: getCssVar("background"),
-      backgroundSecondary: getCssVar("background-secondary"),
+      backgroundRaised: getCssVar("background-raised"),
+      backgroundRecessed: getCssVar("background-recessed"),
       stream: [...range(Config.NumStreams)].map((s) =>
         getCssVar(streamColorCssVar(s)),
       ),

@@ -1,6 +1,6 @@
 @value black, lightgrey from "./color.module.css";
 @value xxs from "./sizing.module.css";
-@value fontSizeXs from "./typography.module.css";
+@value fontSizeSm from "./typography.module.css";
 
 .container {
   display: flex;
@@ -10,19 +10,19 @@
 }
 
 .label {
-  font-size: fontSizeXs;
+  font-size: fontSizeSm;
 }
 
 .barrel {
   border-radius: 100%;
   background-color: lightgrey;
-  border: xxs solid black;
+  border: 1px solid black;
   display: flex;
   justify-content: center;
 }
 
 .notch {
-  width: xxs;
+  width: 1px;
   background-color: black;
-  height: 20%;
+  height: 15%;
 }

@@ -246,7 +246,7 @@ function Barrel(props: BarrelProps) {
   const notchRef = createRef<HTMLDivElement>();
 
   return (
-    <Tooltipped tooltip={formatValue(val)} visible={tooltip}>
+    <Tooltipped id={`param-${id}`} tooltip={formatValue(val)} visible={tooltip}>
       <div
         className={style.barrel}
         ref={ringRef}

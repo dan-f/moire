@@ -22,7 +22,10 @@ export function KnobParam(props: Props) {
   return (
     <div style={{ position: "relative" }}>
       {!!mod?.source && (
-        <Tooltipped tooltip={i18n("AssignModulation")}>
+        <Tooltipped
+          id={`add-mod-${mod.source}`}
+          tooltip={i18n("AssignModulation")}
+        >
           <IconButton
             style={{
               position: "absolute",

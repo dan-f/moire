@@ -1,4 +1,3 @@
-@value white from "../ui-lib/color.module.css";
 @value fontSizeLg from "../ui-lib/typography.module.css";
 
 .container {
@@ -22,7 +21,7 @@
   align-items: center;
   justify-content: center;
 
-  background-color: var(--background-secondary);
+  background-color: var(--background-raised);
   font-size: fontSizeLg;
   cursor: pointer;
   opacity: 0;

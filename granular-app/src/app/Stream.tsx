@@ -14,6 +14,7 @@ import { Icon } from "../ui-lib/Icon";
 import { IconButton } from "../ui-lib/IconButton";
 import { Row } from "../ui-lib/Row";
 import { TextButton } from "../ui-lib/TextButton";
+import { Tooltipped } from "../ui-lib/Tooltipped";
 import { classes } from "../ui-lib/css";
 import { useSynth } from "./AppContext";
 import { Modulation } from "./Modulation";
@@ -66,22 +67,27 @@ export function Stream(props: StreamProps) {
     setModSource(undefined);
   };
 
-  const containerClasses = classes(
-    style.container,
+  const streamControlsClasses = classes(
+    style.controls,
     style[`stream${stream}`],
     !enabled ? style.disabled : undefined,
   );
 
   return (
-    <div>
+    <div className={style.container}>
       <Bordered>
-        <div className={containerClasses}>
+        <div className={streamControlsClasses}>
           <Column padV="sm" gap="xs">
-            <IconButton
-              icon={<Icon name="power" />}
-              aria-label={i18n(enabled ? "DisableStream" : "EnableStream")}
-              onClick={() => toggleEnabled()}
-            />
+            <Tooltipped
+              id={`enable-stream-${stream}`}
+              tooltip={i18n(enabled ? "DisableStream" : "EnableStream")}
+            >
+              <IconButton
+                icon={<Icon name="power" />}
+                aria-label={i18n(enabled ? "DisableStream" : "EnableStream")}
+                onClick={() => toggleEnabled()}
+              />
+            </Tooltipped>
             <Param.Discrete
               paramKey={synthParam("subdivision")}
               enabled={isEnabled && !modSource}
@@ -152,7 +158,7 @@ export function Stream(props: StreamProps) {
           onChangeModSource={setModSource}
         />
       </Row>
-      <Column className={style["modulations"]} padV="sm" gap="xs">
+      <Column className={style["modulations"]} gap="xs">
         {modulations.map((m) => (
           <div key={m.id} className={style.modulation}>
             <Modulation stream={stream} modulation={m} />
