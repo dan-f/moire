@@ -2,11 +2,7 @@
 
 .button {
   display: block;
-  background-color: #fff0;
-  color: var(--foreground);
-  border: unset;
   padding: xxs;
-  opacity: 1;
   &:hover,
   &:focus-visible {
     opacity: 0.6;

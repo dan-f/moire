@@ -4,10 +4,13 @@ import { Imports } from "./Imports";
 /**
  * Subtype of `WebAssembly.Instance` to properly type its imports & exports
  */
-export class Instance extends WebAssembly.Instance {
-  exports!: Exports;
+export interface Instance extends WebAssembly.Instance {
+  exports: Exports;
+}
 
-  constructor(module: WebAssembly.Module, imports: Imports) {
-    super(module, imports);
-  }
+export function newInstance(
+  module: WebAssembly.Module,
+  imports: Imports,
+): Instance {
+  return new WebAssembly.Instance(module, imports) as Instance;
 }

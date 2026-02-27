@@ -1,7 +1,23 @@
-@value fontFamily: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+@value fontFamily: "Titillium Web", system-ui, sans-serif;
 @value fontSizeLg: 20px;
 @value fontSizeMd: 16px;
 @value fontSizeSm: 12px;
 @value fontSizeXs: 10px;
 @value lineHeight: 1.5;
 @value fontWeight: 400;
+
+@font-face {
+  font-display: swap;
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/src/assets/titillium-web-v19-latin-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 600;
+  src: url("/src/assets/titillium-web-v19-latin-600.woff2") format("woff2");
+}

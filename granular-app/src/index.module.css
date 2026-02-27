@@ -76,8 +76,13 @@ body {
   user-select: none;
 }
 
-button {
+button,
+select {
+  font-family: fontFamily;
   cursor: pointer;
+  background-color: unset;
+  color: var(--foreground);
+  border: unset;
 }
 
 :global(#root) {

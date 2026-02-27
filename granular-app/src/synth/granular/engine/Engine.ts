@@ -8,7 +8,7 @@ import {
   type GranularParams,
 } from "../param";
 import { type Pointer } from "./Exports";
-import { Instance } from "./Instance";
+import { newInstance, type Instance } from "./Instance";
 
 /**
  * Wrapper class providing safe access to an instance of the WASM granular
@@ -37,11 +37,7 @@ export class Engine {
   ) {
     this.log = new DefaultLogger(Engine.name);
 
-    this.instance = new Instance(module, {
-      Math: {
-        random: Math.random,
-      },
-    });
+    this.instance = newInstance(module, { Math: { random: Math.random } });
 
     this.audioBufCapacity = options.outputBufCapacity;
     this.audioBufLen = options.outputBufLen;
