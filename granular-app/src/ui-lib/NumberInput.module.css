@@ -1,6 +1,3 @@
-@value xs from "./sizing.module.css";
-@value fontSizeSm from "./typography.module.css";
-
 .container {
   display: flex;
   flex-direction: column;
@@ -24,7 +21,7 @@
 
   border: unset;
   border-bottom: 1px solid var(--foreground-secondary);
-  padding: xs;
+  padding: var(--sz-xs);
   text-align: center;
 }
 
@@ -34,5 +31,5 @@
 }
 
 .label {
-  font-size: fontSizeSm;
+  font-size: var(--font-sz-sm);
 }

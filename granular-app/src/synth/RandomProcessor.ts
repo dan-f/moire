@@ -59,4 +59,4 @@ function dt(frequency: number): number {
 
 const DefaultFrequency = 4;
 
-registerProcessor(RandomProcessor.name, RandomProcessor);
+registerProcessor("RandomProcessor", RandomProcessor);

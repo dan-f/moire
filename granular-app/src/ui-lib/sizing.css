@@ -1,0 +1,25 @@
+:root {
+  /* 8-point grid-based sizing values */
+  --sz-0: 0.125rem;
+  --sz-1: 0.25rem;
+  --sz-2: 0.5rem;
+  --sz-3: 0.75rem;
+  --sz-4: 1rem;
+  --sz-5: 1.25rem;
+  --sz-6: 1.5rem;
+  --sz-8: 2rem;
+  --sz-10: 2.5rem;
+
+  /* Common sizes */
+  --sz-xxs: var(--sz-0);
+  --sz-xs: var(--sz-1);
+  --sz-sm: var(--sz-2);
+  --sz-smd: var(--sz-3);
+  --sz-md: var(--sz-4);
+  --sz-lg: var(--sz-6);
+  --sz-xl: var(--sz-8);
+  --sz-xxl: var(--sz-10);
+
+  --border-width: 1px;
+  --border-radius: var(--sz-xs);
+}

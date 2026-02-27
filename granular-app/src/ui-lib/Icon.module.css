@@ -1,15 +1,13 @@
-@value smd as sz-smd, md as sz-md from "./sizing.module.css";
-
 .icon {
   display: inline-block;
 
   &.sm {
-    width: sz-smd;
-    height: sz-smd;
+    width: var(--sz-smd);
+    height: var(--sz-smd);
   }
 
   &.md {
-    width: sz-md;
-    height: sz-md;
+    width: var(--sz-md);
+    height: var(--sz-md);
   }
 }

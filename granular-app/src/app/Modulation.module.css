@@ -1,6 +1,3 @@
-@value xxs, xs, sm, xxl from "../ui-lib/sizing.module.css";
-@value fontSizeXs, fontSizeSm from "../ui-lib/typography.module.css";
-
 .container {
   position: relative;
   display: flex;
@@ -8,13 +5,13 @@
   align-items: center;
   background-color: var(--background-recessed);
   border-radius: var(--border-radius);
-  padding: sm;
+  padding: var(--sz-sm);
 }
 
 .remove {
   position: absolute;
-  top: sm;
-  left: sm;
+  top: var(--sz-sm);
+  left: var(--sz-sm);
 }
 
 .label {
@@ -23,7 +20,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: anchor-center;
-  gap: xs;
+  gap: var(--sz-xs);
 
   .select:first-of-type {
     text-align: start;
@@ -37,13 +34,13 @@
 .select {
   appearance: unset;
   margin: unset;
-  padding: xxs;
+  padding: var(--sz-xxs);
   border: unset;
   background-color: unset;
-  max-width: xxl;
+  max-width: var(--sz-xxl);
 
   color: var(--foreground);
-  font-size: fontSizeSm;
+  font-size: var(--font-sz-sm);
   text-overflow: ellipsis;
   text-align: center;
   opacity: 1;

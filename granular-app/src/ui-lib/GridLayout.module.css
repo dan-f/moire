@@ -1,7 +1,5 @@
-@value sm from "./sizing.module.css";
-
 .container {
   display: grid;
   grid-auto-flow: row;
-  gap: sm;
+  gap: var(--sz-sm);
 }

@@ -1,0 +1,9 @@
+@import "./color.css";
+
+:root {
+  --foreground: var(--color-black);
+  --foreground-secondary: var(--color-slate);
+  --background: var(--color-white);
+  --background-raised: var(--color-bright-white);
+  --background-recessed: var(--color-soft-white);
+}

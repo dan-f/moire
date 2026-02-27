@@ -17,7 +17,7 @@ import {
  */
 class GranularProcessor extends AudioWorkletProcessor {
   private readonly engine: Engine;
-  private readonly log = new DefaultLogger(GranularProcessor.name);
+  private readonly log = new DefaultLogger("GranularProcessor");
 
   constructor(options: GranularWorkletNodeOptions) {
     super();
@@ -68,4 +68,4 @@ class GranularProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor(GranularProcessor.name, GranularProcessor);
+registerProcessor("GranularProcessor", GranularProcessor);

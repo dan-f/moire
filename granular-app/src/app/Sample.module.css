@@ -1,5 +1,3 @@
-@value fontSizeLg from "../ui-lib/typography.module.css";
-
 .container {
   position: relative;
   width: 100%;
@@ -23,7 +21,7 @@
   justify-content: center;
 
   background-color: var(--background-raised);
-  font-size: fontSizeLg;
+  font-size: var(--font-sz-lg);
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--transition-duration);

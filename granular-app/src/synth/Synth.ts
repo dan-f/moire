@@ -45,7 +45,7 @@ export class Synth {
   >;
   private readonly analysers: AnalyserNode[];
   private readonly analyserResultBuf = new Float32Array(1);
-  private readonly log = new DefaultLogger(Synth.name);
+  private readonly log = new DefaultLogger("Synth");
 
   private constructor(ctx: AudioContext, options: SynthOptions) {
     this.ctx = ctx;

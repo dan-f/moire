@@ -1,8 +1,6 @@
-@value xs, border from "./sizing.module.css";
-
 .container {
   display: flex;
-  border: border solid var(--foreground-secondary);
+  border: var(--border-width) solid var(--foreground-secondary);
   border-radius: var(--border-radius);
   overflow: hidden;
 }

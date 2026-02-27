@@ -1,0 +1,43 @@
+@import "./color.css";
+@import "./sizing.css";
+@import "./theme.css";
+@import "./typography.css";
+
+:root {
+  --transition-duration: 100ms;
+}
+
+html {
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+a {
+  color: var(--foreground);
+  text-decoration: unset;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    opacity: 0.6;
+  }
+  transition: opacity var(--transition-duration);
+}
+
+button,
+select {
+  font-family: var(--font-family);
+  font-size: var(--font-sz-sm);
+  cursor: pointer;
+  background-color: unset;
+  color: var(--foreground);
+  border: unset;
+}
+
+:focus-visible {
+  outline: var(--border-width) solid var(--foreground);
+  border-radius: var(--border-radius);
+}

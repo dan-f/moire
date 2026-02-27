@@ -1,5 +1,3 @@
-@value xxs, xs, sm, md, lg from "./sizing.module.css";
-
 .container {
   display: flex;
   flex-direction: column;
@@ -14,71 +12,71 @@
 }
 
 .gap-xxs {
-  gap: xxs;
+  gap: var(--sz-xxs);
 }
 
 .gap-xs {
-  gap: xs;
+  gap: var(--sz-xs);
 }
 
 .gap-sm {
-  gap: sm;
+  gap: var(--sz-sm);
 }
 
 .gap-md {
-  gap: md;
+  gap: var(--sz-md);
 }
 
 .gap-lg {
-  gap: lg;
+  gap: var(--sz-lg);
 }
 
 .padH-xxs {
-  padding-left: xxs;
-  padding-right: xxs;
+  padding-left: var(--sz-xxs);
+  padding-right: var(--sz-xxs);
 }
 
 .padH-xs {
-  padding-left: xs;
-  padding-right: xs;
+  padding-left: var(--sz-xs);
+  padding-right: var(--sz-xs);
 }
 
 .padH-sm {
-  padding-left: sm;
-  padding-right: sm;
+  padding-left: var(--sz-sm);
+  padding-right: var(--sz-sm);
 }
 
 .padH-md {
-  padding-left: md;
-  padding-right: md;
+  padding-left: var(--sz-md);
+  padding-right: var(--sz-md);
 }
 
 .padH-lg {
-  padding-left: lg;
-  padding-right: lg;
+  padding-left: var(--sz-lg);
+  padding-right: var(--sz-lg);
 }
 
 .padV-xxs {
-  padding-top: xxs;
-  padding-bottom: xxs;
+  padding-top: var(--sz-xxs);
+  padding-bottom: var(--sz-xxs);
 }
 
 .padV-xs {
-  padding-top: xs;
-  padding-bottom: xs;
+  padding-top: var(--sz-xs);
+  padding-bottom: var(--sz-xs);
 }
 
 .padV-sm {
-  padding-top: sm;
-  padding-bottom: sm;
+  padding-top: var(--sz-sm);
+  padding-bottom: var(--sz-sm);
 }
 
 .padV-md {
-  padding-top: md;
-  padding-bottom: md;
+  padding-top: var(--sz-md);
+  padding-bottom: var(--sz-md);
 }
 
 .padV-lg {
-  padding-top: lg;
-  padding-bottom: lg;
+  padding-top: var(--sz-lg);
+  padding-bottom: var(--sz-lg);
 }

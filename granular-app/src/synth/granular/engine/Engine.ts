@@ -35,7 +35,7 @@ export class Engine {
       outputBufLen: number;
     },
   ) {
-    this.log = new DefaultLogger(Engine.name);
+    this.log = new DefaultLogger("Engine");
 
     this.instance = newInstance(module, { Math: { random: Math.random } });
 

@@ -1,18 +1,15 @@
-@value xxs, xs from "./sizing.module.css";
-@value fontSizeSm from "./typography.module.css";
-
 .tooltip {
   position: absolute;
   z-index: 1;
-  transform: translateY(calc(xxs * -1));
+  transform: translateY(calc(var(--sz-xxs) * -1));
 
   opacity: 0;
   display: none;
 
   border-radius: var(--border-radius);
-  padding: xxs;
+  padding: var(--sz-xxs);
   background-color: rgb(from var(--background-raised) r g b / 0.85);
-  font-size: fontSizeSm;
+  font-size: var(--font-sz-sm);
 
   transition-property: opacity, display;
   transition-duration: var(--transition-duration);

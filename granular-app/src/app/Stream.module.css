@@ -1,9 +1,7 @@
-@value xs, sm from "../ui-lib/sizing.module.css";
-
 .container {
   display: flex;
   flex-direction: column;
-  gap: sm;
+  gap: var(--sz-sm);
 }
 
 .controls {
@@ -23,7 +21,7 @@
     right: 0;
     background: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0) sm,
+      rgba(0, 0, 0, 0) var(--sz-sm),
       0%,
       rgba(0, 0, 0, 0.15) 100%
     );
@@ -33,7 +31,7 @@
 .stream0 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-0) sm,
+    var(--stream-color-0) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );
@@ -42,7 +40,7 @@
 .stream1 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-1) sm,
+    var(--stream-color-1) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );
@@ -51,7 +49,7 @@
 .stream2 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-2) sm,
+    var(--stream-color-2) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );
@@ -60,7 +58,7 @@
 .stream3 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-3) sm,
+    var(--stream-color-3) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );
@@ -69,7 +67,7 @@
 .stream4 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-4) sm,
+    var(--stream-color-4) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );
@@ -78,7 +76,7 @@
 .stream5 {
   background: linear-gradient(
     to bottom,
-    var(--stream-color-5) sm,
+    var(--stream-color-5) var(--sz-sm),
     0%,
     var(--background-raised) 100%
   );

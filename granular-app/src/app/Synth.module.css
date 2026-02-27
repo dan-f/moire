@@ -1,10 +1,7 @@
-@value fontSizeMd, fontSizeLg from '../ui-lib/typography.module.css';
-@value xs, sm from '../ui-lib/sizing.module.css';
-
 .title {
   grid-column: 2 / span 4;
-  font-size: fontSizeLg;
-  letter-spacing: sm;
+  font-size: var(--font-sz-lg);
+  letter-spacing: var(--sz-sm);
 }
 
 .links {
@@ -13,11 +10,11 @@
   flex-direction: row;
   justify-content: center;
   align-items: anchor-center;
-  gap: xs;
+  gap: var(--sz-xs);
 }
 
 .link {
-  font-size: fontSizeMd;
+  font-size: var(--font-sz-md);
 }
 
 .container {

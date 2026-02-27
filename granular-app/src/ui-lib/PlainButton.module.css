@@ -1,8 +1,6 @@
-@value xxs from "./sizing.module.css";
-
 .button {
   display: block;
-  padding: xxs;
+  padding: var(--sz-xxs);
   &:hover,
   &:focus-visible {
     opacity: 0.6;
