@@ -43,6 +43,7 @@ export function KnobParam(props: Props) {
         val$={val$}
         setVal={set}
         range={paramDef.value.range}
+        defaultVal={paramDef.value.default}
         id={paramKey}
         size="2rem"
         label={paramDef.display?.name}

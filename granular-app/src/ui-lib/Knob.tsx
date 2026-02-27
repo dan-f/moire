@@ -30,6 +30,7 @@ interface KnobProps {
   val$: BehaviorSubject<number>;
   setVal(val: number): void;
   range: [min: number, max: number];
+  defaultVal: number;
   id: string;
   size: string;
   label?: string;
@@ -38,7 +39,17 @@ interface KnobProps {
 }
 
 export function Knob(props: KnobProps) {
-  const { val$, setVal, range, id, size, label, formatValue, disabled } = props;
+  const {
+    val$,
+    setVal,
+    range,
+    defaultVal,
+    id,
+    size,
+    label,
+    formatValue,
+    disabled,
+  } = props;
 
   return (
     <div className={style.container}>
@@ -52,6 +63,7 @@ export function Knob(props: KnobProps) {
               val$={val$}
               setVal={setVal}
               range={range}
+              defaultVal={defaultVal}
               id={id}
               size={size}
               formatValue={formatValue}
@@ -76,6 +88,7 @@ interface BarrelContainerProps {
   val$: BehaviorSubject<number>;
   setVal: (val: number) => void;
   range: [min: number, max: number];
+  defaultVal: number;
   id: string;
   size: string;
   formatValue?: ValueFormatter;
@@ -89,6 +102,7 @@ function BarrelContainer(props: BarrelContainerProps) {
     val$,
     setVal,
     range,
+    defaultVal,
     id,
     size,
     formatValue,
@@ -160,6 +174,10 @@ function BarrelContainer(props: BarrelContainerProps) {
     isHovering$.next(false);
   };
 
+  const handleDoubleClick = () => {
+    setVal(defaultVal);
+  };
+
   const isHoveringOrFocusing$ = combineLatest([
     isHovering$,
     isFocusing$,
@@ -199,6 +217,7 @@ function BarrelContainer(props: BarrelContainerProps) {
       onBlur={handleBlur}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onDoubleClick={handleDoubleClick}
     />
   );
 }
@@ -217,6 +236,7 @@ interface BarrelProps {
   onBlur: React.FocusEventHandler;
   onMouseEnter: React.MouseEventHandler;
   onMouseLeave: React.MouseEventHandler;
+  onDoubleClick: React.MouseEventHandler;
 }
 
 function Barrel(props: BarrelProps) {
@@ -234,6 +254,7 @@ function Barrel(props: BarrelProps) {
     onBlur,
     onMouseEnter,
     onMouseLeave,
+    onDoubleClick,
   } = props;
 
   const val = useBehaviorSubjectState(val$);
@@ -260,6 +281,7 @@ function Barrel(props: BarrelProps) {
         onBlur={onBlur}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        onDoubleClick={onDoubleClick}
         style={{
           width: size,
           height: size,
