@@ -1,6 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs";
 import { i18n } from "../app/i18n";
-import reverbIrUrl from "../assets/stalbans_a_ortf.wav";
 import { upload, type UploadResult } from "../lib/Buffer";
 import { DefaultLogger } from "../lib/DefaultLogger";
 import { range, repeat } from "../lib/iter";
@@ -22,6 +21,7 @@ import {
   Message as Msg,
   unpackStreamParam,
 } from "./granular";
+import reverbIrUrl from "./impulses/stalbans_a_ortf.wav";
 import { type Modulation, type ModulationSource } from "./modulation";
 import {
   packModulationGainParamKey,

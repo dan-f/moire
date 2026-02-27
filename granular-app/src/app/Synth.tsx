@@ -24,7 +24,7 @@ export function Synth() {
 
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
-      <div className={style.title}>MULTIGRAIN</div>
+      <div className={style.title}>POLYSTREAM</div>
       <div className={style.links}>
         <a
           className={style.link}
