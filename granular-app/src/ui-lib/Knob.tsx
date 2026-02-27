@@ -97,8 +97,6 @@ function BarrelContainer(props: BarrelContainerProps) {
 
   const wheel$ = useSubject<React.WheelEvent>();
   const key$ = useSubject<React.KeyboardEvent>();
-  const ringRef = createRef<HTMLDivElement>();
-  const notchRef = createRef<HTMLDivElement>();
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!disabled) {
@@ -111,8 +109,6 @@ function BarrelContainer(props: BarrelContainerProps) {
       wheel$.next(event);
     }
   };
-
-  usePreventWheelScrolling(notchRef, ringRef);
 
   const dragDelta$ = dragEvent$.pipe(
     pairwise(),
@@ -244,6 +240,7 @@ function Barrel(props: BarrelProps) {
   const tooltip = useObservableState(tooltip$, false);
   const ringRef = createRef<HTMLDivElement>();
   const notchRef = createRef<HTMLDivElement>();
+  usePreventWheelScrolling(notchRef, ringRef);
 
   return (
     <Tooltipped id={`param-${id}`} tooltip={formatValue(val)} visible={tooltip}>
@@ -280,6 +277,7 @@ function usePreventWheelScrolling(...refs: React.RefObject<Element>[]) {
     function handleWheel(e: Event) {
       if (refs.some((ref) => ref.current === e.target)) {
         e.preventDefault();
+        e.stopPropagation();
       }
     }
 
