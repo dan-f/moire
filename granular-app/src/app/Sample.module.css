@@ -12,7 +12,7 @@
   height: 100%;
 }
 
-.upload {
+.label {
   position: absolute;
   top: 0;
   left: 0;
@@ -28,6 +28,7 @@
   opacity: 0;
   transition: opacity var(--transition-duration);
 
+  &.label-visible,
   &:hover,
   &:focus-visible {
     opacity: 0.8;

@@ -11,6 +11,7 @@ import * as Buf from "../lib/Buffer";
 import { Synth } from "../synth";
 import { Config } from "../synth/granular";
 import { Bordered } from "../ui-lib/Bordered";
+import { classes } from "../ui-lib/css";
 import { useSynth } from "./AppContext";
 import { useAnimationFrame } from "./hooks/animation";
 import { i18n } from "./i18n";
@@ -36,7 +37,7 @@ export function Sample() {
     if (!file) {
       return;
     }
-    setSampleResult(Ar.loading());
+    setSampleResult((ar) => Ar.loading(ar?.result));
     setSampleResult(Ar.done(await synth.uploadSample(file)));
   }
 
@@ -45,18 +46,23 @@ export function Sample() {
       <canvas
         className={style.canvas}
         aria-label="waveform display"
-        // width={0}
-        // height={0}
         ref={canvasRef}
       ></canvas>
 
       <label
         onKeyUp={triggerFileInput}
-        className={style.upload}
+        className={classes(
+          style.label,
+          sampleResult?.state !== Ar.ResultState.Done && style["label-visible"],
+        )}
         role="button"
         tabIndex={0}
       >
-        <span>{i18n("UploadSample")}</span>
+        <span>
+          {sampleResult?.state === Ar.ResultState.Loading
+            ? ""
+            : i18n("UploadSample")}
+        </span>
         <input
           type="file"
           accept="audio/*"
@@ -121,10 +127,7 @@ class SampleAnimation {
   drawFrame() {
     this.ctx.fillStyle = this.theme.colors.backgroundRaised;
     this.ctx.fillRect(0, 0, this.cssWidth, this.cssHeight);
-    if (
-      this.uploadResult?.state === Ar.ResultState.Done &&
-      this.uploadResult.result.type === Buf.UploadResultType.Success
-    ) {
+    if (this.uploadResult?.result?.type === Buf.UploadResultType.Success) {
       this.drawWave(this.uploadResult.result.buffer);
       this.drawPlayheads();
     }

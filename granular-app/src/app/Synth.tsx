@@ -9,6 +9,7 @@ import { Column } from "../ui-lib/Column";
 import { Row } from "../ui-lib/Row";
 import { useAudioCtx, useSynth } from "./AppContext";
 import { useSubscription } from "./hooks/observable";
+import { i18n } from "./i18n";
 import { Param } from "./Param";
 import { Sample } from "./Sample";
 import { Stream } from "./Stream";
@@ -23,6 +24,17 @@ export function Synth() {
 
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
+      <div className={style.title}>MULTIGRAIN</div>
+      <div className={style.links}>
+        <a
+          className={style.link}
+          href={import.meta.env.VITE_PROJECT_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {`${i18n("Help")} / ${i18n("About")}`}
+        </a>
+      </div>
       <Column gap="xxs">
         <Row>
           <Param.Knob paramKey="attack" enabled />

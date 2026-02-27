@@ -76,9 +76,21 @@ body {
   user-select: none;
 }
 
+a {
+  color: var(--foreground);
+  text-decoration: unset;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    opacity: 0.6;
+  }
+  transition: opacity var(--transition-duration);
+}
+
 button,
 select {
   font-family: fontFamily;
+  font-size: fontSizeSm;
   cursor: pointer;
   background-color: unset;
   color: var(--foreground);

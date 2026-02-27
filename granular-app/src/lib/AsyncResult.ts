@@ -1,7 +1,8 @@
-export type AsyncResult<R> = Loading | Done<R>;
+export type AsyncResult<R> = Loading<R> | Done<R>;
 
-export interface Loading {
+export interface Loading<R> {
   state: ResultState.Loading;
+  result?: R;
 }
 
 export interface Done<R> {
@@ -14,8 +15,8 @@ export enum ResultState {
   Done = "DONE",
 }
 
-export function loading(): Loading {
-  return { state: ResultState.Loading };
+export function loading<R>(result: R | undefined): Loading<R> {
+  return { state: ResultState.Loading, result };
 }
 
 export function done<R>(result: R): Done<R> {

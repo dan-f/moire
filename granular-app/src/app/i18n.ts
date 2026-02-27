@@ -7,7 +7,6 @@ const English = {
   UploadSample: "upload sample",
   Source: "source",
   Target: "target",
-
   Increment: "increment",
   Decrement: "decrement",
   Milliseconds: "ms",
@@ -20,6 +19,8 @@ const English = {
   Lfo: "lfo",
   Random: "random",
   Depth: "depth",
+  Help: "help",
+  About: "about",
 
   level: "level",
   drive: "drive",
