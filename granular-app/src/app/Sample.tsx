@@ -1,4 +1,11 @@
-import { RefObject, useCallback, useMemo, useRef, useState } from "react";
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as Ar from "../lib/AsyncResult";
 import * as Buf from "../lib/Buffer";
 import { Synth } from "../synth";
@@ -38,8 +45,8 @@ export function Sample() {
       <canvas
         className={style.canvas}
         aria-label="waveform display"
-        width={Width}
-        height={Height}
+        // width={0}
+        // height={0}
         ref={canvasRef}
       ></canvas>
 
@@ -68,10 +75,13 @@ function useAnimateSample(
   const synth = useSynth();
   const theme = useTheme();
 
-  const animation = useMemo(
-    () => new SampleAnimation(canvasRef, synth, theme, uploadResult),
-    [canvasRef, synth, theme, uploadResult],
-  );
+  const animation = useMemo(() => {
+    return new SampleAnimation(synth, theme, uploadResult);
+  }, [synth, theme, uploadResult]);
+
+  useEffect(() => {
+    animation.setupCanvas(canvasRef.current!);
+  }, [animation, canvasRef]);
 
   useAnimationFrame(
     useCallback(() => {
@@ -81,18 +91,17 @@ function useAnimateSample(
 }
 
 class SampleAnimation {
-  private readonly canvasRef: RefObject<HTMLCanvasElement>;
+  canvas!: HTMLCanvasElement;
+  ctx!: CanvasRenderingContext2D;
   private readonly synth: Synth;
   private readonly theme: Theme;
   private readonly uploadResult?: Ar.AsyncResult<Buf.UploadResult>;
 
   constructor(
-    canvasRef: RefObject<HTMLCanvasElement>,
     synth: Synth,
     theme: Theme,
     uploadResult: Ar.AsyncResult<Buf.UploadResult> | undefined,
   ) {
-    this.canvasRef = canvasRef;
     this.synth = synth;
     this.theme = theme;
     this.uploadResult = uploadResult;
@@ -100,80 +109,77 @@ class SampleAnimation {
     this.drawFrame = this.drawFrame.bind(this);
   }
 
-  drawFrame() {
-    const canvasRef = this.canvasRef.current;
-    if (canvasRef) {
-      canvasRef.width = this.width;
-      canvasRef.height = this.height;
-      this.drawSampleWindow(canvasRef.getContext("2d")!);
-    }
+  setupCanvas(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d")!;
+    const dpr = window.devicePixelRatio;
+    this.canvas.width = this.cssWidth * dpr;
+    this.canvas.height = this.cssHeight * dpr;
+    this.ctx.scale(dpr, dpr);
   }
 
-  private drawSampleWindow(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = this.theme.colors.backgroundRaised;
-    ctx.fillRect(0, 0, this.width, this.height);
-
+  drawFrame() {
+    this.ctx.fillStyle = this.theme.colors.backgroundRaised;
+    this.ctx.fillRect(0, 0, this.cssWidth, this.cssHeight);
     if (
       this.uploadResult?.state === Ar.ResultState.Done &&
       this.uploadResult.result.type === Buf.UploadResultType.Success
     ) {
-      this.drawWave(ctx, this.uploadResult.result.buffer);
-      this.drawPlayheads(ctx);
+      this.drawWave(this.uploadResult.result.buffer);
+      this.drawPlayheads();
     }
   }
 
-  private drawWave(ctx: CanvasRenderingContext2D, buffer: Buf.Buffer) {
-    const verticalOffset = this.height / 2;
-    const centerPosition = this.height / 2;
+  private drawWave(buffer: Buf.Buffer) {
+    const verticalOffset = this.cssHeight / 2;
+    const centerPosition = this.cssHeight / 2;
 
-    ctx.strokeStyle = this.theme.colors.foreground;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
+    this.ctx.strokeStyle = this.theme.colors.foreground;
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
 
-    for (let x = 0; x < this.width; x++) {
-      const subSample = (x / this.width) * Buf.length(buffer);
+    // left channel
+    for (let x = 0; x < this.cssWidth; x++) {
+      const subSample = (x / this.cssWidth) * Buf.length(buffer);
       const frame = Buf.subFrame(buffer, subSample);
-      ctx.lineTo(x, centerPosition + frame[0] * verticalOffset);
+      this.ctx.lineTo(x, centerPosition + frame[0] * verticalOffset);
     }
 
-    ctx.stroke();
+    this.ctx.stroke();
 
     // right channel
-    ctx.strokeStyle = this.theme.colors.foregroundSecondary;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
+    this.ctx.strokeStyle = this.theme.colors.foregroundSecondary;
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
 
-    for (let x = 0; x < this.width; x++) {
-      const subSample = (x / this.width) * Buf.length(buffer);
+    for (let x = 0; x < this.cssWidth; x++) {
+      const subSample = (x / this.cssWidth) * Buf.length(buffer);
       const frame = Buf.subFrame(buffer, subSample);
-      ctx.lineTo(x, centerPosition + frame[1] * verticalOffset);
+      this.ctx.lineTo(x, centerPosition + frame[1] * verticalOffset);
     }
 
-    ctx.stroke();
+    this.ctx.stroke();
   }
 
-  private drawPlayheads(ctx: CanvasRenderingContext2D) {
+  private drawPlayheads() {
     for (let s = 0; s < Config.NumStreams; s++) {
-      const x = this.synth.playheadPosition(s) * this.width;
+      const x = this.synth.playheadPosition(s) * this.cssWidth;
       if (x > 0) {
-        ctx.strokeStyle = this.theme.colors.stream[s];
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, this.height);
-        ctx.stroke();
+        this.ctx.strokeStyle = this.theme.colors.stream[s];
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, 0);
+        this.ctx.lineTo(x, this.cssHeight);
+        this.ctx.stroke();
       }
     }
   }
 
-  private get width() {
-    return this.canvasRef.current?.clientWidth ?? Width;
+  private get cssWidth() {
+    return this.canvas.clientWidth;
   }
 
-  private get height() {
-    return this.canvasRef.current?.clientHeight ?? Height;
+  private get cssHeight() {
+    return this.canvas.clientHeight;
   }
 }
-
-const Width = 0;
-const Height = 0;
