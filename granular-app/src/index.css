@@ -9,7 +9,6 @@
 
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 2rem;
 
   --stream-color-0: var(--color-royal-blue);
   --stream-color-1: var(--color-green);
@@ -21,6 +20,7 @@
 
 body {
   margin: 0;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   place-items: center;
