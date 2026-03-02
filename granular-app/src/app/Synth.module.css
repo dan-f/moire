@@ -2,6 +2,7 @@
   grid-column: 2 / span 4;
   font-size: var(--font-sz-lg);
   letter-spacing: var(--sz-sm);
+  text-align: center;
 }
 
 .links {

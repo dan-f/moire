@@ -7,7 +7,9 @@ import { KeyboardNoteEvent$, NoteEvent } from "../note";
 import { Config } from "../synth/granular";
 import { Column } from "../ui-lib/Column";
 import { Row } from "../ui-lib/Row";
+import { TextButton } from "../ui-lib/TextButton";
 import { useAudioCtx, useSynth } from "./AppContext";
+import { type HelpModalRef, HelpModal } from "./HelpModal";
 import { useSubscription } from "./hooks/observable";
 import { i18n } from "./i18n";
 import { Param } from "./Param";
@@ -17,6 +19,7 @@ import style from "./Synth.module.css";
 
 export function Synth() {
   const synth = useSynth();
+  const helpModal = useRef<HelpModalRef>(null);
 
   useSubscription(useTimedNoteEvents(), (noteEvent) => {
     synth.sendNoteEvent(noteEvent);
@@ -24,15 +27,22 @@ export function Synth() {
 
   return (
     <div className={style.container} onClick={() => synth.resumeWebAudio()}>
-      <div className={style.title}>POLYSTREAM</div>
+      <div className={style.title}>{import.meta.env.VITE_PROJECT_NAME}</div>
       <div className={style.links}>
+        <TextButton
+          className={style.link}
+          onClick={() => helpModal.current?.open()}
+        >
+          {i18n("Help")}
+        </TextButton>
+        <span>/</span>
         <a
           className={style.link}
           href={import.meta.env.VITE_PROJECT_URL}
           target="_blank"
           rel="noreferrer"
         >
-          {`${i18n("Help")} / ${i18n("About")}`}
+          {i18n("About")}
         </a>
       </div>
       <Column gap="xxs">
@@ -61,6 +71,7 @@ export function Synth() {
       {[...range(Config.NumStreams)].map((stream) => (
         <Stream stream={stream} key={stream} />
       ))}
+      <HelpModal ref={helpModal} />
     </div>
   );
 }

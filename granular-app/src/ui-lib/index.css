@@ -16,6 +16,11 @@ html {
   box-sizing: inherit;
 }
 
+p {
+  margin-top: var(--sz-sm);
+  margin-bottom: var(--sz-sm);
+}
+
 a {
   color: var(--foreground);
   text-decoration: unset;

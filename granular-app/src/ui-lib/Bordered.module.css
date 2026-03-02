@@ -1,6 +1,8 @@
 .container {
   display: flex;
-  border: var(--border-width) solid var(--foreground-secondary);
+  border-style: solid;
+  border-color: var(--foreground-secondary);
+  border-width: var(--border-width);
   border-radius: var(--border-radius);
   overflow: hidden;
 }

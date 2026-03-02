@@ -32,4 +32,5 @@
 
 .label {
   font-size: var(--font-sz-sm);
+  text-align: center;
 }

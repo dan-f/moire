@@ -1,0 +1,22 @@
+.dialog {
+  /* position: relative; */
+  border-style: solid;
+  border-color: var(--foreground-secondary);
+  border-width: var(--border-width);
+  border-radius: var(--border-radius);
+  max-width: calc(var(--max-width) / 2);
+  padding: var(--sz-sm);
+}
+
+.close-btn {
+  float: right;
+  padding: 0;
+  margin-top: var(--sz-sm);
+  margin-bottom: var(--sz-sm);
+  font-size: var(--font-sz-md);
+  text-decoration: underline;
+}
+
+.em {
+  font-weight: 600;
+}
