@@ -28,7 +28,7 @@ export function NumberInput(props: Props) {
           ref={ref}
           {...props}
           id={id}
-          size={1}
+          size={2}
           className={style.input}
           onFocus={() => ref.current?.select()}
           onKeyDown={(e) => {
