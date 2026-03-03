@@ -37,7 +37,7 @@ export function DragTarget(props: Props) {
         return;
       }
       e.preventDefault();
-      beginDrag(id, e.clientX, e.clientY);
+      beginDrag(id, e.clientX, e.clientY, e.shiftKey);
     },
     [beginDrag, enabled, id],
   );

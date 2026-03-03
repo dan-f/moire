@@ -25,9 +25,9 @@ export function DragArea(props: Props) {
   }, []);
 
   const beginDrag = useCallback(
-    (target_: string, x: number, y: number) => {
+    (target_: string, x: number, y: number, slow: boolean) => {
       target$.next(target_);
-      dragEvents.current[target_].next(Drag.start(x, y));
+      dragEvents.current[target_].next(Drag.start(x, y, slow));
     },
     [target$],
   );
@@ -38,7 +38,9 @@ export function DragArea(props: Props) {
       if (curTarget === null) {
         return;
       }
-      dragEvents.current[curTarget].next(Drag.move(e.clientX, e.clientY));
+      dragEvents.current[curTarget].next(
+        Drag.move(e.clientX, e.clientY, e.shiftKey),
+      );
     }
 
     function handleMouseUp(e: MouseEvent) {
@@ -46,7 +48,9 @@ export function DragArea(props: Props) {
       if (curTarget === null) {
         return;
       }
-      dragEvents.current[curTarget].next(Drag.end(e.clientX, e.clientY));
+      dragEvents.current[curTarget].next(
+        Drag.end(e.clientX, e.clientY, e.shiftKey),
+      );
       target$.next(null);
     }
 

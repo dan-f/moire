@@ -127,12 +127,11 @@ function BarrelContainer(props: BarrelContainerProps) {
   const dragDelta$ = dragEvent$.pipe(
     pairwise(),
     filter(([a, _]) => a.type !== "DragEnd"),
-    map(([a, b]) => b.y - a.y),
-    map((pixelDelta) => pixelDeltaToValDelta(range, pixelDelta)),
+    map(([a, b]) => pixelDeltaToValDelta(range, b.y - a.y, b.slow)),
   );
 
   const wheelDelta$ = wheel$.pipe(
-    map((e) => wheelDeltaToValDelta(range, e.deltaY)),
+    map((e) => wheelDeltaToValDelta(range, e.deltaY, e.shiftKey)),
   );
 
   const keyDelta$ = key$.pipe(
@@ -311,15 +310,17 @@ function usePreventWheelScrolling(...refs: React.RefObject<Element>[]) {
 function pixelDeltaToValDelta(
   range: [min: number, max: number],
   delta: number,
+  slow: boolean,
 ): number {
-  return (-delta / 75) * (range[1] - range[0]);
+  return (-delta / (slow ? 300 : 75)) * (range[1] - range[0]);
 }
 
 function wheelDeltaToValDelta(
   range: [min: number, max: number],
   delta: number,
+  slow: boolean,
 ): number {
-  return (-delta / 1000) * (range[1] - range[0]);
+  return (-delta / (slow ? 4000 : 1000)) * (range[1] - range[0]);
 }
 
 function keyEventToValDelta(

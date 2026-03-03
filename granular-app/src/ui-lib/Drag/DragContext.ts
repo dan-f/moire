@@ -14,7 +14,7 @@ export interface DragCtx {
   registerTarget(target: string, events$: Subject<Drag.DragEvent>): void;
   deregisterTarget(target: string): void;
 
-  beginDrag(target: string, x: number, y: number): void;
+  beginDrag(target: string, x: number, y: number, slow?: boolean): void;
 }
 
 export type DragEventsTable = Record<string, Subject<Drag.DragEvent>>;
