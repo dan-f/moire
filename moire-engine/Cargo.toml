@@ -1,5 +1,5 @@
 [package]
-name = "granular-engine"
+name = "moire-engine"
 version = "0.1.0"
 authors = ["Daniel Friedman <dfriedman58@gmail.com>"]
 edition = "2021"

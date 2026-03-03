@@ -5,4 +5,4 @@ test:
   cargo test
 
 disassemble: build
-  wasm2wat target/wasm32-unknown-unknown/release/granular_engine.wasm -o granular_engine.wat
+  wasm2wat target/wasm32-unknown-unknown/release/moire_engine.wasm -o moire_engine.wat

@@ -1,5 +1,5 @@
-engine_dir := "granular-engine"
-app_dir := "granular-app"
+engine_dir := "moire-engine"
+app_dir := "moire-app"
 
 default: dev
 
@@ -13,7 +13,7 @@ test: (engine 'test')
 
 build-engine: (engine 'build')
   cp \
-    {{engine_dir}}/target/wasm32-unknown-unknown/release/granular_engine.wasm \
+    {{engine_dir}}/target/wasm32-unknown-unknown/release/moire_engine.wasm \
     {{app_dir}}/src/synth/granular/engine/
 
 app recipe *ARGS:
