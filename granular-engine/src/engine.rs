@@ -1,6 +1,7 @@
 use num_rational::Rational64;
 
 use crate::{
+    adsr::AdsrParams,
     buffer::Buffer,
     env::Env,
     time,
@@ -26,10 +27,12 @@ impl<const S: usize> Engine<S> {
         } = params;
         let voices = VoiceManager::new(
             VoiceMode::Poly,
-            time::ms_to_samples(cfg.sample_rate, attack_ms),
-            time::ms_to_samples(cfg.sample_rate, decay_ms),
-            sustain,
-            time::ms_to_samples(cfg.sample_rate, release_ms),
+            &AdsrParams {
+                attack: time::ms_to_samples(cfg.sample_rate, attack_ms),
+                decay: time::ms_to_samples(cfg.sample_rate, decay_ms),
+                sustain,
+                release: time::ms_to_samples(cfg.sample_rate, release_ms),
+            },
             time::bpm_to_freq(bpm),
             cfg.sample_rate,
         );
@@ -59,12 +62,12 @@ impl<const S: usize> Engine<S> {
         self.params.decay_ms = decay_ms;
         self.params.sustain = sustain;
         self.params.release_ms = release_ms;
-        self.voices.set_adsr(
-            time::ms_to_samples(self.sample_rate, attack_ms),
-            time::ms_to_samples(self.sample_rate, decay_ms),
+        self.voices.set_adsr(&AdsrParams {
+            attack: time::ms_to_samples(self.sample_rate, attack_ms),
+            decay: time::ms_to_samples(self.sample_rate, decay_ms),
             sustain,
-            time::ms_to_samples(self.sample_rate, release_ms),
-        );
+            release: time::ms_to_samples(self.sample_rate, release_ms),
+        });
     }
 
     pub fn set_stream_enabled(&mut self, stream_id: usize, enabled: bool) {
@@ -133,7 +136,10 @@ impl<const S: usize> Engine<S> {
         for i in 0..output_buf.len {
             let mut frame = [0., 0.];
 
-            // TODO - polyphonic playhead positions
+            // TODO(playheads) if we want per-grain playheads (vs current
+            // per-stream last-write-wins), the data modeling needs to be
+            // adjusted. For example, per-stream buffers accommodating
+            // grain_pool_len * num_voices
             let mut playhead_positions = [-1.; S];
             self.voices.spawn_new_grains(&sample_buf, self.sample_rate);
             self.voices

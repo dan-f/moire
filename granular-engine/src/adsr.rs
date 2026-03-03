@@ -6,47 +6,54 @@ pub struct Adsr {
     phase: AdsrPhase,
 }
 
+pub struct AdsrParams {
+    pub attack: usize,
+    pub decay: usize,
+    pub sustain: f32,
+    pub release: usize,
+}
+
 impl Adsr {
-    pub fn new(attack: usize, decay: usize, sustain: f32, release: usize) -> Self {
+    pub fn new(params: &AdsrParams) -> Self {
         Self {
-            attack,
-            decay,
-            sustain,
-            release,
+            attack: params.attack,
+            decay: params.decay,
+            sustain: params.sustain,
+            release: params.release,
             phase: AdsrPhase::Off,
         }
     }
 
-    pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
-        if attack == self.attack
-            && decay == self.decay
-            && sustain == self.sustain
-            && release == self.release
+    pub fn set_adsr(&mut self, params: &AdsrParams) {
+        if params.attack == self.attack
+            && params.decay == self.decay
+            && params.sustain == self.sustain
+            && params.release == self.release
         {
             return;
         }
 
         match self.phase {
             AdsrPhase::Attack { ref mut i } => {
-                *i = ((*i as f32 / self.attack as f32) * attack as f32).round() as usize;
+                *i = ((*i as f32 / self.attack as f32) * params.attack as f32).round() as usize;
             }
             AdsrPhase::Decay { ref mut i } => {
-                *i = ((*i as f32 / self.decay as f32) * decay as f32).round() as usize;
+                *i = ((*i as f32 / self.decay as f32) * params.decay as f32).round() as usize;
             }
             AdsrPhase::Release {
                 ref mut start_gain,
                 ref mut i,
             } => {
-                *start_gain = sustain;
-                *i = ((*i as f32 / self.release as f32) * release as f32).round() as usize;
+                *start_gain = params.sustain;
+                *i = ((*i as f32 / self.release as f32) * params.release as f32).round() as usize;
             }
             _ => {}
         };
 
-        self.attack = attack;
-        self.decay = decay;
-        self.sustain = sustain;
-        self.release = release;
+        self.attack = params.attack;
+        self.decay = params.decay;
+        self.sustain = params.sustain;
+        self.release = params.release;
     }
 
     pub fn set_gate(&mut self, gate: bool) {
@@ -347,6 +354,11 @@ mod tests {
     }
 
     fn fixture() -> Adsr {
-        Adsr::new(10, 5, 0.75, 100)
+        Adsr::new(&AdsrParams {
+            attack: 10,
+            decay: 5,
+            sustain: 0.75,
+            release: 100,
+        })
     }
 }

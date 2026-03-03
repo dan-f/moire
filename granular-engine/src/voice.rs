@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use num_rational::Rational64;
 
 use crate::{
-    adsr::Adsr,
+    adsr::{Adsr, AdsrParams},
     buffer::Buffer,
     env::Env,
     grain_pool::{self, GrainPool},
@@ -21,19 +21,13 @@ pub struct Voice<const S: usize> {
 }
 
 impl<const S: usize> Voice<S> {
-    pub fn new(
-        clock: Rc<RefCell<Clock>>,
-        attack: usize,
-        decay: usize,
-        sustain: f32,
-        release: usize,
-    ) -> Self {
+    pub fn new(clock: Rc<RefCell<Clock>>, adsr_params: &AdsrParams) -> Self {
         let streams: Vec<_> = (0..S)
             .map(|_| Stream::default_with_clock(clock::add_child(&clock)))
             .collect();
 
         Voice {
-            adsr: Adsr::new(attack, decay, sustain, release),
+            adsr: Adsr::new(adsr_params),
             clock,
             note: 60,
             streams,
@@ -82,12 +76,18 @@ impl<const S: usize> Voice<S> {
         self.adsr.tick();
     }
 
-    pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
+    pub fn set_adsr(&mut self, params: &AdsrParams) {
         // prevents bug where 0-length ramp phases create total silence
-        let attack = if attack == 0 { 1 } else { attack };
-        let decay = if decay == 0 { 1 } else { decay };
-        let release = if release == 0 { 1 } else { release };
-        self.adsr.set_adsr(attack, decay, sustain, release);
+        self.adsr.set_adsr(&AdsrParams {
+            attack: if params.attack == 0 { 1 } else { params.attack },
+            decay: if params.decay == 0 { 1 } else { params.decay },
+            sustain: params.sustain,
+            release: if params.release == 0 {
+                1
+            } else {
+                params.release
+            },
+        });
     }
 
     pub fn set_note(&mut self, note: u32) {

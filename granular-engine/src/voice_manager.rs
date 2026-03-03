@@ -3,6 +3,7 @@ use std::array;
 use num_rational::Rational64;
 
 use crate::{
+    adsr::AdsrParams,
     buffer::Buffer,
     env::Env,
     time::clock::{self},
@@ -25,23 +26,12 @@ pub struct VoiceManager<const V: usize, const S: usize> {
 impl<const V: usize, const S: usize> VoiceManager<V, S> {
     pub fn new(
         mode: VoiceMode,
-        // TODO refactor these into an AdsrParams struct or something
-        attack: usize,
-        decay: usize,
-        sustain: f32,
-        release: usize,
+        adsr_params: &AdsrParams,
         clock_freq: Rational64,
         sample_rate: usize,
     ) -> Self {
-        let voices = array::from_fn(|_| {
-            Voice::new(
-                clock::new_clock(sample_rate, clock_freq),
-                attack,
-                decay,
-                sustain,
-                release,
-            )
-        });
+        let voices =
+            array::from_fn(|_| Voice::new(clock::new_clock(sample_rate, clock_freq), adsr_params));
         Self {
             mode,
             voices,
@@ -49,6 +39,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_mode(&mut self, mode: VoiceMode) {
         for voice in self.voices.iter_mut() {
             voice.set_gate(false);
@@ -69,9 +60,9 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         }
     }
 
-    pub fn set_adsr(&mut self, attack: usize, decay: usize, sustain: f32, release: usize) {
+    pub fn set_adsr(&mut self, params: &AdsrParams) {
         for voice in self.voices.iter_mut() {
-            voice.set_adsr(attack, decay, sustain, release);
+            voice.set_adsr(params);
         }
     }
 
@@ -165,7 +156,7 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
 
     pub fn note_off(&mut self, note: u32) {
         if self.mode == VoiceMode::Mono {
-            // TODO I think this is buggy. `i` could be zero which would crash
+            // TODO(bug) `i` could be zero which would crash
             // us out. Furthermore, why we we immediately de-assign the last
 
             // find matching pseudo-voice to de-assign
@@ -247,12 +238,8 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
         if self.mode == VoiceMode::Mono {
             self.voices[0].render_frame(sample, frame, playhead_positions)
         } else {
-            // TODO(poly) - implement proper support for additional playheads.
-            // Right now, playhead positions will be last-write-wins... is that
-            // actually OK?
-            //
-            // Also, do we want to adjust gain in poly mode or globally to
-            // account for clipping potential?
+            // TODO(playheads) - implement proper support for additional
+            // playheads. See comment in `engine.rs`.
             for voice in self.voices.iter_mut() {
                 voice.render_frame(sample, frame, playhead_positions);
             }
@@ -265,7 +252,6 @@ impl<const V: usize, const S: usize> VoiceManager<V, S> {
             voice.tick();
             if was_playing && !voice.adsr.is_open() {
                 voice.stop_lead_clock();
-                // TODO why only in poly mode?
                 if self.mode == VoiceMode::Poly {
                     self.assignments[i].take();
                 }
