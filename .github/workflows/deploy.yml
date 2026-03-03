@@ -1,0 +1,40 @@
+name: deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+      - name: setup rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          - node-version: "^22"
+      - name: setup just
+        uses: extractions/setup-just@v3
+      - name: test
+        run: just test
+      - name: build
+        run: just build
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: moire-app/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
