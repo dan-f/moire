@@ -18,7 +18,7 @@
   -moz-appearance: textfield;
   background-color: unset;
   color: var(--foreground);
-
+  width: 2rem;
   border: unset;
   border-bottom: 1px solid var(--foreground-secondary);
   padding: var(--sz-xs);
