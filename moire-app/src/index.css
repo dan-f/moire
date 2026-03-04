@@ -28,3 +28,21 @@ body {
   min-height: 100vh;
   user-select: none;
 }
+
+#mobile-fallback {
+  display: none;
+
+  .project-link {
+    text-decoration: underline;
+  }
+}
+
+@media (any-hover: none) {
+  #root {
+    display: none;
+  }
+
+  #mobile-fallback {
+    display: unset;
+  }
+}
