@@ -1,9 +1,8 @@
 import {
-  concatMap,
   defer,
   fromEventPattern,
-  map,
   merge,
+  mergeMap,
   type Observable,
 } from "rxjs";
 import {
@@ -19,8 +18,8 @@ import { DefaultLogger } from "./lib/DefaultLogger";
  * Subscribing forces a MIDI permissions prompt.
  */
 export const NoteMessageEvent$: Observable<NoteMessageEvent> = defer(init).pipe(
-  map((w) => w.inputs[0]),
-  concatMap((input) =>
+  mergeMap((w) => w.inputs),
+  mergeMap((input) =>
     merge(noteEvent$("noteon", input), noteEvent$("noteoff", input)),
   ),
 );
